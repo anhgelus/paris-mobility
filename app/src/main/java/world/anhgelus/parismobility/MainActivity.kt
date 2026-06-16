@@ -5,14 +5,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import world.anhgelus.parismobility.ui.LineKind
+import world.anhgelus.parismobility.ui.StopsMonitoring
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
 import world.anhgelus.parismobility.ui.theme.Typography
 
@@ -35,12 +40,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Preview(showBackground = true)
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState())
+    ) {
         Text(
-            text = "Paris Mobilité",
-            style = Typography.headlineLarge,
+            text = "Votre réseau",
+            style = Typography.headlineMedium,
             modifier = Modifier.padding(bottom = 32.dp)
         )
         LineKind(
@@ -68,5 +76,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                 "14"
             ),
         )
+        Spacer(modifier = Modifier.padding(8.dp))
+        StopsMonitoring()
     }
 }

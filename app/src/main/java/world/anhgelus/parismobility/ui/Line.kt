@@ -2,34 +2,28 @@ package world.anhgelus.parismobility.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.ui.theme.Typography
-import java.nio.file.WatchEvent
 
 @Composable
-fun Line(name: String) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_launcher_background),
-            contentDescription = null
-        )
-        Text(text = name)
-    }
+fun Line(name: String, modifier: Modifier = Modifier) {
+    Icon(
+        painter = painterResource(R.drawable.ic_launcher_background),
+        contentDescription = name,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -45,12 +39,16 @@ fun LineKind(name: String, lines: List<String>, modifier: Modifier = Modifier) {
 
 @Composable
 fun Lines(lines: List<String>) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(6),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    val size = 48.dp
+    val items = 6
+    FlowRow(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+        maxItemsInEachRow = items
     ) {
-        items(lines) { Line(it) }
+        lines.forEach { Line(it, Modifier.size(size)) }
+        repeat(items - (lines.size % items)) { Spacer(Modifier.size(size)) }
     }
 }
 
