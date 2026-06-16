@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import world.anhgelus.parismobility.navigation.NavigationRoute
+import world.anhgelus.parismobility.navigation.NavigationRoot
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ParisMobiliteTheme {
-                NavigationRoute()
+                NavigationRoot()
             }
         }
     }

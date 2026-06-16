@@ -47,20 +47,20 @@ fun StopsMonitoring(modifier: Modifier = Modifier) {
             modifier,
         )
         StopMonitoring(
+            "7",
+            "Jussieu",
+            mapOf(
+                Pair("La Courneuve", listOf("3 min", "8 min", "13 min")),
+            ),
+            modifier
+        )
+        StopMonitoring(
             "J",
             "Gare Saint-Lazare",
             mapOf(
                 Pair("Gisors", listOf("23 min")),
                 Pair("Mantes-la-Jolie", listOf("18 min", "37 min")),
                 Pair("Pontoise", listOf("10 min", "45 min")),
-            ),
-            modifier
-        )
-        StopMonitoring(
-            "7",
-            "Jussieu",
-            mapOf(
-                Pair("La Courneuve", listOf("3 min", "8 min", "13 min")),
             ),
             modifier
         )
@@ -83,7 +83,7 @@ fun StopMonitoring(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Line(name = line, Modifier.size(64.dp))
+            Line(name = line, Modifier.size(48.dp))
             Text(
                 text = stop,
                 style = Typography.bodyMedium,
