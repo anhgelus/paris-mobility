@@ -5,17 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import world.anhgelus.parismobility.R
-import world.anhgelus.parismobility.ui.theme.Typography
 
 @Composable
 fun Line(name: String, modifier: Modifier = Modifier) {
@@ -29,10 +26,10 @@ fun Line(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun LineKind(name: String, lines: List<String>, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(bottom = 32.dp),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = name, style = Typography.titleLarge)
+        SectionTitle(name)
         Lines(lines)
     }
 }
@@ -48,7 +45,9 @@ fun Lines(lines: List<String>) {
         maxItemsInEachRow = items
     ) {
         lines.forEach { Line(it, Modifier.size(size)) }
-        repeat(items - (lines.size % items)) { Spacer(Modifier.size(size)) }
+        val mod = lines.size % items
+        if (mod != 0)
+            repeat(items - (lines.size % items)) { Spacer(Modifier.size(size)) }
     }
 }
 

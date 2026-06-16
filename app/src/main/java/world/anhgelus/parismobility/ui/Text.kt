@@ -15,6 +15,18 @@ fun ScreenTitle(
     Text(
         text = content,
         style = Typography.headlineMedium,
-        modifier = modifier.padding(bottom = 32.dp, top = 24.dp)
+        modifier = modifier.padding(top = 24.dp)
+    )
+}
+
+@Composable
+fun SectionTitle(
+    content: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = content,
+        style = Typography.titleLarge,
+        modifier = modifier
     )
 }

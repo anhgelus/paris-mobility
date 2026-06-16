@@ -1,7 +1,7 @@
 package world.anhgelus.parismobility.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,36 +17,17 @@ import world.anhgelus.parismobility.ui.StopsMonitoring
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState())
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         ScreenTitle("Votre réseau")
         LineKind(
             modifier = Modifier.padding(horizontal = 16.dp),
-            name = "RER",
-            lines = listOf("A", "B", "C", "D", "E")
+            name = "État de vos lignes",
+            lines = listOf("A", "E", "7", "10", "14", "J")
         )
-        LineKind(
-            modifier = Modifier
-                .padding(horizontal = 16.dp),
-            name = "Métro",
-            lines = listOf(
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "10",
-                "11",
-                "12",
-                "13",
-                "14"
-            ),
-        )
-        Spacer(modifier = Modifier.padding(8.dp))
-        StopsMonitoring(modifier = Modifier.padding(bottom = 16.dp))
+        StopsMonitoring()
     }
 }

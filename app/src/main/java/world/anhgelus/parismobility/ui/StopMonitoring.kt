@@ -29,7 +29,7 @@ fun StopsMonitoring(modifier: Modifier = Modifier) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().padding(top = 8.dp),
     ) {
         val modifier = Modifier.padding(16.dp)
         Text(
@@ -87,7 +87,7 @@ fun StopMonitoring(
             Text(
                 text = stop,
                 style = Typography.bodyMedium,
-                modifier = Modifier.width(92.dp),
+                modifier = Modifier.width(96.dp),
                 overflow = TextOverflow.Ellipsis,
                 softWrap = false,
                 textAlign = TextAlign.Center,
