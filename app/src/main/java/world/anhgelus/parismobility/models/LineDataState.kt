@@ -6,6 +6,12 @@ import androidx.compose.ui.graphics.Color
 import world.anhgelus.parismobility.ui.theme.CustomColorScheme
 
 @Stable
+data class LinesGroupDataState(
+    val name: String,
+    val lines: List<LineDataState>,
+)
+
+@Stable
 data class LineDataState(
     val name: String,
     val resource: Int,

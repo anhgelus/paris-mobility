@@ -19,6 +19,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.R
+import world.anhgelus.parismobility.data.LocalDataRepository
 import world.anhgelus.parismobility.models.HomeViewModel
 import world.anhgelus.parismobility.models.LineDataState
 import world.anhgelus.parismobility.models.NetworkViewModel
@@ -30,6 +31,7 @@ import kotlin.math.pow
 
 @Composable
 fun NavigationRoot(
+    localRepo: LocalDataRepository,
     modifier: Modifier = Modifier
 ) {
     val rootBackStack = rememberNavBackStack(Route.Home)
@@ -71,35 +73,7 @@ fun NavigationRoot(
             listOf(stopA, stop7, stopJ)
         )
     }
-    val networkViewModel = viewModel {
-        NetworkViewModel(
-            listOf(
-                "RER" to listOf(
-                    lineA,
-                    LineDataState("B", R.drawable.ic_launcher_foreground),
-                    LineDataState("C", R.drawable.ic_launcher_foreground),
-                    LineDataState("D", R.drawable.ic_launcher_foreground),
-                    LineDataState("E", R.drawable.ic_launcher_foreground),
-                ),
-                "Métro" to listOf(
-                    LineDataState("1", R.drawable.ic_launcher_foreground),
-                    LineDataState("2", R.drawable.ic_launcher_foreground),
-                    LineDataState("3", R.drawable.ic_launcher_foreground),
-                    LineDataState("4", R.drawable.ic_launcher_foreground),
-                    LineDataState("5", R.drawable.ic_launcher_foreground),
-                    LineDataState("6", R.drawable.ic_launcher_foreground),
-                    line7,
-                    LineDataState("8", R.drawable.ic_launcher_foreground),
-                    LineDataState("9", R.drawable.ic_launcher_foreground),
-                    LineDataState("10", R.drawable.ic_launcher_foreground),
-                    LineDataState("11", R.drawable.ic_launcher_foreground),
-                    LineDataState("12", R.drawable.ic_launcher_foreground),
-                    LineDataState("13", R.drawable.ic_launcher_foreground),
-                    LineDataState("14", R.drawable.ic_launcher_foreground),
-                )
-            )
-        )
-    }
+    val networkViewModel = viewModel { NetworkViewModel(localRepo.lines) }
     // disable return function for main nav
     Scaffold(
         modifier = modifier,

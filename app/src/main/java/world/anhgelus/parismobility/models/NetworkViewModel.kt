@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class NetworkViewModel(
-    linesGroup: List<Pair<String, List<LineDataState>>>,
+    linesGroup: List<LinesGroupDataState>,
 ) : ViewModel() {
     private val _linesGroups = MutableStateFlow(linesGroup)
     val linesGroups = _linesGroups.asStateFlow()
