@@ -18,60 +18,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import world.anhgelus.parismobility.models.StopDataState
 import world.anhgelus.parismobility.ui.theme.Typography
 
-@Preview(showBackground = true)
 @Composable
-fun StopsMonitoring(modifier: Modifier = Modifier) {
+fun StopsMonitoring(stops: List<StopDataState>, modifier: Modifier = Modifier) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
-        modifier = modifier.fillMaxWidth().padding(top = 8.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
     ) {
         val modifier = Modifier.padding(16.dp)
-        Text(
-            text = "Prochains passages",
-            style = Typography.titleMedium,
-            modifier = modifier,
-        )
-        StopMonitoring(
-            "A",
-            "Reuil-Malmaison",
-            mapOf(
-                Pair("Marne-la-Vallée", listOf("3 min", "8 min")),
-                Pair("Boissy-Saint-Léger", listOf("5 min", "12 min")),
-            ),
-            modifier,
-        )
-        StopMonitoring(
-            "7",
-            "Jussieu",
-            mapOf(
-                Pair("La Courneuve", listOf("3 min", "8 min", "13 min")),
-            ),
-            modifier
-        )
-        StopMonitoring(
-            "J",
-            "Gare Saint-Lazare",
-            mapOf(
-                Pair("Gisors", listOf("23 min")),
-                Pair("Mantes-la-Jolie", listOf("18 min", "37 min")),
-                Pair("Pontoise", listOf("10 min", "45 min")),
-            ),
-            modifier
-        )
+        SectionTitle("Prochains passages", modifier)
+        stops.forEach { StopMonitoring(it, modifier) }
     }
 }
 
 @Composable
 fun StopMonitoring(
-    line: String,
-    stop: String,
-    data: Map<String, List<String>>,
+    stop: StopDataState,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -83,9 +52,9 @@ fun StopMonitoring(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Line(name = line, Modifier.size(48.dp))
+            Line(stop.line, Modifier.size(48.dp))
             Text(
-                text = stop,
+                text = stop.name,
                 style = Typography.bodyMedium,
                 modifier = Modifier.width(96.dp),
                 overflow = TextOverflow.Ellipsis,
@@ -94,9 +63,7 @@ fun StopMonitoring(
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            data.forEach { (k, v) ->
-                Monitoring(k, v)
-            }
+            stop.nextTrains.forEach { (k, v) -> Monitoring(k, v) }
         }
     }
 }

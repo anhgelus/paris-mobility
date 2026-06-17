@@ -6,16 +6,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import world.anhgelus.parismobility.models.HomeViewModel
 import world.anhgelus.parismobility.ui.LineKind
 import world.anhgelus.parismobility.ui.ScreenTitle
 import world.anhgelus.parismobility.ui.StopsMonitoring
 
-@Preview(showBackground = true)
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    modifier: Modifier = Modifier
+) {
+    val lines by viewModel.lines.collectAsStateWithLifecycle()
+    val stops by viewModel.stops.collectAsStateWithLifecycle()
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -26,8 +32,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         LineKind(
             modifier = Modifier.padding(horizontal = 16.dp),
             name = "État de vos lignes",
-            lines = listOf("A", "E", "7", "10", "14", "J")
+            lines = lines
         )
-        StopsMonitoring()
+        StopsMonitoring(stops)
     }
 }
