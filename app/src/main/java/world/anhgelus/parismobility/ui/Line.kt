@@ -1,5 +1,6 @@
 package world.anhgelus.parismobility.ui
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -10,21 +11,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import world.anhgelus.parismobility.models.LineDataState
-import world.anhgelus.parismobility.models.LineIssue
-import world.anhgelus.parismobility.models.LineIssueLevel
 
 @Composable
 fun Line(data: LineDataState, modifier: Modifier = Modifier) {
     Icon(
         painter = painterResource(data.resource),
         contentDescription = data.name,
-        modifier = (data.issue ?: LineIssue(LineIssueLevel.NORMAL))
-            .level
-            .modifier(modifier.clip(RoundedCornerShape(8.dp))),
+        modifier = modifier.border(
+            width = 4.dp,
+            color = data.trafficQuality.color() ?: Color.Transparent,
+            shape = RoundedCornerShape(20)
+        ),
     )
 }
 

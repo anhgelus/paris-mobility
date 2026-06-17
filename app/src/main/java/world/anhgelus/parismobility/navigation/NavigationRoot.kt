@@ -1,6 +1,6 @@
 package world.anhgelus.parismobility.navigation
 
-import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.EaseInCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,10 +21,9 @@ import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.models.HomeViewModel
 import world.anhgelus.parismobility.models.LineDataState
-import world.anhgelus.parismobility.models.LineIssue
-import world.anhgelus.parismobility.models.LineIssueLevel
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.models.StopDataState
+import world.anhgelus.parismobility.models.TrafficQuality
 import world.anhgelus.parismobility.screens.HomeScreen
 import world.anhgelus.parismobility.screens.NetworkScreen
 import kotlin.math.pow
@@ -37,13 +36,13 @@ fun NavigationRoot(
     val lineA = LineDataState(
         "A",
         R.drawable.ic_launcher_foreground,
-        LineIssue(LineIssueLevel.MAJOR_ISSUE)
+        TrafficQuality.MAJOR_ISSUE
     )
     val line7 = LineDataState("7", R.drawable.ic_launcher_foreground)
     val lineJ = LineDataState(
         "J",
         R.drawable.ic_launcher_foreground,
-        LineIssue(LineIssueLevel.MINOR_ISSUE)
+        TrafficQuality.MINOR_ISSUE
     )
 
     val stopA = StopDataState(
@@ -122,9 +121,9 @@ fun NavigationRoot(
             ),
             transitionSpec = {
                 val scale = 0.95f
-                val duration = 300
+                val duration = 200
                 val delay = duration / 3
-                val easing = EaseInOut
+                val easing = EaseInCubic
                 scaleIn(
                     initialScale = scale.pow(0.5f),
                     animationSpec = tween(
@@ -132,19 +131,16 @@ fun NavigationRoot(
                         durationMillis = duration,
                         easing = easing
                     )
-                ) +
-                        fadeIn(
-                            animationSpec = tween(
-                                delayMillis = delay,
-                                durationMillis = 2 * duration / 3,
-                                easing = easing
-                            )
-                        ) togetherWith
-                        scaleOut(
-                            animationSpec = tween(durationMillis = duration, easing = easing),
-                            targetScale = scale
-                        ) +
-                        fadeOut(animationSpec = tween(durationMillis = duration, easing = easing))
+                ) + fadeIn(
+                    animationSpec = tween(
+                        delayMillis = delay,
+                        durationMillis = 2 * duration / 3,
+                        easing = easing
+                    )
+                ) togetherWith scaleOut(
+                    animationSpec = tween(durationMillis = duration, easing = easing),
+                    targetScale = scale
+                ) + fadeOut(animationSpec = tween(durationMillis = duration, easing = easing))
             },
             entryProvider = entryProvider {
                 entry<Route.Home> {

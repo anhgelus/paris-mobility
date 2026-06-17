@@ -1,33 +1,22 @@
 package world.anhgelus.parismobility.models
 
-import androidx.compose.foundation.border
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import world.anhgelus.parismobility.ui.theme.CustomColorScheme
 
 @Stable
 data class LineDataState(
     val name: String,
     val resource: Int,
-    val issue: LineIssue? = null,
+    val trafficQuality: TrafficQuality = TrafficQuality.NORMAL,
+    val details: String? = null,
 )
 
-@Stable
-data class LineIssue(
-    val level: LineIssueLevel,
-    val details: String? = null
-)
-
-enum class LineIssueLevel(
-    val modifier: @Composable ((Modifier) -> Modifier) = { it },
+enum class TrafficQuality(
+    val color: @Composable (() -> Color?) = { null },
 ) {
     NORMAL,
-    MINOR_ISSUE({
-        it.border(4.dp, MaterialTheme.colorScheme.error)
-    }),
-    MAJOR_ISSUE({
-        it.border(4.dp, MaterialTheme.colorScheme.errorContainer)
-    }),
+    MINOR_ISSUE({ CustomColorScheme.warning }),
+    MAJOR_ISSUE({ CustomColorScheme.error });
 }
