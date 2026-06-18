@@ -19,7 +19,7 @@ fun NetworkScreen(
     viewModel: NetworkViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val groups by viewModel.linesGroups.collectAsStateWithLifecycle()
+    val groups by viewModel.linesGroup.collectAsStateWithLifecycle()
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(32.dp),

@@ -18,7 +18,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import world.anhgelus.parismobility.data.LocalDataRepository
+import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.models.HomeViewModel
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.screens.HomeScreen
@@ -27,7 +27,7 @@ import kotlin.math.pow
 
 @Composable
 fun NavigationRoot(
-    localRepo: LocalDataRepository,
+    linesRepo: LinesRepository,
     modifier: Modifier = Modifier
 ) {
     val rootBackStack = rememberNavBackStack(Route.Home)
@@ -38,7 +38,7 @@ fun NavigationRoot(
             listOf()
         )
     }
-    val networkViewModel = viewModel { NetworkViewModel(localRepo.lines) }
+    val networkViewModel = viewModel { NetworkViewModel(linesRepo.lines) }
     // disable return function for main nav
     Scaffold(
         modifier = modifier,

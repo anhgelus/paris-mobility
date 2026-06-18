@@ -1,12 +1,8 @@
 package world.anhgelus.parismobility.models
 
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-class NetworkViewModel(
-    linesGroup: List<LinesGroupDataState>,
-) : ViewModel() {
-    private val _linesGroups = MutableStateFlow(linesGroup)
-    val linesGroups = _linesGroups.asStateFlow()
-}
+data class NetworkViewModel(
+    val linesGroup: StateFlow<List<LinesGroupDataState>>,
+) : ViewModel()

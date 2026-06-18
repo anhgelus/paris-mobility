@@ -3,6 +3,8 @@ package world.anhgelus.parismobility.data
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -11,18 +13,17 @@ import world.anhgelus.parismobility.models.LineKind
 import world.anhgelus.parismobility.models.LinesGroupDataState
 import java.io.FileNotFoundException
 
-class LocalDataRepository {
-    val lines: List<LinesGroupDataState>
-
-    private constructor(ctx: Context) {
-        lines = listOf(
-            newGroup(ctx, LineKind.RER),
-            newGroup(ctx, LineKind.TRANSILIEN),
-            newGroup(ctx, LineKind.METRO),
-            newGroup(ctx, LineKind.TRAM),
-        )
+object LinesDataSource {
+    suspend fun getLinesGroups(ctx: Context): List<LinesGroupDataState> {
+        return withContext(Dispatchers.IO) {
+            listOf(
+                newGroup(ctx, LineKind.RER),
+                newGroup(ctx, LineKind.TRANSILIEN),
+                newGroup(ctx, LineKind.METRO),
+                newGroup(ctx, LineKind.TRAM),
+            )
+        }
     }
-//    val bus = newGroup("Bus", "", R.raw.bus)
 
     private fun newGroup(ctx: Context, kind: LineKind): LinesGroupDataState {
         val json = Json { ignoreUnknownKeys = true }
@@ -32,15 +33,6 @@ class LocalDataRepository {
             .use { it.readText() }
         val parsed = json.decodeFromString<LinesJson>(input)
         return LinesGroupDataState(kind, parsed.toState(ctx, kind))
-    }
-
-    companion object {
-        private var INSTANCE: LocalDataRepository? = null
-
-        fun get(ctx: Context): LocalDataRepository {
-            if (INSTANCE == null) INSTANCE = LocalDataRepository(ctx)
-            return INSTANCE!!
-        }
     }
 }
 
