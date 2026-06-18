@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ParisMobiliteTheme {
-                NavigationRoot(LocalDataRepository(baseContext))
+                NavigationRoot(LocalDataRepository.get(this))
             }
         }
     }

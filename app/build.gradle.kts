@@ -100,7 +100,8 @@ tasks.register("updateLinesJson") {
                         if (data.second != null) "&TransportSubmode=${data.second}"
                         else ""
             )
-        }.standardOutput.asText.get().run { println(this) }
+        }
+        logger.info("Downloaded {}'s JSON data", fileName)
     }
 }
 
@@ -122,10 +123,11 @@ tasks.register("updateLinesSvg") {
                 "-o", zip.absolutePath,
                 "$base&transportMode=$mode"
             )
-        }.standardError.asText.get().run { logger.info(this) }
+        }
+        logger.info("Downloaded {}'s SVG", mode)
         zipTree(zip).forEach {
             val name = it.name.split(":")[2].split(".")[0].lowercase()
-            val dest = file("src/main/res/drawable/${mode}_${name}.xml")
+            val dest = file("src/main/res/drawable/${mode}_$name.xml")
             val err = Svg2Vector.parseSvgToXml(it.toPath(), dest.outputStream())
             if (!err.isEmpty()) throw Exception(err)
         }

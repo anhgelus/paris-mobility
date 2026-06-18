@@ -18,13 +18,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.LocalDataRepository
 import world.anhgelus.parismobility.models.HomeViewModel
-import world.anhgelus.parismobility.models.LineDataState
 import world.anhgelus.parismobility.models.NetworkViewModel
-import world.anhgelus.parismobility.models.StopDataState
-import world.anhgelus.parismobility.models.TrafficQuality
 import world.anhgelus.parismobility.screens.HomeScreen
 import world.anhgelus.parismobility.screens.NetworkScreen
 import kotlin.math.pow
@@ -35,42 +31,11 @@ fun NavigationRoot(
     modifier: Modifier = Modifier
 ) {
     val rootBackStack = rememberNavBackStack(Route.Home)
-    val lineA = LineDataState(
-        "A",
-        R.drawable.ic_launcher_foreground,
-        TrafficQuality.MAJOR_ISSUE
-    )
-    val line7 = LineDataState("7", R.drawable.ic_launcher_foreground)
-    val lineJ = LineDataState(
-        "J",
-        R.drawable.ic_launcher_foreground,
-        TrafficQuality.MINOR_ISSUE
-    )
-
-    val stopA = StopDataState(
-        "Rueil-Malmaison", lineA, listOf(
-            "Marne-la-Vallée" to listOf("3 min", "12 min"),
-            "Boissy-Saint-Léger" to listOf("8 min"),
-        )
-    )
-    val stop7 = StopDataState(
-        "Jussieu", line7, listOf(
-            "La Courneuve" to listOf("2 min", "7 min", "12 min")
-        )
-    )
-    val stopJ = StopDataState(
-        "Gare Saint-Lazare", lineJ, listOf(
-            "Gisors" to listOf("18 min"),
-            "Ermont-Aubonne" to listOf("8 min", "26 min"),
-            "Pontoise" to listOf("1 min", "48 min"),
-            "Mantes-la-Jolie" to listOf("12 min", "33 min")
-        )
-    )
 
     val homeViewModel = viewModel {
         HomeViewModel(
-            listOf(lineA, line7, lineJ),
-            listOf(stopA, stop7, stopJ)
+            listOf(),
+            listOf()
         )
     }
     val networkViewModel = viewModel { NetworkViewModel(localRepo.lines) }

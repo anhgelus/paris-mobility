@@ -1,42 +1,76 @@
 package world.anhgelus.parismobility.data
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Resources
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.models.LineDataState
+import world.anhgelus.parismobility.models.LineKind
 import world.anhgelus.parismobility.models.LinesGroupDataState
+import java.io.FileNotFoundException
 
-class LocalDataRepository(private val ctx: Context) {
-    val lines = listOf(
-        newGroup("RER", R.raw.rer),
-        newGroup("Transilien", R.raw.transilien),
-        newGroup("Métro", R.raw.metro),
-        newGroup("Tram", R.raw.tram),
-    )
-    val bus = newGroup("Bus", R.raw.bus)
+class LocalDataRepository {
+    val lines: List<LinesGroupDataState>
 
-    private fun newGroup(
-        name: String,
-        id: Int,
-    ): LinesGroupDataState {
+    private constructor(ctx: Context) {
+        lines = listOf(
+            newGroup(ctx, LineKind.RER),
+            newGroup(ctx, LineKind.TRANSILIEN),
+            newGroup(ctx, LineKind.METRO),
+            newGroup(ctx, LineKind.TRAM),
+        )
+    }
+//    val bus = newGroup("Bus", "", R.raw.bus)
+
+    private fun newGroup(ctx: Context, kind: LineKind): LinesGroupDataState {
         val json = Json { ignoreUnknownKeys = true }
-        val input = ctx.resources.openRawResource(id).bufferedReader().use { it.readText() }
+        val input = ctx.resources
+            .openRawResource(kind.data)
+            .bufferedReader()
+            .use { it.readText() }
         val parsed = json.decodeFromString<LinesJson>(input)
-        return LinesGroupDataState(name, parsed.toState())
+        return LinesGroupDataState(kind, parsed.toState(ctx, kind))
+    }
+
+    companion object {
+        private var INSTANCE: LocalDataRepository? = null
+
+        fun get(ctx: Context): LocalDataRepository {
+            if (INSTANCE == null) INSTANCE = LocalDataRepository(ctx)
+            return INSTANCE!!
+        }
     }
 }
 
 @Serializable
 private data class LinesJson(val dataObjects: DataObjects) {
-    fun toState(): List<LineDataState> {
+    // because we retrieve the logo dynamically
+    @SuppressLint("DiscouragedApi")
+    fun toState(ctx: Context, kind: LineKind): List<LineDataState> {
         val lines = dataObjects.compositeFrame.frames.generalFrame[1].members.lines!!
-        return lines.filter { it.status == LineStatus.Active }.map {
-            LineDataState(it.name, R.drawable.ic_launcher_foreground)
-        }.sortedBy {
-            it.name
-        }
+        return lines.filter {
+            try {
+                it.status == LineStatus.Active &&
+                        if (kind != LineKind.RER) it.name.removePrefix("RER ") == it.name
+                        else true
+            } catch (e: Exception) {
+                throw Exception("cannot filter ${it.name}", e)
+            }
+        }.map {
+            it.members.lineRef.forEach { ref ->
+                val id = ref.ref.split(":")[2]
+                val res = ctx.resources.getIdentifier(
+                    "${kind.prefix}_${id.lowercase()}",
+                    "drawable",
+                    "world.anhgelus.parismobility",
+                )
+                if (res == Resources.ID_NULL) return@forEach
+                return@map LineDataState(it.name, id, res, kind)
+            }
+            throw FileNotFoundException("missing logo for ${it.name}")
+        }.sorted()
     }
 
     @Serializable

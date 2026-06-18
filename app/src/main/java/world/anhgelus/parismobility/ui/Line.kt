@@ -1,6 +1,9 @@
 package world.anhgelus.parismobility.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -8,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,14 +20,16 @@ import world.anhgelus.parismobility.models.LineDataState
 
 @Composable
 fun Line(data: LineDataState, modifier: Modifier = Modifier) {
-    Icon(
+    Image(
         painter = painterResource(data.resource),
         contentDescription = data.name,
-        modifier = modifier.border(
-            width = 4.dp,
-            color = data.trafficQuality.color() ?: Color.Transparent,
-            shape = RoundedCornerShape(20)
-        ),
+        modifier = modifier
+            .border(
+                width = 4.dp,
+                color = data.trafficQuality.color() ?: Color.Transparent,
+                shape = RoundedCornerShape(25)
+            )
+            .background(if (isSystemInDarkTheme()) Color.White else Color.Transparent),
     )
 }
 

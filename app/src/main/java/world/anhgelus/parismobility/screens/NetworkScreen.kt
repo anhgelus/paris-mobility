@@ -28,7 +28,7 @@ fun NetworkScreen(
         groups.forEach { (kind, lines) ->
             LineKind(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                name = kind,
+                name = kind.displayName,
                 lines = lines
             )
         }
