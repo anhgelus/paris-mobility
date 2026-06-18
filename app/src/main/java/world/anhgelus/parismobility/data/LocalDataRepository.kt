@@ -75,7 +75,8 @@ private data class LinesJson(val dataObjects: DataObjects) {
         val id: String,
         val status: LineStatus,
         @SerialName("Name") val name: String,
-        @SerialName("TransportMode") val kind: String
+        @SerialName("TransportMode") val kind: String,
+        val members: LineMembers
     )
 
     @Serializable

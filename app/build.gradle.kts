@@ -1,5 +1,4 @@
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import com.android.ide.common.vectordrawable.Svg2Vector
 
 plugins {
     alias(libs.plugins.android.application)
@@ -30,6 +29,8 @@ android {
             optimization {
                 enable = false
             }
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
     compileOptions {
@@ -66,12 +67,19 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
 }
 
+fun getPrismToken(): String {
+    return System.getenv("PRISM_TOKEN")!!
+}
+
 tasks.register("updateLines") {
+    description = "Update lines data"
+    dependsOn(":updateLinesJson")
+    dependsOn(":updateLinesSvg")
+}
+
+tasks.register("updateLinesJson") {
     description = "Update JSON storing lines"
 
-    val token = System.getenv("PRISM_TOKEN")
-
-    val client = HttpClientBuilder.create().build()
     val groups = mapOf(
         "metro" to Pair("metro", null),
         "tram" to Pair("tram", null),
@@ -81,24 +89,45 @@ tasks.register("updateLines") {
     )
     val base =
         "https://prim.iledefrance-mobilites.fr/marketplace/ilico/getData?method=getlc&format=json"
-    groups.forEach { (file, data) ->
-        val req = HttpGet(
-            "$base&TransportMode=${data.first}" +
-                    if (data.second != null) "&TransportSubmode=${data.second}"
-                    else ""
-        )
-        req.addHeader("Accept", "application/json")
-        req.addHeader("apiKey", token)
-        val resp = client.execute(req)
-        val content = resp.entity.content.bufferedReader().use { it.readText() }
-        if (resp.statusLine.statusCode != 200) {
-            throw Exception(
-                "invalid status code ${resp.statusLine.statusCode}, content $content"
+    groups.forEach { (fileName, data) ->
+        providers.exec {
+            commandLine(
+                "curl", "-H", "Accept: application/zip",
+                "-H", "apiKey: ${getPrismToken()}",
+                "-X", "GET",
+                "-o", file("src/main/res/raw/$fileName.json").absolutePath,
+                "$base&TransportMode=${data.first}" +
+                        if (data.second != null) "&TransportSubmode=${data.second}"
+                        else ""
             )
-        }
-        val f = file("src/main/res/raw/$file.json")
-        f.writeText(content)
-        resp.close()
+        }.standardOutput.asText.get().run { println(this) }
     }
-    client.close()
+}
+
+tasks.register("updateLinesSvg") {
+    description = "Update JSON storing lines"
+
+    mkdir("build/intermediates/res/lines/")
+
+    val base =
+        "https://prim.iledefrance-mobilites.fr/marketplace/ilico/getIcon/sprite?usage=signage_spaces&format=zip_svg&style=colored&getAll=true"
+    listOf("metro", "rer", "tram", "train").forEach { mode ->
+        val zip = file("build/intermediates/res/lines/$mode.zip")
+        providers.exec {
+            commandLine(
+                "curl",
+                "-H", "Accept: application/zip",
+                "-H", "apiKey: ${getPrismToken()}",
+                "-X", "GET",
+                "-o", zip.absolutePath,
+                "$base&transportMode=$mode"
+            )
+        }.standardError.asText.get().run { logger.info(this) }
+        zipTree(zip).forEach {
+            val name = it.name.split(":")[2].split(".")[0].lowercase()
+            val dest = file("src/main/res/drawable/${mode}_${name}.xml")
+            val err = Svg2Vector.parseSvgToXml(it.toPath(), dest.outputStream())
+            if (!err.isEmpty()) throw Exception(err)
+        }
+    }
 }

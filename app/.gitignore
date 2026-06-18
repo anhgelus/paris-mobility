@@ -1,1 +1,12 @@
 /build
+
+# content that I don't own
+src/main/res/drawable/metro_*
+src/main/res/drawable/rer_*
+src/main/res/drawable/tram_*
+src/main/res/drawable/train_*
+
+src/main/res/raw/metro.json
+src/main/res/raw/bus.json
+src/main/res/raw/rer.json
+src/main/res/raw/transilien.json
