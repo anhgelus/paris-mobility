@@ -1,10 +1,10 @@
 package world.anhgelus.parismobility.models
 
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.graphics.Color
 import world.anhgelus.parismobility.R
-import world.anhgelus.parismobility.ui.theme.CustomColorScheme
+import world.anhgelus.parismobility.data.Disruption
 
 @Stable
 data class LinesGroupDataState(
@@ -18,8 +18,7 @@ data class LineDataState(
     val id: String,
     val resource: Int,
     val kind: LineKind,
-    val trafficQuality: TrafficQuality = TrafficQuality.NORMAL,
-    val details: String? = null,
+    val disruption: Disruption? = null,
 ) : Comparable<LineDataState> {
     private val metroBisSuffix = " Bis"
     private val tramPrefix = "T"
@@ -48,24 +47,47 @@ data class LineDataState(
     }
 }
 
+private val TRAIN_CORNER_SHAPE = RoundedCornerShape(20)
+private val METRO_CORNER_SHAPE = RoundedCornerShape(50)
+private val TRAM_CORNER_SHAPE = RoundedCornerShape(5)
+
 @Stable
 enum class LineKind(
     val displayName: String,
     val prefix: String,
     val data: Int,
+    val roundedCornerShape: CornerBasedShape,
+    val requiresBackground: Boolean = false,
 ) {
-    METRO("Métro", "metro", R.raw.metro),
-    RER("RER", "rer", R.raw.rer),
-    TRAM("Tram", "tram", R.raw.tram),
-    TRANSILIEN("Transilien", "train", R.raw.transilien),
-    BUS("Bus", "bus", R.raw.bus)
-}
-
-@Stable
-enum class TrafficQuality(
-    val color: @Composable (() -> Color?) = { null },
-) {
-    NORMAL,
-    MINOR_ISSUE({ CustomColorScheme.warning }),
-    MAJOR_ISSUE({ CustomColorScheme.error });
+    METRO(
+        "Métro",
+        "metro",
+        R.raw.metro,
+        METRO_CORNER_SHAPE,
+    ),
+    RER(
+        "RER",
+        "rer",
+        R.raw.rer,
+        TRAIN_CORNER_SHAPE,
+    ),
+    TRAM(
+        "Tram",
+        "tram",
+        R.raw.tram,
+        TRAM_CORNER_SHAPE,
+        true,
+    ),
+    TRANSILIEN(
+        "Transilien",
+        "train",
+        R.raw.transilien,
+        TRAIN_CORNER_SHAPE,
+    ),
+    BUS(
+        "Bus",
+        "bus",
+        R.raw.bus,
+        RoundedCornerShape(0),
+    )
 }

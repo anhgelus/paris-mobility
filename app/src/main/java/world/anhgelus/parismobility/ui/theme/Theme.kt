@@ -59,10 +59,8 @@ fun ParisMobiliteTheme(
     }
 
     CustomColorScheme =
-        if (darkTheme) AdditionalColorScheme(Orange30, Red30) else AdditionalColorScheme(
-            Orange80,
-            Red80
-        )
+        if (darkTheme) AdditionalColorScheme(OrangeDark, RedDark)
+        else AdditionalColorScheme(OrangeLight, RedLight)
 
     MaterialTheme(
         colorScheme = colorScheme,

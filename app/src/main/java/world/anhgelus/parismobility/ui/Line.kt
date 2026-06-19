@@ -5,12 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,21 +21,49 @@ import world.anhgelus.parismobility.models.LineDataState
 
 @Composable
 fun Line(data: LineDataState, modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(data.resource),
-        contentDescription = data.name,
-        modifier = modifier
-            .border(
-                width = 4.dp,
-                color = data.trafficQuality.color() ?: Color.Transparent,
-                shape = RoundedCornerShape(25)
+    val sev = data.disruption?.severity
+    if (sev != null) {
+        Box(
+            modifier = modifier
+                .border(
+                    width = 2.dp,
+                    color = sev.color(),
+                    shape = data.kind.roundedCornerShape
+                )
+                .padding(8.dp)
+        ) {
+            Image(
+                painter = painterResource(data.resource),
+                contentDescription = data.name,
+                modifier = modifier
+                    .background(
+                        color = if (isSystemInDarkTheme() && data.kind.requiresBackground) Color.White
+                        else Color.Transparent,
+                        shape = data.kind.roundedCornerShape
+                    ),
             )
-            .background(if (isSystemInDarkTheme()) Color.White else Color.Transparent),
-    )
+        }
+    } else {
+        Image(
+            painter = painterResource(data.resource),
+            contentDescription = data.name,
+            modifier = modifier
+                .padding(4.dp)
+                .background(
+                    color = if (isSystemInDarkTheme() && data.kind.requiresBackground) Color.White
+                    else Color.Transparent,
+                    shape = data.kind.roundedCornerShape
+                ),
+        )
+    }
 }
 
 @Composable
-fun LineKind(name: String, lines: List<LineDataState>, modifier: Modifier = Modifier) {
+fun LineKind(
+    name: String,
+    lines: List<LineDataState>,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -45,7 +74,10 @@ fun LineKind(name: String, lines: List<LineDataState>, modifier: Modifier = Modi
 }
 
 @Composable
-fun Lines(lines: List<LineDataState>, modifier: Modifier = Modifier) {
+fun Lines(
+    lines: List<LineDataState>,
+    modifier: Modifier = Modifier
+) {
     val size = 48.dp
     val items = 6
     FlowRow(

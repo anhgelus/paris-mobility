@@ -25,11 +25,13 @@ fun NetworkScreen(
         verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         ScreenTitle("Réseau")
+        println("render")
         groups.forEach { (kind, lines) ->
             LineKind(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp),
                 name = kind.displayName,
-                lines = lines
+                lines = lines,
             )
         }
     }

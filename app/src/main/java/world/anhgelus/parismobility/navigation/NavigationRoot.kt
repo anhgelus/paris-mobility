@@ -34,11 +34,10 @@ fun NavigationRoot(
 
     val homeViewModel = viewModel {
         HomeViewModel(
-            listOf(),
-            listOf()
+            listOf(), listOf(), linesRepo,
         )
     }
-    val networkViewModel = viewModel { NetworkViewModel(linesRepo.lines) }
+    val networkViewModel = viewModel { NetworkViewModel(linesRepo, linesRepo.lines) }
     // disable return function for main nav
     Scaffold(
         modifier = modifier,
@@ -52,8 +51,8 @@ fun NavigationRoot(
         NavDisplay(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .fillMaxSize(),
             backStack = rootBackStack,
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator()

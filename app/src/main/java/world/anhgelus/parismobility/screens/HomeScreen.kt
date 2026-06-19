@@ -23,16 +23,14 @@ fun HomeScreen(
     val lines by viewModel.lines.collectAsStateWithLifecycle()
     val stops by viewModel.stops.collectAsStateWithLifecycle()
     Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .padding(bottom = 16.dp),
+        modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         ScreenTitle("Votre réseau")
         LineKind(
             modifier = Modifier.padding(horizontal = 16.dp),
             name = "État de vos lignes",
-            lines = lines
+            lines = lines,
         )
         StopsMonitoring(stops)
     }

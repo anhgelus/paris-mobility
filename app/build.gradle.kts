@@ -1,9 +1,16 @@
 import com.android.ide.common.vectordrawable.Svg2Vector
+import org.jetbrains.kotlin.konan.properties.loadProperties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.kotlin.serialization)
+}
+
+val keys = loadProperties("keys.properties")
+
+fun getPrismToken(): String {
+    return keys["PRISM_TOKEN"] as String? ?: System.getenv("PRISM_TOKEN")
 }
 
 android {
@@ -22,6 +29,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "PRISM_TOKEN", getPrismToken())
     }
 
     buildTypes {
@@ -39,6 +48,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -59,16 +69,14 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation(libs.kotlinx.serialization.core)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.bundles.serialization)
 
     // navbar
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
-}
 
-fun getPrismToken(): String {
-    return System.getenv("PRISM_TOKEN")!!
+    // http requests
+    implementation(libs.bundles.ktor)
 }
 
 tasks.register("updateLines") {
