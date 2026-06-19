@@ -1,26 +1,42 @@
 package world.anhgelus.parismobility.data
 
-import android.content.Context
+import android.content.res.Resources
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import world.anhgelus.parismobility.models.LinesGroupDataState
+import world.anhgelus.parismobility.models.LineKind
 
 class LinesRepository(
     private val linesSource: LinesDataSource,
     private val prismSource: PrimDataSource
 ) {
 
-    private val _lines = MutableStateFlow<List<LinesGroupDataState>>(listOf())
+    private val _lines = MutableStateFlow<Map<LineKind, List<Line>>>(mutableMapOf())
     val lines = _lines.asStateFlow()
 
     private val _disruptions = MutableStateFlow<Map<String, List<Disruption>>>(mapOf())
     val disruptions = _disruptions.asStateFlow()
 
-//    val bus = newGroup("Bus", "", R.raw.bus)
+    suspend fun initLines(res: Resources) {
+        val lines = linesSource.getLines(res)
+        val res = mutableMapOf<LineKind, List<Line>>()
+        lines.forEach { (mode, lines) ->
+            when (mode) {
+                Line.TransportMode.BUS -> res[LineKind.BUS] = lines.sorted()
+                Line.TransportMode.TRAM -> res[LineKind.TRAM] = lines.sorted()
+                Line.TransportMode.METRO -> res[LineKind.METRO] = lines.sorted()
+                Line.TransportMode.RAIL -> {
+                    res[LineKind.RER] = lines.filter { it.submode == "local" }.sorted()
+                    res[LineKind.TRANSILIEN] = lines.filter {
+                        // because the API doesn't contain linked data
+                        it.submode == "suburbanRailway" && it.name != "V"
+                    }.sorted()
+                }
 
-    suspend fun initLines(ctx: Context) {
-        updateLines(linesSource.getLinesGroups(ctx))
+                else -> {} // do nothing with unsupported modes
+            }
+        }
+        updateLines(res)
     }
 
     suspend fun updateDisruptions() {
@@ -30,12 +46,9 @@ class LinesRepository(
         }
     }
 
-    private fun updateLines(lines: List<LinesGroupDataState> = _lines.value) {
-        _lines.value = lines.map { kind ->
-            val lines = kind.lines.map {
-                it.copy(disruption = disruptions.value[it.id]?.sorted()?.max())
-            }
-            kind.copy(lines = lines)
+    private fun updateLines(groups: Map<LineKind, List<Line>> = _lines.value) {
+        _lines.value = groups.mapValues { (_, lines) ->
+            lines.map { it.setDisruption(disruptions.value[it.id]?.sorted()?.max()?.severity) }
         }
     }
 }

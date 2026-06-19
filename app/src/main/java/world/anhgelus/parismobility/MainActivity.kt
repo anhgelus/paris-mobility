@@ -21,11 +21,9 @@ class MainActivity : ComponentActivity() {
 
         val linesRepo = LinesRepository(LinesDataSource, PrimDataSource)
 
-        val ctx = this
-
         setContent {
             LaunchedEffect(true) {
-                linesRepo.initLines(ctx)
+                linesRepo.initLines(resources)
                 CoroutineScope(Dispatchers.IO).launch {
                     linesRepo.updateDisruptions()
                 }

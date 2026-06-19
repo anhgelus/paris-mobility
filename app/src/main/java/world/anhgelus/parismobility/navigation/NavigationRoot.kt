@@ -37,7 +37,7 @@ fun NavigationRoot(
             listOf(), listOf(), linesRepo,
         )
     }
-    val networkViewModel = viewModel { NetworkViewModel(linesRepo, linesRepo.lines) }
+    val networkViewModel = viewModel { NetworkViewModel(linesRepo) }
     // disable return function for main nav
     Scaffold(
         modifier = modifier,
@@ -54,9 +54,7 @@ fun NavigationRoot(
                 .padding(horizontal = 16.dp)
                 .fillMaxSize(),
             backStack = rootBackStack,
-            entryDecorators = listOf(
-                rememberSaveableStateHolderNavEntryDecorator()
-            ),
+            entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
             transitionSpec = {
                 val scale = 0.95f
                 val duration = 200

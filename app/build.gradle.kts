@@ -9,8 +9,8 @@ plugins {
 
 val keys = loadProperties("keys.properties")
 
-fun getPrismToken(): String {
-    return keys["PRISM_TOKEN"] as String? ?: System.getenv("PRISM_TOKEN")
+fun getPrimToken(): String {
+    return keys["PRIM_TOKEN"] as String? ?: System.getenv("PRIM_TOKEN")
 }
 
 android {
@@ -30,7 +30,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "PRISM_TOKEN", getPrismToken())
+        buildConfigField("String", "PRIM_TOKEN", "\"${getPrimToken()}\"")
     }
 
     buildTypes {
@@ -79,42 +79,49 @@ dependencies {
     implementation(libs.bundles.ktor)
 }
 
-tasks.register("updateLines") {
-    description = "Update lines data"
-    dependsOn(":updateLinesJson")
-    dependsOn(":updateLinesSvg")
-}
-
-tasks.register("updateLinesJson") {
-    description = "Update JSON storing lines"
-
-    val groups = mapOf(
-        "metro" to Pair("metro", null),
-        "tram" to Pair("tram", null),
-        "rer" to Pair("rail", "local"),
-        "transilien" to Pair("rail", "suburbanRailway"),
-        "bus" to Pair("bus", "regionalBus"),
-    )
-    val base =
-        "https://prim.iledefrance-mobilites.fr/marketplace/ilico/getData?method=getlc&format=json"
-    groups.forEach { (fileName, data) ->
+fun request(
+    url: String,
+    outputPath: String,
+    accept: String = "application/json",
+    vararg headers: String
+) {
+    try {
         providers.exec {
-            commandLine(
-                "curl", "-H", "Accept: application/zip",
-                "-H", "apiKey: ${getPrismToken()}",
-                "-X", "GET",
-                "-o", file("src/main/res/raw/$fileName.json").absolutePath,
-                "$base&TransportMode=${data.first}" +
-                        if (data.second != null) "&TransportSubmode=${data.second}"
-                        else ""
+            val args = mutableListOf(
+                "curl", "-H", "Accept: $accept",
+                "--fail-with-body",
+                "-v",
+                "-o", outputPath,
             )
-        }
-        logger.info("Downloaded {}'s JSON data", fileName)
+            args.addAll(headers.flatMap { listOf("-H", it) })
+            args.add(url)
+            commandLine(args)
+            args.forEach { logger.info(it) }
+        }.standardError.asText.get().let { logger.info(it) }
+    } catch (e: ProcessExecutionException) {
+        logger.error(e.message)
+        logger.info("url: $url")
+        throw e.cause ?: e
     }
 }
 
-tasks.register("updateLinesSvg") {
-    description = "Update JSON storing lines"
+tasks.register("updateLines") {
+    description = "Update lines data"
+    dependsOn(downloadLines, updateLinesSvg)
+}
+
+val downloadLines = tasks.register("downloadLinesJson") {
+    description = "Download JSON describing lines"
+
+    request(
+        url = "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/referentiel-des-lignes/exports/json",
+        outputPath = file("src/main/res/raw/lines.json").absolutePath
+    )
+    logger.info("Lines data downloaded")
+}
+
+val updateLinesSvg = tasks.register("updateLinesSvg") {
+    description = "Update lines' SVG"
 
     mkdir("build/intermediates/res/lines/")
 
@@ -122,20 +129,16 @@ tasks.register("updateLinesSvg") {
         "https://prim.iledefrance-mobilites.fr/marketplace/ilico/getIcon/sprite?usage=signage_spaces&format=zip_svg&style=colored&getAll=true"
     listOf("metro", "rer", "tram", "train").forEach { mode ->
         val zip = file("build/intermediates/res/lines/$mode.zip")
-        providers.exec {
-            commandLine(
-                "curl",
-                "-H", "Accept: application/zip",
-                "-H", "apiKey: ${getPrismToken()}",
-                "-X", "GET",
-                "-o", zip.absolutePath,
-                "$base&transportMode=$mode"
-            )
-        }
-        logger.info("Downloaded {}'s SVG", mode)
+        request(
+            "$base&transportMode=$mode",
+            zip.absolutePath,
+            "application/zip",
+            "apiKey: ${getPrimToken()}"
+        )
+        logger.info("{}'s SVGs downloaded", mode)
         zipTree(zip).forEach {
             val name = it.name.split(":")[2].split(".")[0].lowercase()
-            val dest = file("src/main/res/drawable/${mode}_$name.xml")
+            val dest = file("src/main/res/drawable/line_$name.xml")
             val err = Svg2Vector.parseSvgToXml(it.toPath(), dest.outputStream())
             if (!err.isEmpty()) throw Exception(err)
         }

@@ -1,122 +1,126 @@
 package world.anhgelus.parismobility.data
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.res.Resources
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import world.anhgelus.parismobility.models.LineDataState
-import world.anhgelus.parismobility.models.LineKind
-import world.anhgelus.parismobility.models.LinesGroupDataState
-import java.io.FileNotFoundException
+import world.anhgelus.parismobility.R
 
 object LinesDataSource {
-    suspend fun getLinesGroups(ctx: Context): List<LinesGroupDataState> {
+    suspend fun getLines(res: Resources): Map<Line.TransportMode, List<Line>> {
         return withContext(Dispatchers.IO) {
-            listOf(
-                newGroup(ctx, LineKind.RER),
-                newGroup(ctx, LineKind.TRANSILIEN),
-                newGroup(ctx, LineKind.METRO),
-                newGroup(ctx, LineKind.TRAM),
-            )
+            val json = Json { ignoreUnknownKeys = true }
+            val input = res
+                .openRawResource(R.raw.lines)
+                .bufferedReader()
+                .use { it.readText() }
+            json.decodeFromString<List<Line>>(input)
+                .filter { it.status == Line.Status.ACTIVE }
+                .fold(mutableMapOf<Line.TransportMode, MutableList<Line>>()) { acc, line ->
+                    val lines = acc[line.mode] ?: mutableListOf()
+                    line.loadResource(res)
+                    lines.add(line)
+                    acc[line.mode] = lines
+                    acc
+                }
         }
-    }
-
-    private fun newGroup(ctx: Context, kind: LineKind): LinesGroupDataState {
-        val json = Json { ignoreUnknownKeys = true }
-        val input = ctx.resources
-            .openRawResource(kind.data)
-            .bufferedReader()
-            .use { it.readText() }
-        val parsed = json.decodeFromString<LinesJson>(input)
-        return LinesGroupDataState(kind, parsed.toState(ctx, kind))
     }
 }
 
 @Serializable
-private data class LinesJson(val dataObjects: DataObjects) {
-    // because we retrieve the logo dynamically
-    @SuppressLint("DiscouragedApi")
-    fun toState(ctx: Context, kind: LineKind): List<LineDataState> {
-        val lines = dataObjects.compositeFrame.frames.generalFrame[1].members.lines!!
-        return lines.filter {
-            try {
-                it.status == LineStatus.Active &&
-                        if (kind != LineKind.RER) it.name.removePrefix("RER ") == it.name
-                        else true
-            } catch (e: Exception) {
-                throw Exception("cannot filter ${it.name}", e)
-            }
-        }.map {
-            it.members.lineRef.forEach { ref ->
-                val id = ref.ref.split(":")[2]
-                val res = ctx.resources.getIdentifier(
-                    "${kind.prefix}_${id.lowercase()}",
-                    "drawable",
-                    "world.anhgelus.parismobility",
-                )
-                if (res == Resources.ID_NULL) return@forEach
-                return@map LineDataState(it.name, id, res, kind)
-            }
-            throw FileNotFoundException("missing logo for ${it.name}")
-        }.sorted()
+data class Line(
+    @SerialName("id_line") val id: String,
+    @SerialName("name_line") val name: String,
+    @SerialName("shortname_line") val shortName: String = name,
+    @SerialName("transportmode") val mode: TransportMode,
+    @SerialName("transportsubmode") val submode: String? = null,
+    @SerialName("id_groupoflines") val groupOfLines: String? = null,
+    @SerialName("networkname") val network: String? = null,
+    @SerialName("status") val status: Status = Status.INACTIVE,
+) : Comparable<Line> {
+    enum class TransportMode(val hasSubMode: Boolean = false) {
+        @SerialName("bus")
+        BUS(true),
+
+        @SerialName("rail")
+        RAIL(true),
+
+        @SerialName("funicular")
+        FUNICULAR,
+
+        @SerialName("metro")
+        METRO,
+
+        @SerialName("tram")
+        TRAM,
+
+        @SerialName("cableway")
+        CABLEWAY,
+
+        @SerialName("water")
+        WATER
     }
 
-    @Serializable
-    data class DataObjects(@SerialName("CompositeFrame") val compositeFrame: CompositeFrame)
-
-    @Serializable
-    data class CompositeFrame(val frames: Frames)
-
-    @Serializable
-    data class Frames(@SerialName("GeneralFrame") val generalFrame: List<GeneralFrame>)
-
-    @Serializable
-    data class GeneralFrame(val members: Members)
-
-    @Serializable
-    data class Members(
-        @SerialName("SchematicMap") val schematicMaps: List<SchematicMap>? = null,
-        @SerialName("GroupOfLines") val lines: List<GroupOfLines>? = null,
-    )
-
-    @Serializable
-    data class SchematicMap(
-        @SerialName("Name") val name: String,
-        @SerialName("ImageUri") val imageUri: String,
-        @SerialName("DepictedObjectRef") val objectRef: DepictedObjectRef
-    )
-
-    @Serializable
-    data class DepictedObjectRef(
-        val version: String,
-        val ref: String,
-    )
-
-    @Serializable
-    data class GroupOfLines(
-        val id: String,
-        val status: LineStatus,
-        @SerialName("Name") val name: String,
-        @SerialName("TransportMode") val kind: String,
-        val members: LineMembers
-    )
-
-    @Serializable
-    enum class LineStatus {
+    enum class Status {
         @SerialName("active")
-        Active,
+        ACTIVE,
 
-        @SerialName("inactive")
-        Inactive
+        @SerialName("prochainement active")
+        INACTIVE
     }
 
-    @Serializable
-    data class LineMembers(@SerialName("LineRef") val lineRef: List<LineRef>)
+    var disruptionSeverity: Disruptions.Severity = Disruptions.Severity.INFORMATION
+        private set
 
-    @Serializable
-    data class LineRef(val ref: String)
+    var resource: Int = 0
+        private set
+        get() = if (field != 0) field else throw IllegalArgumentException("resource is 0 for $this")
+
+    fun setDisruption(sev: Disruptions.Severity?): Line {
+        disruptionSeverity = sev ?: Disruptions.Severity.INFORMATION
+        return this
+    }
+
+    // because we load it dynamically
+    @SuppressLint("DiscouragedApi")
+    fun loadResource(res: Resources): Boolean {
+        val id = res.getIdentifier(
+            "line_${id.lowercase()}",
+            "drawable",
+            "world.anhgelus.parismobility"
+        )
+        resource = id
+        return id != 0
+    }
+
+    private val metroBisSuffix = "B"
+    private val tramPrefix = "T"
+
+    override fun compareTo(other: Line): Int {
+        if (mode != other.mode) throw IllegalArgumentException("must have the same kind")
+        return when (mode) {
+            TransportMode.TRAM -> {
+                var na = name.removePrefix(tramPrefix)
+                var nb = other.name.removePrefix(tramPrefix)
+                if (!na.last().isDigit()) na = na.removeSuffix(na.last().toString())
+                if (!nb.last().isDigit()) nb = nb.removeSuffix(nb.last().toString())
+                val ln = na.length - nb.length
+                if (ln != 0) ln
+                else String.CASE_INSENSITIVE_ORDER.compare(name, other.name)
+            }
+
+            TransportMode.RAIL -> String.CASE_INSENSITIVE_ORDER.compare(name, other.name)
+
+            else -> {
+                val ln = name.removeSuffix(metroBisSuffix).length - other.name.removeSuffix(
+                    metroBisSuffix
+                ).length
+                if (ln != 0) ln
+                else String.CASE_INSENSITIVE_ORDER.compare(name, other.name)
+            }
+        }
+    }
 }

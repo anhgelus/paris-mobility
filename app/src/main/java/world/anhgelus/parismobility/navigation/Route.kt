@@ -3,12 +3,16 @@ package world.anhgelus.parismobility.navigation
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import world.anhgelus.parismobility.R
+import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.models.LineKind
 
 @Serializable
 sealed interface Route : NavKey {
     @Serializable
     data object Home : Route
-    data object Network : Route
+    data object Network : Route {
+        data class SpecificLine(val kind: LineKind, val line: Line) : Route
+    }
 }
 
 data class BottomNavItem(

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import world.anhgelus.parismobility.models.HomeViewModel
+import world.anhgelus.parismobility.models.LineKind
 import world.anhgelus.parismobility.ui.LineKind
 import world.anhgelus.parismobility.ui.ScreenTitle
 import world.anhgelus.parismobility.ui.StopsMonitoring
@@ -31,6 +32,7 @@ fun HomeScreen(
             modifier = Modifier.padding(horizontal = 16.dp),
             name = "État de vos lignes",
             lines = lines,
+            kind = LineKind.RER
         )
         StopsMonitoring(stops)
     }

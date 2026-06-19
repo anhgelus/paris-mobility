@@ -34,7 +34,7 @@ object PrimDataSource {
             userAgent("Paris Mobilité/1.0")
             headers {
                 append("Accept", "application/json")
-                append("apiKey", BuildConfig.PRISM_TOKEN)
+                append("apiKey", BuildConfig.PRIM_TOKEN)
             }
         }.let {
             if (it.status.value >= 400) throw IOException("invalid response: ${it.bodyAsText()}")

@@ -1,5 +1,8 @@
 package world.anhgelus.parismobility.screens
 
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -10,29 +13,72 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import world.anhgelus.parismobility.data.Disruption
+import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.models.NetworkViewModel
+import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.LineKind
 import world.anhgelus.parismobility.ui.ScreenTitle
+import world.anhgelus.parismobility.models.LineKind as LK
 
 @Composable
 fun NetworkScreen(
     viewModel: NetworkViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val groups by viewModel.linesGroup.collectAsStateWithLifecycle()
+    val networkBackStack = rememberNavBackStack(Route.Network)
+
+    NavDisplay(
+        modifier = modifier,
+        backStack = networkBackStack,
+        transitionSpec = { slideInHorizontally { it } togetherWith slideOutHorizontally { -it } },
+        popTransitionSpec = { slideInHorizontally { -it } togetherWith slideOutHorizontally { it } },
+        entryProvider = entryProvider {
+            entry<Route.Network> {
+                val groups by viewModel.lines.collectAsStateWithLifecycle()
+                GeneralScreen(groups, onClick = { kind, line ->
+                    networkBackStack.add(Route.Network.SpecificLine(kind, line))
+                })
+            }
+            entry<Route.Network.SpecificLine> { (kind, line) ->
+                val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
+                LineScreen(disruptions[line.id])
+            }
+        },
+    )
+}
+
+@Composable
+fun GeneralScreen(
+    groups: Map<LK, List<Line>>,
+    onClick: (LK, Line) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         ScreenTitle("Réseau")
-        println("render")
-        groups.forEach { (kind, lines) ->
+        groups.filter { it.key != LK.BUS }.forEach { (kind, lines) ->
             LineKind(
                 modifier = Modifier
                     .padding(horizontal = 16.dp),
                 name = kind.displayName,
                 lines = lines,
+                kind = kind,
+                onClick = onClick
             )
         }
     }
+}
+
+@Composable
+fun LineScreen(
+    disruptions: List<Disruption>?,
+    modifier: Modifier = Modifier,
+) {
+
 }
