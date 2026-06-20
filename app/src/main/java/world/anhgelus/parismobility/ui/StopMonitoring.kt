@@ -52,7 +52,7 @@ fun StopMonitoring(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Line(stop.kind, stop.line, Modifier.size(48.dp))
+            Line(stop.kind, stop.line, {}, Modifier.size(48.dp))
             Text(
                 text = stop.name,
                 style = Typography.bodyMedium,

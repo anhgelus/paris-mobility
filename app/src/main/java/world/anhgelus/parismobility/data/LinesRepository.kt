@@ -4,6 +4,7 @@ import android.content.res.Resources
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.models.LineKind
 
 class LinesRepository(
@@ -28,7 +29,7 @@ class LinesRepository(
                 Line.TransportMode.RAIL -> {
                     res[LineKind.RER] = lines.filter { it.submode == "local" }.sorted()
                     res[LineKind.TRANSILIEN] = lines.filter {
-                        // because the API doesn't contain linked data
+                        // because the API doesn't contain the data of line V
                         it.submode == "suburbanRailway" && it.name != "V"
                     }.sorted()
                 }
@@ -40,15 +41,23 @@ class LinesRepository(
     }
 
     suspend fun updateDisruptions() {
-        prismSource.disruptions.collectLatest {
-            _disruptions.value = it
+        prismSource.disruptions.collectLatest { dis ->
+            _disruptions.update { dis }
             updateLines()
         }
     }
 
     private fun updateLines(groups: Map<LineKind, List<Line>> = _lines.value) {
-        _lines.value = groups.mapValues { (_, lines) ->
-            lines.map { it.setDisruption(disruptions.value[it.id]?.sorted()?.max()?.severity) }
+        _lines.update {
+            groups.mapValues { (_, lines) ->
+                lines.map { line ->
+                    line.setDisruption(
+                        disruptions.value[line.id]
+                            ?.filter { it.isHappening() }
+                            ?.minOrNull()
+                            ?.severity)
+                }
+            }
         }
     }
 }

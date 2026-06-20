@@ -8,6 +8,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -33,9 +35,13 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+@Stable
+@Immutable
 data class AdditionalColorScheme(
     val warning: Color,
+    val onWarning: Color,
     val error: Color,
+    val onError: Color,
 )
 
 lateinit var CustomColorScheme: AdditionalColorScheme
@@ -59,8 +65,14 @@ fun ParisMobiliteTheme(
     }
 
     CustomColorScheme =
-        if (darkTheme) AdditionalColorScheme(OrangeDark, RedDark)
-        else AdditionalColorScheme(OrangeLight, RedLight)
+        if (darkTheme) AdditionalColorScheme(
+            OrangeDark, colorScheme.background,
+            RedDark, colorScheme.onSurface
+        )
+        else AdditionalColorScheme(
+            OrangeLight, colorScheme.onSurface,
+            RedLight, colorScheme.background
+        )
 
     MaterialTheme(
         colorScheme = colorScheme,

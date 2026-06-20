@@ -2,10 +2,13 @@ package world.anhgelus.parismobility.data
 
 import android.annotation.SuppressLint
 import android.content.res.Resources
+import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import world.anhgelus.parismobility.R
 
@@ -40,6 +43,10 @@ data class Line(
     @SerialName("id_groupoflines") val groupOfLines: String? = null,
     @SerialName("networkname") val network: String? = null,
     @SerialName("status") val status: Status = Status.INACTIVE,
+    @SerialName("colourweb_hexa") private val rawColor: String,
+    @Transient val color: Color = Color(("#$rawColor").toColorInt()),
+    @SerialName("textcolourweb_hexa") private val rawTextColor: String,
+    @Transient val textColor: Color = Color(("#$rawTextColor").toColorInt()),
 ) : Comparable<Line> {
     enum class TransportMode(val hasSubMode: Boolean = false) {
         @SerialName("bus")
@@ -72,15 +79,17 @@ data class Line(
         INACTIVE
     }
 
-    var disruptionSeverity: Disruptions.Severity = Disruptions.Severity.INFORMATION
+    @Transient
+    var disruptionSeverity: Severity = Severity.INFORMATION
         private set
 
+    @Transient
     var resource: Int = 0
         private set
         get() = if (field != 0) field else throw IllegalArgumentException("resource is 0 for $this")
 
-    fun setDisruption(sev: Disruptions.Severity?): Line {
-        disruptionSeverity = sev ?: Disruptions.Severity.INFORMATION
+    fun setDisruption(sev: Severity?): Line {
+        disruptionSeverity = sev ?: Severity.INFORMATION
         return this
     }
 

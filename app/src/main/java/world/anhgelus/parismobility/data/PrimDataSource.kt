@@ -1,5 +1,6 @@
 package world.anhgelus.parismobility.data
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import io.ktor.client.HttpClient
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.io.IOException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import world.anhgelus.parismobility.BuildConfig
 import world.anhgelus.parismobility.ui.theme.CustomColorScheme
@@ -45,26 +47,30 @@ object PrimDataSource {
     val disruptions = flow {
         val resp = get("disruptions_bulk/disruptions/v2")
         val content = resp.bodyAsText()
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
-        val disruptions = json.decodeFromString<Disruptions>(content).disruptions
-        val v = disruptions
-            .filter { it.isHappening() && it.severity != Disruptions.Severity.INFORMATION }
-            .fold(mutableMapOf<String, MutableList<Disruption>>()) { acc, disruption ->
-                disruption.impactedSections?.forEach {
-                    val id = it.id.split(":")[2]
-                    val part = acc[id] ?: mutableListOf()
-                    part.add(disruption)
-                    acc[id] = part
-                }
+        val json = Json { ignoreUnknownKeys = true }
+        val disruptions = json.decodeFromString<Disruptions>(content)
+        val alreadyAdded = mutableSetOf<String>()
+        val indexedDisruptions = disruptions.disruptions
+            .filter { !it.periods.isEmpty() && alreadyAdded.add(it.title) }
+            .fold(mutableMapOf<String, Disruption>()) { acc, disruption ->
+                acc[disruption.id] = disruption
                 acc
             }
-        emit(v)
+        val linesDisruptions = disruptions.lines
+            .fold(mutableMapOf<String, List<Disruption>>()) { acc, l ->
+                val id = l.id.split(":")[2]
+                val d = mutableListOf<Disruption>()
+                l.impactedObjects.firstOrNull { it.type == "line" }?.disruptionIds?.forEach {
+                    indexedDisruptions[it]?.let { v -> d.add(v) }
+                }
+                if (!d.isEmpty()) acc[id] = d.sorted()
+                acc
+            }
+        emit(linesDisruptions)
     }
 }
 
-fun parsePrismTime(time: String): LocalDateTime {
+fun parsePrimTime(time: String): LocalDateTime {
     val year = time.substring(0, 4).toInt()
     val month = time.substring(4, 6).toInt()
     val day = time.substring(6, 8).toInt()
@@ -78,52 +84,96 @@ fun parsePrismTime(time: String): LocalDateTime {
 @Serializable
 data class Disruption(
     val id: String,
-    @SerialName("applicationPeriods") val periods: List<Disruptions.Period>,
+    @SerialName("applicationPeriods") private val stringPeriods: List<Disruptions.StringPeriod>,
     val cause: String,
-    val severity: Disruptions.Severity,
+    val severity: Severity,
     val title: String,
     val message: String,
     val shortMessage: String? = null,
     @SerialName("impactedSections") val impactedSections: List<Disruptions.ImpactedSection>? = null,
 ) : Comparable<Disruption> {
+    @Transient
+    val periods: List<Period> = stringPeriods.map { it.toPeriod() }.sorted()
+        get() = field.filter { it.end.isAfter(LocalDateTime.now()) }
+
     fun isHappening(): Boolean {
         val now = LocalDateTime.now()
-        return periods.any {
-            parsePrismTime(it.begin).isBefore(now) && parsePrismTime(it.end).isAfter(now)
-        }
+        return periods.any { it.begin <= now }
+    }
+
+    fun currentOrNextPeriod(): Period {
+        return periods.min()
     }
 
     override fun compareTo(other: Disruption): Int {
-        return severity.compareTo(other.severity)
+        val res = currentOrNextPeriod().compareTo(other.currentOrNextPeriod())
+        if (res != 0) return res
+        return -severity.compareTo(other.severity)
+    }
+}
+
+data class Period(
+    val begin: LocalDateTime,
+    val end: LocalDateTime
+) : Comparable<Period> {
+    override fun compareTo(other: Period): Int {
+        return begin.compareTo(other.begin)
     }
 }
 
 @Serializable
+enum class Severity {
+    @SerialName("INFORMATION")
+    INFORMATION,
+
+    @SerialName("PERTURBEE")
+    DISRUPT,
+
+    @SerialName("BLOQUANTE")
+    BLOCKING;
+
+    val color: Pair<Color, Color>
+        @Composable
+        get() = when (this) {
+            INFORMATION -> Pair(Color.Transparent, MaterialTheme.colorScheme.onSurface)
+            DISRUPT -> Pair(CustomColorScheme.warning, CustomColorScheme.onWarning)
+            BLOCKING -> Pair(CustomColorScheme.error, CustomColorScheme.onError)
+        }
+}
+
+@Serializable
 data class Disruptions(
-    val disruptions: List<Disruption>
+    val disruptions: List<Disruption>,
+    val lines: List<LineDisruptions>
 ) {
     @Serializable
-    data class Period(
+    data class StringPeriod(
         val begin: String,
         val end: String,
-    )
+    ) {
+        fun toPeriod(): Period {
+            return Period(parsePrimTime(begin), parsePrimTime(end))
+        }
+    }
 
     @Serializable
     data class ImpactedSection(
         @SerialName("lineId") val id: String,
     )
+}
 
+@Serializable
+data class LineDisruptions(
+    val id: String,
+    val name: String,
+    val mode: String,
+    val impactedObjects: List<ImpactedObject>
+) {
     @Serializable
-    enum class Severity(
-        val color: @Composable (() -> Color) = { Color.Transparent }
-    ) {
-        @SerialName("INFORMATION")
-        INFORMATION,
-
-        @SerialName("PERTURBEE")
-        DISRUPT(({ CustomColorScheme.warning })),
-
-        @SerialName("BLOQUANTE")
-        BLOCKING(({ CustomColorScheme.error })),
-    }
+    data class ImpactedObject(
+        val type: String,
+        val id: String,
+        val name: String,
+        val disruptionIds: List<String>
+    )
 }

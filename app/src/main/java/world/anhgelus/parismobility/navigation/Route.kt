@@ -10,7 +10,10 @@ import world.anhgelus.parismobility.models.LineKind
 sealed interface Route : NavKey {
     @Serializable
     data object Home : Route
+
+    @Serializable
     data object Network : Route {
+        @Serializable
         data class SpecificLine(val kind: LineKind, val line: Line) : Route
     }
 }

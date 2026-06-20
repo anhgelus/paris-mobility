@@ -18,19 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.Severity
 import world.anhgelus.parismobility.models.LineKind
 
 @Composable
 fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val sev = line.disruptionSeverity
     var modifier = modifier
-    if (sev != Disruptions.Severity.INFORMATION) {
+    if (sev != Severity.INFORMATION) {
         modifier = modifier
             .border(
                 width = 2.dp,
-                color = sev.color(),
+                color = sev.color.first,
                 shape = kind.roundedCornerShape
             )
             .padding(8.dp)
@@ -38,8 +38,8 @@ fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = M
     Box(
         modifier = modifier.clickable(onClick = onClick),
     ) {
-        var modifier = modifier
-        if (sev == Disruptions.Severity.INFORMATION) {
+        var modifier: Modifier = Modifier
+        if (sev == Severity.INFORMATION) {
             modifier = modifier.padding(4.dp)
         }
         Image(

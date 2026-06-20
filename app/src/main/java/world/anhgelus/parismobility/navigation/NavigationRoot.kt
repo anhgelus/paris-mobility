@@ -51,7 +51,6 @@ fun NavigationRoot(
         NavDisplay(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
                 .fillMaxSize(),
             backStack = rootBackStack,
             entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
@@ -79,11 +78,12 @@ fun NavigationRoot(
                 ) + fadeOut(animationSpec = tween(durationMillis = duration, easing = easing))
             },
             entryProvider = entryProvider {
+                val modif = Modifier.padding(horizontal = 16.dp)
                 entry<Route.Home> {
-                    HomeScreen(homeViewModel)
+                    HomeScreen(homeViewModel, modif)
                 }
                 entry<Route.Network> {
-                    NetworkScreen(networkViewModel)
+                    NetworkScreen(networkViewModel, modif)
                 }
             },
         )
