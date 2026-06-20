@@ -1,5 +1,6 @@
 package world.anhgelus.parismobility.navigation
 
+import android.content.Context
 import androidx.compose.animation.core.EaseInCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -19,6 +20,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.data.LinesRepository
+import world.anhgelus.parismobility.data.PreferencesRepository
 import world.anhgelus.parismobility.models.HomeViewModel
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.screens.HomeScreen
@@ -27,6 +29,8 @@ import kotlin.math.pow
 
 @Composable
 fun NavigationRoot(
+    ctx: Context,
+    preferencesRepo: PreferencesRepository,
     linesRepo: LinesRepository,
     modifier: Modifier = Modifier
 ) {
@@ -34,7 +38,7 @@ fun NavigationRoot(
 
     val homeViewModel = viewModel {
         HomeViewModel(
-            listOf(), listOf(), linesRepo,
+            preferencesRepo, linesRepo, listOf(),
         )
     }
     val networkViewModel = viewModel { NetworkViewModel(linesRepo) }
@@ -42,10 +46,7 @@ fun NavigationRoot(
     Scaffold(
         modifier = modifier,
         bottomBar = {
-            NavigationBar(selectedKey = rootBackStack.last()) {
-                rootBackStack.removeAt(rootBackStack.lastIndex)
-                rootBackStack.add(it)
-            }
+            NavigationBar(selectedKey = rootBackStack.last()) { rootBackStack.add(it) }
         }
     ) { innerPadding ->
         NavDisplay(
@@ -80,7 +81,7 @@ fun NavigationRoot(
             entryProvider = entryProvider {
                 val modif = Modifier.padding(horizontal = 16.dp)
                 entry<Route.Home> {
-                    HomeScreen(homeViewModel, modif)
+                    HomeScreen(ctx, homeViewModel, modif)
                 }
                 entry<Route.Network> {
                     NetworkScreen(networkViewModel, modif)

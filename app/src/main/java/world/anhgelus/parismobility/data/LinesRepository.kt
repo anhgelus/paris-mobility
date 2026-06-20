@@ -1,22 +1,35 @@
 package world.anhgelus.parismobility.data
 
 import android.content.res.Resources
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.models.LineKind
 
 class LinesRepository(
+    val scope: CoroutineScope,
     private val linesSource: LinesDataSource,
-    private val prismSource: PrimDataSource
+    private val primSource: PrimDataSource
 ) {
 
     private val _lines = MutableStateFlow<Map<LineKind, List<Line>>>(mutableMapOf())
     val lines = _lines.asStateFlow()
 
-    private val _disruptions = MutableStateFlow<Map<String, List<Disruption>>>(mapOf())
-    val disruptions = _disruptions.asStateFlow()
+    val disruptions = flow {
+        val l = primSource.disruptions.last()
+        updateLines(l)
+        emit(l)
+    }.stateIn(
+        scope = scope,
+        // Start without waiting a listener, because disruptions are deeply linked with lines
+        started = SharingStarted.Eagerly,
+        initialValue = emptyMap()
+    )
 
     suspend fun initLines(res: Resources) {
         val lines = linesSource.getLines(res)
@@ -37,25 +50,21 @@ class LinesRepository(
                 else -> {} // do nothing with unsupported modes
             }
         }
-        updateLines(res)
+        _lines.update { res }
     }
 
-    suspend fun updateDisruptions() {
-        prismSource.disruptions.collectLatest { dis ->
-            _disruptions.update { dis }
-            updateLines()
-        }
-    }
-
-    private fun updateLines(groups: Map<LineKind, List<Line>> = _lines.value) {
-        _lines.update {
-            groups.mapValues { (_, lines) ->
+    private fun updateLines(
+        disruptions: Map<String, List<Disruption>>,
+    ) {
+        _lines.update { v ->
+            v.mapValues { (_, lines) ->
                 lines.map { line ->
                     line.setDisruption(
-                        disruptions.value[line.id]
+                        disruptions[line.id]
                             ?.filter { it.isHappening() }
                             ?.minOrNull()
-                            ?.severity)
+                            ?.severity
+                    )
                 }
             }
         }

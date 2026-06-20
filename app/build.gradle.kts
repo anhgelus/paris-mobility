@@ -75,6 +75,9 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
 
+    // datastores
+    implementation(libs.androidx.datastore.preferences)
+
     // http requests
     implementation(libs.bundles.ktor)
 }

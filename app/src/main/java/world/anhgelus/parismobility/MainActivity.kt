@@ -5,11 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import world.anhgelus.parismobility.data.LinesDataSource
 import world.anhgelus.parismobility.data.LinesRepository
+import world.anhgelus.parismobility.data.PreferencesRepository
 import world.anhgelus.parismobility.data.PrimDataSource
 import world.anhgelus.parismobility.navigation.NavigationRoot
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
@@ -19,17 +18,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        val linesRepo = LinesRepository(LinesDataSource, PrimDataSource)
-
         setContent {
+            val scope = rememberCoroutineScope()
+            val linesRepo = LinesRepository(scope, LinesDataSource, PrimDataSource)
+            val preferencesRepo = PreferencesRepository(this)
             LaunchedEffect(true) {
                 linesRepo.initLines(resources)
-                CoroutineScope(Dispatchers.IO).launch {
-                    linesRepo.updateDisruptions()
-                }
             }
             ParisMobiliteTheme {
-                NavigationRoot(linesRepo)
+                NavigationRoot(this, preferencesRepo, linesRepo)
             }
         }
     }

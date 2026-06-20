@@ -9,11 +9,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -47,8 +50,9 @@ fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = M
             contentDescription = line.name,
             modifier = modifier
                 .background(
-                    color = if (isSystemInDarkTheme() && kind.requiresBackground) Color.White
-                    else Color.Transparent,
+                    color =
+                        if (isSystemInDarkTheme() && kind.requiresBackground) Color.White
+                        else Color.Transparent,
                     shape = kind.roundedCornerShape
                 ),
         )
@@ -56,10 +60,32 @@ fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = M
 }
 
 @Composable
+fun LineDetailed(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Image(
+            painter = painterResource(line.resource),
+            contentDescription = line.name,
+            modifier = Modifier
+                .size(48.dp)
+                .background(
+                    color =
+                        if (isSystemInDarkTheme() && kind.requiresBackground) Color.White
+                        else Color.Transparent,
+                    shape = kind.roundedCornerShape
+                ),
+        )
+        Text("${kind.displayName} ${line.name}")
+    }
+}
+
+@Composable
 fun LineKind(
     name: String,
     kind: LineKind,
-    lines: List<Line>,
+    lines: Collection<Line>,
     onClick: (LineKind, Line) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -75,7 +101,7 @@ fun LineKind(
 @Composable
 fun Lines(
     kind: LineKind,
-    lines: List<Line>,
+    lines: Collection<Line>,
     onClick: (LineKind, Line) -> Unit,
     modifier: Modifier = Modifier
 ) {

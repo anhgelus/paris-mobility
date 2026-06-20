@@ -9,7 +9,10 @@ import world.anhgelus.parismobility.models.LineKind
 @Serializable
 sealed interface Route : NavKey {
     @Serializable
-    data object Home : Route
+    data object Home : Route {
+        @Serializable
+        data object Modify : Route
+    }
 
     @Serializable
     data object Network : Route {
