@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.data.Disruption
 import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.DisruptionCard
@@ -62,7 +64,7 @@ fun NetworkScreen(
 
 @Composable
 fun GeneralScreen(
-    groups: Map<LK, List<Line>>,
+    groups: LineGroups,
     onClick: (LK, Line) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -73,7 +75,7 @@ fun GeneralScreen(
         item {
             ScreenTitle("Réseau")
         }
-        items(items = groups.filter { it.key != LK.BUS }.toList()) { (kind, lines) ->
+        items(items = groups.filter { (key, _) -> key != LK.BUS }.toList()) { (kind, lines) ->
             LineKind(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -121,8 +123,8 @@ fun LineScreen(
                         )
                     )
                 }
-                if (dis.size >= 3) {
-                    item {
+                item {
+                    if (dis.size >= 3) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
@@ -133,6 +135,8 @@ fun LineScreen(
                                 Text(text = "Voir plus", style = Typography.bodyLarge)
                             }
                         }
+                    } else {
+                        Spacer(modifier = Modifier.padding(bottom = 16.dp))
                     }
                 }
             }

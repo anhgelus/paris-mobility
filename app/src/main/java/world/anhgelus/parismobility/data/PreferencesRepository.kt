@@ -51,11 +51,6 @@ data class SavedLine(
     val line: String,
 )
 
-fun Map<LineKind, List<Line>>.getLine(saved: SavedLine): Pair<LineKind, Line>? {
-    val line = this[saved.kind]?.firstOrNull { it.id == saved.line } ?: return null
-    return Pair(saved.kind, line)
-}
-
 fun Collection<SavedLine>.contains(kind: LineKind, line: Line): Boolean {
     return this.contains(SavedLine(kind, line.id))
 }

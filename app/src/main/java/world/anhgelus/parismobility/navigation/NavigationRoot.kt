@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -77,6 +79,19 @@ fun NavigationRoot(
                     animationSpec = tween(durationMillis = duration, easing = easing),
                     targetScale = scale
                 ) + fadeOut(animationSpec = tween(durationMillis = duration, easing = easing))
+            },
+            predictivePopTransitionSpec = {
+                slideInHorizontally {
+                    -it
+                } + fadeIn(
+                    initialAlpha = 0.5f,
+                    animationSpec = tween(durationMillis = 200, easing = EaseInCubic)
+                ) togetherWith slideOutHorizontally {
+                    it
+                } + fadeOut(
+                    targetAlpha = 0.9f,
+                    animationSpec = tween(durationMillis = 200, easing = EaseInCubic)
+                )
             },
             entryProvider = entryProvider {
                 val modif = Modifier.padding(horizontal = 16.dp)

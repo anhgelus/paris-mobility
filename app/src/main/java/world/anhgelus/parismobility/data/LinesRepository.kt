@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.json.Json
 import world.anhgelus.parismobility.models.LineKind
 
 class LinesRepository(
@@ -12,7 +13,7 @@ class LinesRepository(
     private val primSource: PrimDataSource
 ) {
 
-    private val _lines = MutableStateFlow<Map<LineKind, List<Line>>>(mutableMapOf())
+    private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
     val lines = _lines.asStateFlow()
 
     val disruptions = primSource.disruptions.onEach { updateLines(it) }
@@ -40,7 +41,7 @@ class LinesRepository(
     }
 
     private fun updateLines(
-        disruptions: Map<String, List<Disruption>>,
+        disruptions: LineDisruptions,
     ) {
         _lines.update { v ->
             v.mapValues { (_, lines) ->
@@ -52,7 +53,15 @@ class LinesRepository(
                             ?.severity
                     )
                 }
-            }
+            }.let { Json.encodeToString(it) }.let { Json.decodeFromString(it) }
         }
     }
 }
+
+typealias LineGroups = Map<LineKind, List<Line>>
+
+operator fun LineGroups.get(saved: SavedLine): Pair<LineKind, Line>? {
+    return this[saved.kind]?.firstOrNull { it.id == saved.line }?.let { Pair(saved.kind, it) }
+}
+
+typealias LineDisruptions = Map<String, List<Disruption>>

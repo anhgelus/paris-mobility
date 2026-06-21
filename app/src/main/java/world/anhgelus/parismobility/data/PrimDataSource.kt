@@ -151,7 +151,7 @@ enum class Severity {
 @Serializable
 data class Disruptions(
     val disruptions: List<Disruption>,
-    val lines: List<LineDisruptions>
+    val lines: List<LineAffected>
 ) {
     @Stable
     @Immutable
@@ -174,7 +174,7 @@ data class Disruptions(
 @Stable
 @Immutable
 @Serializable
-data class LineDisruptions(
+data class LineAffected(
     val id: String,
     val name: String,
     val mode: String,

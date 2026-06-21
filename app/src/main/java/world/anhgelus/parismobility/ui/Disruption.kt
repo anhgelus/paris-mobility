@@ -1,5 +1,6 @@
 package world.anhgelus.parismobility.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +34,7 @@ fun DisruptionCard(disruption: Disruption, modifier: Modifier = Modifier) {
     val color = disruption.severity.color
     val enabled = disruption.isHappening()
     Card(
-//        border = BorderStroke(0.dp, color.first),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer),
         colors = CardDefaults.cardColors(
             contentColor = MaterialTheme.colorScheme.onSurface,
             containerColor =

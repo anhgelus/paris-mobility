@@ -25,9 +25,10 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.contains
-import world.anhgelus.parismobility.data.getLine
+import world.anhgelus.parismobility.data.get
 import world.anhgelus.parismobility.models.HomeViewModel
 import world.anhgelus.parismobility.models.LineKind
 import world.anhgelus.parismobility.models.StopDataState
@@ -82,7 +83,7 @@ fun HomeScreen(
 
 @Composable
 fun GeneralScreen(
-    groups: Map<LineKind, List<Line>>,
+    groups: LineGroups,
     savedLines: Collection<SavedLine>,
     stops: List<StopDataState>,
     modifier: Modifier = Modifier,
@@ -99,7 +100,7 @@ fun GeneralScreen(
         ) {
             SectionTitle("État de vos lignes")
             LinesRow { size ->
-                val lines = savedLines.mapNotNull { groups.getLine(it) }
+                val lines = savedLines.mapNotNull { groups[it] }
                 lines.forEach { (kind, line) ->
                     L(kind, line, onClick = {}, modifier = Modifier.size(size))
                 }
@@ -120,7 +121,7 @@ fun GeneralScreen(
 
 @Composable
 fun ModifyScreen(
-    groups: Map<LineKind, List<Line>>,
+    groups: LineGroups,
     savedLines: Collection<SavedLine>,
     onUpdate: (LineKind, Line, Boolean) -> Unit,
 ) {
