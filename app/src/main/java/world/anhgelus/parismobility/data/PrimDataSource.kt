@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import io.ktor.client.HttpClient
 import io.ktor.client.request.headers
@@ -15,38 +16,54 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.appendEncodedPathSegments
 import io.ktor.http.userAgent
 import kotlinx.coroutines.flow.flow
-import kotlinx.io.IOException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import world.anhgelus.parismobility.BuildConfig
 import world.anhgelus.parismobility.ui.theme.CustomColorScheme
+import java.nio.channels.UnresolvedAddressException
 import java.time.LocalDateTime
 
 object PrimDataSource {
-    private suspend fun get(path: String): HttpResponse {
-        val client = HttpClient {}
-
-        return client.request {
-            method = HttpMethod.Get
-            url {
-                protocol = URLProtocol.HTTPS
-                host = "prim.iledefrance-mobilites.fr"
-                appendEncodedPathSegments("marketplace", path)
+    private suspend fun get(path: String): Result<HttpResponse, NetworkError> {
+        val resp = try {
+            HttpClient().request {
+                method = HttpMethod.Get
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = "prim.iledefrance-mobilites.fr"
+                    appendEncodedPathSegments("marketplace", path)
+                }
+                userAgent("Paris Mobilité/1.0")
+                headers {
+                    append("Accept", "application/json")
+                    append("apiKey", BuildConfig.PRIM_TOKEN)
+                }
             }
-            userAgent("Paris Mobilité/1.0")
-            headers {
-                append("Accept", "application/json")
-                append("apiKey", BuildConfig.PRIM_TOKEN)
-            }
-        }.also {
-            if (it.status.value >= 400) throw IOException("invalid response: ${it.bodyAsText()}")
+        } catch (_: UnresolvedAddressException) {
+            return Result.Error(NetworkError.NO_INTERNET)
+        }
+        return when (resp.status.value) {
+            in 200..299 -> Result.Ok(resp)
+            400 -> Result.Error(NetworkError.INVALID_DATA)
+            401 -> Result.Error(NetworkError.INVALID_AUTH)
+            429 -> Result.Error(NetworkError.RATE_LIMITED)
+            in 500..599 -> Result.Error(NetworkError.SERVER_ERROR)
+            else -> Result.Error(NetworkError.UNKNOWN_ERROR)
         }
     }
 
+    val primError = mutableStateOf<NetworkError?>(null)
+
     val disruptions = flow {
-        val resp = get("disruptions_bulk/disruptions/v2")
+        var resp: HttpResponse? = null
+        get("disruptions_bulk/disruptions/v2").onSuccess {
+            resp = it
+        }.onError {
+            primError.value = it
+        }
+        if (resp == null) return@flow
         val content = resp.bodyAsText()
         val json = Json { ignoreUnknownKeys = true }
         val disruptions = json.decodeFromString<Disruptions>(content)

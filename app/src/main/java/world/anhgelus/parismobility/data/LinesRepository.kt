@@ -17,6 +17,8 @@ class LinesRepository(
 
     val disruptions = primSource.disruptions.onEach { updateLines(it) }
 
+    val primErrors = primSource.primError
+
     suspend fun initLines(res: Resources) {
         val lines = linesSource.getLines(res)
         val res = mutableMapOf<LineKind, List<Line>>()
