@@ -5,14 +5,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.models.LineKind
 
 class LinesRepository(
-    val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val linesSource: LinesDataSource,
     private val primSource: PrimDataSource
 ) {
@@ -20,10 +19,8 @@ class LinesRepository(
     private val _lines = MutableStateFlow<Map<LineKind, List<Line>>>(mutableMapOf())
     val lines = _lines.asStateFlow()
 
-    val disruptions = flow {
-        val l = primSource.disruptions.last()
-        updateLines(l)
-        emit(l)
+    val disruptions = primSource.disruptions.onEach {
+        updateLines(it)
     }.stateIn(
         scope = scope,
         // Start without waiting a listener, because disruptions are deeply linked with lines

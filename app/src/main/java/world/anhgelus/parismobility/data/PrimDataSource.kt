@@ -38,9 +38,8 @@ object PrimDataSource {
                 append("Accept", "application/json")
                 append("apiKey", BuildConfig.PRIM_TOKEN)
             }
-        }.let {
+        }.also {
             if (it.status.value >= 400) throw IOException("invalid response: ${it.bodyAsText()}")
-            else it
         }
     }
 
@@ -84,7 +83,7 @@ fun parsePrimTime(time: String): LocalDateTime {
 @Serializable
 data class Disruption(
     val id: String,
-    @SerialName("applicationPeriods") private val stringPeriods: List<Disruptions.StringPeriod>,
+    @SerialName("applicationPeriods") private val stringPeriods: List<Disruptions.StringPeriod>? = null,
     val cause: String,
     val severity: Severity,
     val title: String,
@@ -93,7 +92,7 @@ data class Disruption(
     @SerialName("impactedSections") val impactedSections: List<Disruptions.ImpactedSection>? = null,
 ) : Comparable<Disruption> {
     @Transient
-    val periods: List<Period> = stringPeriods.map { it.toPeriod() }.sorted()
+    val periods: List<Period> = stringPeriods?.map { it.toPeriod() }?.sorted() ?: emptyList()
         get() = field.filter { it.end.isAfter(LocalDateTime.now()) }
 
     fun isHappening(): Boolean {
