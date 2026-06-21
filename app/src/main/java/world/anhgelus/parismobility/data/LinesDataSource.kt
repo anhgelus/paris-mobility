@@ -2,6 +2,7 @@ package world.anhgelus.parismobility.data
 
 import android.annotation.SuppressLint
 import android.content.res.Resources
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ object LinesDataSource {
     }
 }
 
+@Stable
 @Serializable
 data class Line(
     @SerialName("id_line") val id: String,
@@ -84,9 +86,7 @@ data class Line(
         private set
 
     @Transient
-    var resource: Int = 0
-        private set
-        get() = if (field != 0) field else throw IllegalArgumentException("resource is 0 for $this")
+    private var resource: Int = 0
 
     fun setDisruption(sev: Severity?): Line {
         disruptionSeverity = sev ?: Severity.INFORMATION
@@ -107,6 +107,28 @@ data class Line(
 
     private val metroBisSuffix = "B"
     private val tramPrefix = "T"
+
+    fun copy(): Line {
+        val l = Line(
+            id,
+            name,
+            shortName,
+            mode,
+            submode,
+            groupOfLines,
+            network,
+            status,
+            rawColor,
+            rawTextColor = rawTextColor,
+        )
+        l.resource = resource
+        l.disruptionSeverity = disruptionSeverity
+        return l
+    }
+
+    fun getResource() =
+        if (resource != 0) resource
+        else throw IllegalArgumentException("resource is 0 for $this")
 
     override fun compareTo(other: Line): Int {
         if (mode != other.mode) throw IllegalArgumentException("must have the same kind")

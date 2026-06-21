@@ -75,7 +75,9 @@ fun GeneralScreen(
         }
         items(items = groups.filter { it.key != LK.BUS }.toList()) { (kind, lines) ->
             LineKind(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp),
                 name = kind.displayName,
                 lines = lines,
                 kind = kind,
@@ -123,7 +125,9 @@ fun LineScreen(
                     item {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
                         ) {
                             FilledTonalButton(onClick = {}) {
                                 Text(text = "Voir plus", style = Typography.bodyLarge)

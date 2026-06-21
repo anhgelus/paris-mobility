@@ -2,6 +2,8 @@ package world.anhgelus.parismobility.data
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import io.ktor.client.HttpClient
 import io.ktor.client.request.headers
@@ -80,6 +82,7 @@ fun parsePrimTime(time: String): LocalDateTime {
     return LocalDateTime.of(year, month, day, hour, minute, second)
 }
 
+@Stable
 @Serializable
 data class Disruption(
     val id: String,
@@ -111,6 +114,8 @@ data class Disruption(
     }
 }
 
+@Stable
+@Immutable
 data class Period(
     val begin: LocalDateTime,
     val end: LocalDateTime
@@ -120,6 +125,8 @@ data class Period(
     }
 }
 
+@Stable
+@Immutable
 @Serializable
 enum class Severity {
     @SerialName("INFORMATION")
@@ -140,15 +147,18 @@ enum class Severity {
         }
 }
 
+@Stable
 @Serializable
 data class Disruptions(
     val disruptions: List<Disruption>,
     val lines: List<LineDisruptions>
 ) {
+    @Stable
+    @Immutable
     @Serializable
     data class StringPeriod(
-        val begin: String,
-        val end: String,
+        val begin: String = "19990102T010203", // skip data without "begin" set
+        val end: String = begin,
     ) {
         fun toPeriod(): Period {
             return Period(parsePrimTime(begin), parsePrimTime(end))
@@ -161,6 +171,8 @@ data class Disruptions(
     )
 }
 
+@Stable
+@Immutable
 @Serializable
 data class LineDisruptions(
     val id: String,

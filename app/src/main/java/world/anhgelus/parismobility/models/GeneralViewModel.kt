@@ -31,9 +31,8 @@ class GeneralViewModel(
 
     fun loadData(ctx: Context) {
         _isLoading.update { true }
-        val scope = viewModelScope
-        scope.launch {
-            linesRepository = LinesRepository(scope, linesDataSource, primDataSource)
+        viewModelScope.launch {
+            linesRepository = LinesRepository(linesDataSource, primDataSource)
             preferencesRepository = PreferencesRepository(ctx)
             linesRepository.initLines(ctx.resources)
             _isLoading.update { false }

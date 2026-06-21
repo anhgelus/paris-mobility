@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -24,11 +25,15 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.SavedLine
+import world.anhgelus.parismobility.data.contains
+import world.anhgelus.parismobility.data.getLine
 import world.anhgelus.parismobility.models.HomeViewModel
+import world.anhgelus.parismobility.models.LineKind
 import world.anhgelus.parismobility.models.StopDataState
 import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.LineDetailed
-import world.anhgelus.parismobility.ui.LineKind
+import world.anhgelus.parismobility.ui.LinesRow
 import world.anhgelus.parismobility.ui.ScreenTitle
 import world.anhgelus.parismobility.ui.SectionTitle
 import world.anhgelus.parismobility.ui.StopsMonitoring
@@ -36,7 +41,7 @@ import world.anhgelus.parismobility.ui.theme.Typography
 import world.anhgelus.parismobility.ui.theme.transitionSub
 import world.anhgelus.parismobility.ui.theme.transitionSubPop
 import world.anhgelus.parismobility.ui.theme.transitionSubPredictivePop
-import world.anhgelus.parismobility.models.LineKind as LK
+import world.anhgelus.parismobility.ui.Line as L
 
 @Composable
 fun HomeScreen(
@@ -47,7 +52,8 @@ fun HomeScreen(
     val homeBackStack = rememberNavBackStack(Route.Home)
 
     val lines by viewModel.lines.collectAsStateWithLifecycle()
-    val savedLines = viewModel.getSavedLines()
+    val savedLines by viewModel.savedLines.collectAsStateWithLifecycle()
+    println("rendering")
     val stops by viewModel.stops.collectAsStateWithLifecycle()
 
     NavDisplay(
@@ -58,6 +64,7 @@ fun HomeScreen(
         entryProvider = entryProvider {
             entry<Route.Home> {
                 GeneralScreen(
+                    lines,
                     savedLines,
                     stops,
                     modifier
@@ -75,7 +82,8 @@ fun HomeScreen(
 
 @Composable
 fun GeneralScreen(
-    lines: Collection<Line>,
+    groups: Map<LineKind, List<Line>>,
+    savedLines: Collection<SavedLine>,
     stops: List<StopDataState>,
     modifier: Modifier = Modifier,
     onModifyClick: () -> Unit,
@@ -85,13 +93,19 @@ fun GeneralScreen(
         verticalArrangement = Arrangement.spacedBy(32.dp),
     ) {
         ScreenTitle("Votre réseau")
-        LineKind(
+        Column(
             modifier = Modifier.padding(horizontal = 16.dp),
-            name = "État de vos lignes",
-            lines = lines,
-            kind = LK.RER,
-            onClick = { _, _ -> },
-        )
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            SectionTitle("État de vos lignes")
+            LinesRow { size ->
+                val lines = savedLines.mapNotNull { groups.getLine(it) }
+                lines.forEach { (kind, line) ->
+                    L(kind, line, onClick = {}, modifier = Modifier.size(size))
+                }
+                lines.size
+            }
+        }
         StopsMonitoring(stops)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -106,9 +120,9 @@ fun GeneralScreen(
 
 @Composable
 fun ModifyScreen(
-    groups: Map<LK, List<Line>>,
-    savedLines: Collection<Line>,
-    onUpdate: (LK, Line, Boolean) -> Unit,
+    groups: Map<LineKind, List<Line>>,
+    savedLines: Collection<SavedLine>,
+    onUpdate: (LineKind, Line, Boolean) -> Unit,
 ) {
     Column(
         modifier = Modifier.padding(horizontal = 16.dp)
@@ -118,7 +132,7 @@ fun ModifyScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.padding(16.dp)
         ) {
-            groups.filter { it.key != LK.BUS }.forEach { (kind, lines) ->
+            groups.filter { it.key != LineKind.BUS }.forEach { (kind, lines) ->
                 item {
                     SectionTitle(
                         content = kind.displayName,
@@ -129,12 +143,14 @@ fun ModifyScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = { onUpdate(kind, it, !savedLines.contains(it)) }),
+                            .clickable(onClick = {
+                                onUpdate(kind, it, !savedLines.contains(kind, it))
+                            }),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         LineDetailed(kind, it)
                         Checkbox(
-                            checked = savedLines.contains(it),
+                            checked = savedLines.contains(kind, it),
                             onCheckedChange = { change -> onUpdate(kind, it, change) }
                         )
                     }

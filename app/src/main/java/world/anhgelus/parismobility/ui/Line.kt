@@ -20,10 +20,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.Severity
 import world.anhgelus.parismobility.models.LineKind
+
+@Composable
+fun LineImage(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(line.getResource()),
+        contentDescription = line.name,
+        modifier = modifier
+            .background(
+                color =
+                    if (isSystemInDarkTheme() && kind.requiresBackground) Color.White
+                    else Color.Transparent,
+                shape = kind.roundedCornerShape
+            ),
+    )
+}
 
 @Composable
 fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -45,16 +61,10 @@ fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = M
         if (sev == Severity.INFORMATION) {
             modifier = modifier.padding(4.dp)
         }
-        Image(
-            painter = painterResource(line.resource),
-            contentDescription = line.name,
-            modifier = modifier
-                .background(
-                    color =
-                        if (isSystemInDarkTheme() && kind.requiresBackground) Color.White
-                        else Color.Transparent,
-                    shape = kind.roundedCornerShape
-                ),
+        LineImage(
+            kind = kind,
+            line = line,
+            modifier = modifier,
         )
     }
 }
@@ -62,20 +72,14 @@ fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = M
 @Composable
 fun LineDetailed(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
     Row(
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Image(
-            painter = painterResource(line.resource),
-            contentDescription = line.name,
-            modifier = Modifier
-                .size(48.dp)
-                .background(
-                    color =
-                        if (isSystemInDarkTheme() && kind.requiresBackground) Color.White
-                        else Color.Transparent,
-                    shape = kind.roundedCornerShape
-                ),
+        LineImage(
+            kind = kind,
+            line = line,
+            modifier = Modifier.size(48.dp),
         )
         Text("${kind.displayName} ${line.name}")
     }
@@ -94,28 +98,28 @@ fun LineKind(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SectionTitle(name)
-        Lines(kind, lines, onClick)
+        LinesRow { size ->
+            lines.forEach {
+                Line(kind, it, onClick = { onClick(kind, it) }, Modifier.size(size))
+            }
+            lines.size
+        }
     }
 }
 
 @Composable
-fun Lines(
-    kind: LineKind,
-    lines: Collection<Line>,
-    onClick: (LineKind, Line) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun LinesRow(modifier: Modifier = Modifier, content: @Composable ((Dp) -> Int)) {
     val size = 48.dp
     val items = 6
     FlowRow(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = modifier.fillMaxWidth(),
-        maxItemsInEachRow = items
+        maxItemsInEachRow = items,
     ) {
-        lines.forEach { Line(kind, it, onClick = { onClick(kind, it) }, Modifier.size(size)) }
-        val mod = lines.size % items
+        val s = content(size)
+        val mod = s % items
         if (mod != 0)
-            repeat(items - (lines.size % items)) { Spacer(Modifier.size(size)) }
+            repeat(items - (s % items)) { Spacer(Modifier.size(size)) }
     }
 }

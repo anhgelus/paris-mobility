@@ -1,13 +1,12 @@
 package world.anhgelus.parismobility.models
 
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LinesRepository
@@ -21,12 +20,11 @@ class HomeViewModel(
 ) : ViewModel() {
     val lines = linesRepo.lines
 
-    @Composable
-    fun getSavedLines(): List<Line> {
-        val lines by lines.collectAsStateWithLifecycle()
-        val savedLines by preferencesRepo.linesFlow.collectAsStateWithLifecycle(emptySet())
-        return savedLines.mapNotNull { it.toLine(lines) }
-    }
+    val savedLines = preferencesRepo.linesFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(60_000),
+        initialValue = emptySet()
+    )
 
     private val _stops = MutableStateFlow(stops)
     val stops = _stops.asStateFlow()
