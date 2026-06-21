@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.serialization.json.Json
 import world.anhgelus.parismobility.models.LineKind
 
 class LinesRepository(
@@ -53,7 +52,7 @@ class LinesRepository(
                             ?.severity
                     )
                 }
-            }.let { Json.encodeToString(it) }.let { Json.decodeFromString(it) }
+            }
         }
     }
 }

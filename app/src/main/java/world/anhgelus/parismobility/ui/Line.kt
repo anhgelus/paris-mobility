@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,7 +44,7 @@ fun LineImage(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
 
 @Composable
 fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val sev = line.disruptionSeverity
+    val sev by line.disruptionSeverity
     var modifier = modifier
     if (sev != Severity.INFORMATION) {
         modifier = modifier

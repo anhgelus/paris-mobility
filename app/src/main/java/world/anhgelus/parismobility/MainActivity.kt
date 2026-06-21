@@ -23,7 +23,6 @@ class MainActivity : ComponentActivity() {
                 }
                 NavigationRoot(baseContext, model)
             }
-
         }
     }
 }

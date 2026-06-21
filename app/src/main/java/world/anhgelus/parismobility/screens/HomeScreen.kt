@@ -54,7 +54,6 @@ fun HomeScreen(
 
     val lines by viewModel.lines.collectAsStateWithLifecycle()
     val savedLines by viewModel.savedLines.collectAsStateWithLifecycle()
-    println("rendering")
     val stops by viewModel.stops.collectAsStateWithLifecycle()
 
     NavDisplay(

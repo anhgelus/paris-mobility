@@ -3,6 +3,7 @@ package world.anhgelus.parismobility.data
 import android.annotation.SuppressLint
 import android.content.res.Resources
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.Dispatchers
@@ -82,14 +83,13 @@ data class Line(
     }
 
     @Transient
-    var disruptionSeverity: Severity = Severity.INFORMATION
-        private set
+    val disruptionSeverity = mutableStateOf(Severity.INFORMATION)
 
     @Transient
     private var resource: Int = 0
 
     fun setDisruption(sev: Severity?): Line {
-        disruptionSeverity = sev ?: Severity.INFORMATION
+        disruptionSeverity.value = sev ?: Severity.INFORMATION
         return this
     }
 
@@ -107,24 +107,6 @@ data class Line(
 
     private val metroBisSuffix = "B"
     private val tramPrefix = "T"
-
-    fun copy(): Line {
-        val l = Line(
-            id,
-            name,
-            shortName,
-            mode,
-            submode,
-            groupOfLines,
-            network,
-            status,
-            rawColor,
-            rawTextColor = rawTextColor,
-        )
-        l.resource = resource
-        l.disruptionSeverity = disruptionSeverity
-        return l
-    }
 
     fun getResource() =
         if (resource != 0) resource
