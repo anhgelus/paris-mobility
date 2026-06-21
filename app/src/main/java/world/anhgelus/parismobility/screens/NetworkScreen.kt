@@ -1,13 +1,16 @@
 package world.anhgelus.parismobility.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilledTonalButton
@@ -16,6 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.innerShadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
@@ -96,23 +105,63 @@ fun LineScreen(
     disruptions: List<Disruption>?,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = Modifier.background(line.color),
     ) {
+        val network = when (kind) {
+            LK.RER -> "RER"
+            LK.METRO -> "Métro"
+            LK.TRAM -> "Tram"
+            LK.TRANSILIEN -> "Ligne"
+            else -> line.network!!
+        }
+        val title = "$network ${line.name}"
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .dropShadow(
+                    RectangleShape,
+                    Shadow(
+                        radius = 2.dp,
+                        spread = 1.dp,
+                        color = Color.Black,
+                    )
+                )
+                .background(line.color) // because the shadow is above this
+                .padding(16.dp)
+        ) {
+            Image(
+                painter = painterResource(kind.logoId!!),
+                contentDescription = "Logo du ${kind.displayName}",
+                modifier = Modifier.size(64.dp)
+            )
+            Text(
+                text = title,
+                style = Typography.headlineMedium,
+                color = line.textColor
+            )
+        }
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(32.dp),
-            modifier = modifier.fillMaxHeight(),
+            modifier = Modifier.fillMaxHeight(),
         ) {
-            val network = when (kind) {
-                LK.RER -> "RER"
-                LK.METRO -> "Métro"
-                LK.TRAM -> "Tram"
-                LK.TRANSILIEN -> "Ligne"
-                else -> line.network!!
-            }
-            val title = "$network ${line.name}"
             item {
-                ScreenTitle(content = title, color = line.textColor)
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(128.dp)
+                        .background(Color.White)
+                        .innerShadow(
+                            RectangleShape,
+                            Shadow(
+                                radius = 4.dp,
+                                spread = 1.dp,
+                                color = Color.Black,
+                            )
+                        )
+                )
             }
             disruptions?.let { dis ->
                 items(minOf(3, dis.size), key = { dis[it].id }) { i ->
@@ -120,7 +169,8 @@ fun LineScreen(
                     DisruptionCard(
                         it.copy(
                             title = it.title.removePrefix("$title : ").removePrefix("$title - ")
-                        )
+                        ),
+                        modifier
                     )
                 }
                 item {
