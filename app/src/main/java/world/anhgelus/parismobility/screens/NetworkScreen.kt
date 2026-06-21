@@ -19,13 +19,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.innerShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -121,15 +122,15 @@ fun LineScreen(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .dropShadow(
-                    RectangleShape,
-                    Shadow(
-                        radius = 2.dp,
-                        spread = 1.dp,
-                        color = Color.Black,
+                .background(
+                    Color(
+                        ColorUtils.blendARGB(
+                            line.color.toArgb(),
+                            Color.Black.toArgb(),
+                            0.3f
+                        )
                     )
                 )
-                .background(line.color) // because the shadow is above this
                 .padding(16.dp)
         ) {
             Image(
@@ -137,10 +138,10 @@ fun LineScreen(
                 contentDescription = "Logo du ${kind.displayName}",
                 modifier = Modifier.size(64.dp)
             )
-            Text(
-                text = title,
-                style = Typography.headlineMedium,
-                color = line.textColor
+            Image(
+                painter = painterResource(line.getResource()),
+                contentDescription = "Logo du $title",
+                modifier = Modifier.size(64.dp)
             )
         }
         LazyColumn(
