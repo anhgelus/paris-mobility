@@ -4,14 +4,18 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.LineStops
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.PreferencesRepository
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.Stop
+import world.anhgelus.parismobility.data.get
 
 class HomeViewModel(
     private val preferencesRepo: PreferencesRepository,
@@ -25,12 +29,30 @@ class HomeViewModel(
         initialValue = emptySet()
     )
 
-    val stops = linesRepo.stops
+    val stops: StateFlow<LineStops> = linesRepo.stops.onEach { mp ->
+        linesRepo.monitorStop(
+            s = savedStops.value.mapNotNull { s -> mp[s]?.second }.toTypedArray(),
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(60_000),
+        initialValue = emptyMap()
+    )
 
-    val savedStops = preferencesRepo.stopsFlow.stateIn(
+    val savedStops: StateFlow<Set<SavedStop>> = preferencesRepo.stopsFlow.onEach { mp ->
+        linesRepo.monitorStop(
+            s = mp.mapNotNull { s -> stops.value[s]?.second }.toTypedArray(),
+        )
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(60_000),
         initialValue = emptySet()
+    )
+
+    val monitoringStops = linesRepo.monitorStops.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(60_000),
+        initialValue = emptyMap()
     )
 
     fun saveLine(ctx: Context, kind: LineKind, line: Line) {
@@ -51,6 +73,7 @@ class HomeViewModel(
                 ctx,
                 SavedStop(SavedLine(kind, line.id), stop.id, direction)
             )
+            linesRepo.monitorStop(stop)
         }
     }
 
@@ -60,6 +83,7 @@ class HomeViewModel(
                 ctx,
                 SavedStop(SavedLine(kind, line.id), stop.id, direction)
             )
+            linesRepo.stopMonitoringStop(stop)
         }
     }
 }

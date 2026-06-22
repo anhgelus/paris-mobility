@@ -3,6 +3,7 @@ package world.anhgelus.parismobility.screens
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,8 +20,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import kotlinx.coroutines.flow.StateFlow
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.LineStops
+import world.anhgelus.parismobility.data.MonitorStop
+import world.anhgelus.parismobility.data.NetworkError
+import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.get
@@ -61,6 +66,7 @@ fun HomeScreen(
                     savedLines,
                     stops,
                     savedStops,
+                    viewModel.monitoringStops,
                     modifier
                 ) { homeBackStack.add(Route.Home.Modify) }
             }
@@ -90,6 +96,7 @@ fun GeneralScreen(
     savedLines: Collection<SavedLine>,
     stops: LineStops,
     savedStops: Collection<SavedStop>,
+    monitoredStops: StateFlow<Map<Int, Result<MonitorStop, NetworkError>>>,
     modifier: Modifier = Modifier,
     onModifyClick: () -> Unit,
 ) {
@@ -111,7 +118,7 @@ fun GeneralScreen(
                 lines.size
             }
         }
-        StopsMonitoring(groups, stops, savedStops)
+        StopsMonitoring(groups, stops, savedStops, monitoredStops)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
@@ -120,5 +127,6 @@ fun GeneralScreen(
                 Text(text = "Modifier", style = Typography.bodyLarge)
             }
         }
+        Spacer(modifier = Modifier.padding(bottom = 16.dp))
     }
 }

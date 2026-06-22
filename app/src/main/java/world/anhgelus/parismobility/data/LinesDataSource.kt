@@ -162,5 +162,6 @@ data class Line(
 data class Stop(
     @SerialName("id_gares") val id: Int,
     @SerialName("idrefligc") val line: String,
-    @SerialName("nom_iv") val name: String
+    @SerialName("nom_iv") val name: String,
+    @SerialName("id_ref_zda") val zda: Int
 )

@@ -32,7 +32,7 @@ class GeneralViewModel(
     fun loadData(ctx: Context) {
         _isLoading.update { true }
         viewModelScope.launch {
-            linesRepository = LinesRepository(linesDataSource, primDataSource)
+            linesRepository = LinesRepository(120, linesDataSource, primDataSource)
             preferencesRepository = PreferencesRepository(ctx)
             linesRepository.loadLines(ctx.resources)
             _isLoading.update { false }

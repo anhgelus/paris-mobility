@@ -37,6 +37,7 @@ import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.DisruptionCard
+import world.anhgelus.parismobility.ui.LineImage
 import world.anhgelus.parismobility.ui.LineKind
 import world.anhgelus.parismobility.ui.ScreenTitle
 import world.anhgelus.parismobility.ui.theme.Typography
@@ -138,11 +139,7 @@ fun LineScreen(
                 contentDescription = "Logo du ${kind.displayName}",
                 modifier = Modifier.size(64.dp)
             )
-            Image(
-                painter = painterResource(line.getResource()),
-                contentDescription = "Logo du $title",
-                modifier = Modifier.size(64.dp)
-            )
+            LineImage(kind, line, Modifier.size(64.dp), true)
         }
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(32.dp),
@@ -178,19 +175,16 @@ fun LineScreen(
                     if (dis.size >= 3) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp)
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             FilledTonalButton(onClick = {}) {
                                 Text(text = "Voir plus", style = Typography.bodyLarge)
                             }
                         }
-                    } else {
-                        Spacer(modifier = Modifier.padding(bottom = 16.dp))
                     }
                 }
             }
+            item { Spacer(modifier = Modifier.padding(bottom = 16.dp)) }
         }
     }
 }

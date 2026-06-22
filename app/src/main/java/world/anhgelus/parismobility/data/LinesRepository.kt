@@ -1,13 +1,17 @@
 package world.anhgelus.parismobility.data
 
 import android.content.res.Resources
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.models.LineKind
+import kotlin.time.Duration.Companion.milliseconds
 
 class LinesRepository(
+    val fetchStopEach: Int,
     private val linesSource: LinesDataSource,
     private val primSource: PrimDataSource
 ) {
@@ -48,6 +52,34 @@ class LinesRepository(
         _stops.update { linesSource.getStops(res) }
     }
 
+    private var monitoredStops = mutableSetOf<Stop>()
+
+    val monitorStops = flow {
+        while (true) {
+            if (monitoredStops.isEmpty()) {
+                delay(500.milliseconds)
+                continue
+            }
+            val added = mutableSetOf<Int>()
+            val res =
+                monitoredStops.fold(mutableMapOf<Int, Result<MonitorStop, NetworkError>>()) { acc, stop ->
+                    if (!added.add(stop.zda)) return@fold acc
+                    acc[stop.id] = primSource.monitorStop(stop)
+                    acc
+                }
+            emit(res)
+            delay((fetchStopEach * 1000L).milliseconds)
+        }
+    }
+
+    fun monitorStop(vararg s: Stop) {
+        monitoredStops.addAll(s)
+    }
+
+    fun stopMonitoringStop(vararg s: Stop) {
+        monitoredStops.removeAll(s.toSet())
+    }
+
     private fun updateLines(
         disruptions: LineDisruptions,
     ) {
@@ -77,6 +109,6 @@ typealias LineDisruptions = Map<String, List<Disruption>>
 typealias LineStops = Map<String, List<Stop>>
 
 operator fun LineStops.get(saved: SavedStop): Pair<SavedLine, Stop>? {
-    return this[saved.line.line]?.firstOrNull { it.line == saved.line.line }
+    return this[saved.line.line]?.firstOrNull { it.id == saved.stop }
         ?.let { Pair(saved.line, it) }
 }

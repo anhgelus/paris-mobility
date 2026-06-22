@@ -15,7 +15,7 @@ abstract class Result<out R, out E> {
         this.error = error
     }
 
-    abstract fun <T> map(transform: (R) -> T): Result<T, E>
+    abstract suspend fun <T> map(transform: suspend (R) -> T): Result<T, E>
 
     fun onSuccess(action: (R) -> Unit): Result<R, E> {
         if (success) action(value!!)
@@ -28,13 +28,13 @@ abstract class Result<out R, out E> {
     }
 
     data class Ok<out R, out E>(val value: R) : Result<R, E>(true, value) {
-        override fun <T> map(transform: (R) -> T): Result<T, E> {
+        override suspend fun <T> map(transform: suspend (R) -> T): Result<T, E> {
             return Ok(transform(value))
         }
     }
 
     data class Error<out R, out E>(val error: E) : Result<R, E>(false, error = error) {
-        override fun <T> map(transform: (R) -> T): Result<T, E> {
+        override suspend fun <T> map(transform: suspend (R) -> T): Result<T, E> {
             return Error(error)
         }
     }

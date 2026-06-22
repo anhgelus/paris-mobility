@@ -24,6 +24,9 @@ import world.anhgelus.parismobility.BuildConfig
 import world.anhgelus.parismobility.ui.theme.CustomColorScheme
 import java.nio.channels.UnresolvedAddressException
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 object PrimDataSource {
     private suspend fun get(path: String): Result<HttpResponse, NetworkError> {
@@ -56,6 +59,8 @@ object PrimDataSource {
 
     val primError = mutableStateOf<NetworkError?>(null)
 
+    private val json = Json { ignoreUnknownKeys = true }
+
     val disruptions = flow {
         var resp: HttpResponse? = null
         get("disruptions_bulk/disruptions/v2").onSuccess {
@@ -65,7 +70,6 @@ object PrimDataSource {
         }
         if (resp == null) return@flow
         val content = resp.bodyAsText()
-        val json = Json { ignoreUnknownKeys = true }
         val disruptions = json.decodeFromString<Disruptions>(content)
         val alreadyAdded = mutableSetOf<String>()
         val indexedDisruptions = disruptions.disruptions
@@ -85,6 +89,12 @@ object PrimDataSource {
                 acc
             }
         emit(linesDisruptions)
+    }
+
+    suspend fun monitorStop(stop: Stop): Result<MonitorStop, NetworkError> {
+        return get("stop-monitoring?MonitoringRef=STIF%3AStopArea%3ASP%3A${stop.zda}%3A").map {
+            json.decodeFromString<Siri>(it.bodyAsText()).root.delivery.monitorStop.first()
+        }
     }
 }
 
@@ -204,4 +214,146 @@ data class LineAffected(
         val name: String,
         val disruptionIds: List<String>
     )
+}
+
+@Stable
+@Immutable
+@Serializable
+private data class Siri(
+    @SerialName("Siri") val root: ServiceDelivery,
+) {
+    @Stable
+    @Immutable
+    @Serializable
+    data class ServiceDelivery(
+        @SerialName("ServiceDelivery") val delivery: StopMonitoringDelivery,
+    )
+
+    @Stable
+    @Immutable
+    @Serializable
+    data class StopMonitoringDelivery(
+        @SerialName("StopMonitoringDelivery") val monitorStop: List<MonitorStop>,
+    )
+}
+
+@Stable
+@Immutable
+@Serializable
+data class MonitorStop(
+    // responseTimestamp is local time!
+    @SerialName("ResponseTimestamp") val responseTimestamp: String,
+    @SerialName("MonitoredStopVisit") val stopVisit: List<StopVisit>,
+) {
+    fun compact(
+        stop: Stop,
+        filter: (StopVisit) -> Boolean = { true }
+    ): Map<String, MutableList<StopVisit>> {
+        return stopVisit.filter(filter)
+            .fold<StopVisit, MutableMap<String, MutableList<StopVisit>>>(mutableMapOf()) { acc, visit ->
+                val k = visit.journey.monitored.destinationDisplay.first().value
+                val v = acc[k] ?: mutableListOf()
+                v.add(visit)
+                acc[k] = v
+                acc
+            }.filterKeys { !stop.name.contains(it) && !it.contains(stop.name) }
+    }
+
+    @Stable
+    @Immutable
+    @Serializable
+    data class StopVisit(
+        @SerialName("RecordedAtTime") val recordedAt: String,
+        @SerialName("MonitoringRef") val ref: Ref,
+        @SerialName("MonitoredVehicleJourney") val journey: Journey,
+    )
+
+    @Stable
+    @Immutable
+    @Serializable
+    data class Ref(
+        @SerialName("value") val value: String
+    )
+
+    @Stable
+    @Immutable
+    @Serializable
+    data class Journey(
+        @SerialName("LineRef") val line: Ref,
+        @SerialName("DirectionName") val directions: List<Ref>,
+        @SerialName("JourneyNote") val notes: List<Ref>? = null,
+        @SerialName("MonitoredCall") val monitored: Monitored,
+        @SerialName("VehicleFeatureRef") val vehicleFeature: List<VehicleFeature> = emptyList(),
+    )
+
+    @Stable
+    @Immutable
+    @Serializable
+    enum class VehicleFeature {
+        @SerialName("shortTrain")
+        ShortTrain,
+
+        @SerialName("longTrain")
+        LongTrain
+    }
+
+    @Stable
+    @Immutable
+    @Serializable
+    data class Monitored(
+        @SerialName("VehicleAtStop") val isStopped: Boolean,
+        @SerialName("DestinationDisplay") val destinationDisplay: List<Ref>,
+        @SerialName("ExpectedArrivalTime") private val arrivalTime: String? = null,
+        @SerialName("ExpectedDepartureTime") private val departureTime: String? = null,
+        @SerialName("DepartureStatus") val status: Status,
+    ) {
+        init {
+            if (arrivalTime == null && departureTime == null)
+                throw IllegalArgumentException("cannot have arrival and departure time at null")
+        }
+
+        fun displayTime(): String {
+            val t = ZonedDateTime.parse(arrivalTime ?: departureTime!!)
+                .withZoneSameInstant(ZoneId.systemDefault())
+            val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), t)
+            if (mins > 45) {
+                val h = if (t.hour < 10) "0${t.hour}" else t.hour.toString()
+                val m = if (t.minute < 10) "0${t.minute}" else t.minute.toString()
+                return "$h:$m"
+            }
+            val hours = mins / 60
+            val minString = (mins % 60).let { if (it < 10) "0$it" else "$it" }
+            return if (hours != 0L) "$hours h $minString"
+            else "${mins % 60} min"
+        }
+    }
+
+    @Stable
+    @Immutable
+    @Serializable
+    enum class Status {
+        @SerialName("onTime")
+        OnTime,
+
+        @SerialName("early")
+        Early,
+
+        @SerialName("delayed")
+        Delayed,
+
+        @SerialName("cancelled")
+        Cancelled,
+
+        @SerialName("missed")
+        Missed,
+
+        @SerialName("arrived")
+        Arrived,
+
+        @SerialName("departed")
+        Departed,
+
+        @SerialName("notExpected")
+        NotExpected,
+    }
 }

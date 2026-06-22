@@ -28,14 +28,19 @@ import world.anhgelus.parismobility.data.Severity
 import world.anhgelus.parismobility.models.LineKind
 
 @Composable
-fun LineImage(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
+fun LineImage(
+    kind: LineKind,
+    line: Line,
+    modifier: Modifier = Modifier,
+    forceBackground: Boolean = false
+) {
     Image(
         painter = painterResource(line.getResource()),
         contentDescription = line.name,
         modifier = modifier
             .background(
                 color =
-                    if (isSystemInDarkTheme() && kind.requiresBackground) Color.White
+                    if ((isSystemInDarkTheme() || forceBackground) && kind.requiresBackground) Color.White
                     else Color.Transparent,
                 shape = kind.roundedCornerShape
             ),
