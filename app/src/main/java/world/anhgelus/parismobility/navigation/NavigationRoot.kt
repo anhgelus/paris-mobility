@@ -41,7 +41,6 @@ fun NavigationRoot(
         HomeViewModel(
             model.preferencesRepository,
             model.linesRepository,
-            listOf(),
         )
     }
     val networkViewModel = viewModel { NetworkViewModel(model.linesRepository) }

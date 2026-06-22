@@ -19,11 +19,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import world.anhgelus.parismobility.models.StopDataState
+import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.LineGroups
+import world.anhgelus.parismobility.data.LineStops
+import world.anhgelus.parismobility.data.SavedStop
+import world.anhgelus.parismobility.data.Stop
+import world.anhgelus.parismobility.data.get
+import world.anhgelus.parismobility.models.LineKind
 import world.anhgelus.parismobility.ui.theme.Typography
 
 @Composable
-fun StopsMonitoring(stops: List<StopDataState>, modifier: Modifier = Modifier) {
+fun StopsMonitoring(
+    lines: LineGroups,
+    stops: LineStops,
+    savedStops: Collection<SavedStop>,
+    modifier: Modifier = Modifier,
+) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -34,13 +45,17 @@ fun StopsMonitoring(stops: List<StopDataState>, modifier: Modifier = Modifier) {
     ) {
         val modifier = Modifier.padding(16.dp)
         SectionTitle("Prochains passages", modifier)
-        stops.forEach { StopMonitoring(it, modifier) }
+        savedStops.mapNotNull { stops[it] }.forEach { (line, stop) ->
+            StopMonitoring(line.kind, lines[line]!!.second, stop, modifier)
+        }
     }
 }
 
 @Composable
 fun StopMonitoring(
-    stop: StopDataState,
+    kind: LineKind,
+    line: Line,
+    stop: Stop,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -52,7 +67,7 @@ fun StopMonitoring(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Line(stop.kind, stop.line, {}, Modifier.size(48.dp))
+            Line(kind, line, {}, Modifier.size(48.dp))
             Text(
                 text = stop.name,
                 style = Typography.bodyMedium,
@@ -62,9 +77,9 @@ fun StopMonitoring(
                 textAlign = TextAlign.Center,
             )
         }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            stop.nextTrains.forEach { (k, v) -> Monitoring(k, v) }
-        }
+//        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+//            stop.nextTrains.forEach { (k, v) -> Monitoring(k, v) }
+//        }
     }
 }
 

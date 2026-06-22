@@ -17,7 +17,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "pr
 class PreferencesRepository(ctx: Context) {
     val linesFlow: Flow<Set<SavedLine>> = ctx.dataStore.data.map { preferences ->
         val raw = preferences[SAVED_LINES] ?: return@map emptySet()
-        Json.decodeFromString<Set<SavedLine>>(raw)
+        Json.decodeFromString(raw)
     }
 
     suspend fun addLines(ctx: Context, vararg lines: SavedLine) {
@@ -40,8 +40,34 @@ class PreferencesRepository(ctx: Context) {
         }
     }
 
+    val stopsFlow: Flow<Set<SavedStop>> = ctx.dataStore.data.map { preferences ->
+        val raw = preferences[SAVED_STOPS] ?: return@map emptySet()
+        Json.decodeFromString(raw)
+    }
+
+    suspend fun addStops(ctx: Context, vararg stops: SavedStop) {
+        ctx.dataStore.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val saved = stopsFlow.first().toMutableSet()
+                saved.addAll(stops)
+                prefs[SAVED_STOPS] = Json.encodeToString(saved)
+            }
+        }
+    }
+
+    suspend fun removeStops(ctx: Context, vararg stops: SavedStop) {
+        ctx.dataStore.updateData {
+            it.toMutablePreferences().also { prefs ->
+                val saved = stopsFlow.first().toMutableSet()
+                saved.removeAll(stops.toSet())
+                prefs[SAVED_STOPS] = Json.encodeToString(saved)
+            }
+        }
+    }
+
     companion object {
         val SAVED_LINES = stringPreferencesKey("saved_lines")
+        val SAVED_STOPS = stringPreferencesKey("saved_stops")
     }
 }
 
@@ -53,4 +79,15 @@ data class SavedLine(
 
 fun Collection<SavedLine>.contains(kind: LineKind, line: Line): Boolean {
     return this.contains(SavedLine(kind, line.id))
+}
+
+@Serializable
+data class SavedStop(
+    val line: SavedLine,
+    val stop: Int,
+    val direction: String,
+)
+
+fun Collection<SavedStop>.contains(kind: LineKind, stop: Stop): Boolean {
+    return this.contains(SavedStop(SavedLine(kind, stop.line), stop.id, ""))
 }

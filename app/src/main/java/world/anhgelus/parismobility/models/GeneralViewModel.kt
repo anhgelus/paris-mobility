@@ -34,8 +34,10 @@ class GeneralViewModel(
         viewModelScope.launch {
             linesRepository = LinesRepository(linesDataSource, primDataSource)
             preferencesRepository = PreferencesRepository(ctx)
-            linesRepository.initLines(ctx.resources)
+            linesRepository.loadLines(ctx.resources)
             _isLoading.update { false }
+            // after isLoading because this is not a required to start
+            linesRepository.loadStops(ctx.resources)
         }
     }
 }

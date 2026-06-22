@@ -11,7 +11,13 @@ sealed interface Route : NavKey {
     @Serializable
     data object Home : Route {
         @Serializable
-        data object Modify : Route
+        data object Modify : Route {
+            @Serializable
+            data object Stops : Route
+
+            @Serializable
+            data class Stop(val kind: LineKind, val line: Line) : Route
+        }
     }
 
     @Serializable

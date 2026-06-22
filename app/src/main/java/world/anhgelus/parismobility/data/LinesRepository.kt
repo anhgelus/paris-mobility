@@ -15,21 +15,24 @@ class LinesRepository(
     private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
     val lines = _lines.asStateFlow()
 
+    private val _stops = MutableStateFlow<LineStops>(mutableMapOf())
+    val stops = _stops.asStateFlow()
+
     val disruptions = primSource.disruptions.onEach { updateLines(it) }
 
     val primErrors = primSource.primError
 
-    suspend fun initLines(res: Resources) {
+    suspend fun loadLines(res: Resources) {
         val lines = linesSource.getLines(res)
-        val res = mutableMapOf<LineKind, List<Line>>()
+        val resp = mutableMapOf<LineKind, List<Line>>()
         lines.forEach { (mode, lines) ->
             when (mode) {
-                Line.TransportMode.BUS -> res[LineKind.BUS] = lines.sorted()
-                Line.TransportMode.TRAM -> res[LineKind.TRAM] = lines.sorted()
-                Line.TransportMode.METRO -> res[LineKind.METRO] = lines.sorted()
+                Line.TransportMode.BUS -> resp[LineKind.BUS] = lines.sorted()
+                Line.TransportMode.TRAM -> resp[LineKind.TRAM] = lines.sorted()
+                Line.TransportMode.METRO -> resp[LineKind.METRO] = lines.sorted()
                 Line.TransportMode.RAIL -> {
-                    res[LineKind.RER] = lines.filter { it.submode == "local" }.sorted()
-                    res[LineKind.TRANSILIEN] = lines.filter {
+                    resp[LineKind.RER] = lines.filter { it.submode == "local" }.sorted()
+                    resp[LineKind.TRANSILIEN] = lines.filter {
                         // because the API doesn't contain the data of line V
                         it.submode == "suburbanRailway" && it.name != "V"
                     }.sorted()
@@ -38,7 +41,11 @@ class LinesRepository(
                 else -> {} // do nothing with unsupported modes
             }
         }
-        _lines.update { res }
+        _lines.update { resp }
+    }
+
+    suspend fun loadStops(res: Resources) {
+        _stops.update { linesSource.getStops(res) }
     }
 
     private fun updateLines(
@@ -66,3 +73,10 @@ operator fun LineGroups.get(saved: SavedLine): Pair<LineKind, Line>? {
 }
 
 typealias LineDisruptions = Map<String, List<Disruption>>
+
+typealias LineStops = Map<String, List<Stop>>
+
+operator fun LineStops.get(saved: SavedStop): Pair<SavedLine, Stop>? {
+    return this[saved.line.line]?.firstOrNull { it.line == saved.line.line }
+        ?.let { Pair(saved.line, it) }
+}

@@ -2,6 +2,7 @@ package world.anhgelus.parismobility.data
 
 import android.annotation.SuppressLint
 import android.content.res.Resources
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
@@ -15,9 +16,10 @@ import kotlinx.serialization.json.Json
 import world.anhgelus.parismobility.R
 
 object LinesDataSource {
+    private val json = Json { ignoreUnknownKeys = true }
+
     suspend fun getLines(res: Resources): Map<Line.TransportMode, List<Line>> {
         return withContext(Dispatchers.IO) {
-            val json = Json { ignoreUnknownKeys = true }
             val input = res
                 .openRawResource(R.raw.lines)
                 .bufferedReader()
@@ -29,6 +31,22 @@ object LinesDataSource {
                     line.loadResource(res)
                     lines.add(line)
                     acc[line.mode] = lines
+                    acc
+                }
+        }
+    }
+
+    suspend fun getStops(res: Resources): Map<String, List<Stop>> {
+        return withContext(Dispatchers.IO) {
+            val input = res
+                .openRawResource(R.raw.stops)
+                .bufferedReader()
+                .use { it.readText() }
+            json.decodeFromString<List<Stop>>(input)
+                .fold(mutableMapOf<String, MutableList<Stop>>()) { acc, stop ->
+                    val lines = acc[stop.line] ?: mutableListOf()
+                    lines.add(stop)
+                    acc[stop.line] = lines
                     acc
                 }
         }
@@ -137,3 +155,12 @@ data class Line(
         }
     }
 }
+
+@Stable
+@Immutable
+@Serializable
+data class Stop(
+    @SerialName("id_gares") val id: Int,
+    @SerialName("idrefligc") val line: String,
+    @SerialName("nom_iv") val name: String
+)

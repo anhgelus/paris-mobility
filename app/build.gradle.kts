@@ -123,6 +123,16 @@ val downloadLines = tasks.register("downloadLinesJson") {
     logger.info("Lines data downloaded")
 }
 
+val downloadStops = tasks.register("downloadStopsJson") {
+    description = "Download JSON describing stops"
+
+    request(
+        url = "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/emplacement-des-gares-idf/exports/json",
+        outputPath = file("src/main/res/raw/stops.json").absolutePath
+    )
+    logger.info("Stops data downloaded")
+}
+
 val updateLinesSvg = tasks.register("updateLinesSvg") {
     description = "Update lines' SVG"
 
