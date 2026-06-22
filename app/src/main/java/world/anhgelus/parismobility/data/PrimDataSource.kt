@@ -29,9 +29,11 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 object PrimDataSource {
+    private val httpClient = HttpClient()
+
     private suspend fun get(path: String): Result<HttpResponse, NetworkError> {
         val resp = try {
-            HttpClient().request {
+            httpClient.request {
                 method = HttpMethod.Get
                 url {
                     protocol = URLProtocol.HTTPS
