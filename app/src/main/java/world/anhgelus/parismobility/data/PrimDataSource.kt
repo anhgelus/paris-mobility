@@ -7,17 +7,19 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.headers
 import io.ktor.client.request.request
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpMethod
 import io.ktor.http.URLProtocol
 import io.ktor.http.appendEncodedPathSegments
 import io.ktor.http.userAgent
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import world.anhgelus.parismobility.BuildConfig
@@ -29,9 +31,13 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 object PrimDataSource {
-    private val httpClient = HttpClient()
+    private val httpClient = HttpClient {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
+    }
 
-    private suspend fun get(path: String): Result<HttpResponse, NetworkError> {
+    private suspend inline fun <reified T> get(path: String): Result<T, NetworkError> {
         val resp = try {
             httpClient.request {
                 method = HttpMethod.Get
@@ -50,7 +56,15 @@ object PrimDataSource {
             return Result.Error(NetworkError.NO_INTERNET)
         }
         return when (resp.status.value) {
-            in 200..299 -> Result.Ok(resp)
+            in 200..299 -> {
+                try {
+                    val data = resp.body<T>()
+                    Result.Ok(data)
+                } catch (_: SerializationException) {
+                    Result.Error(NetworkError.INVALID_DATA)
+                }
+            }
+
             400 -> Result.Error(NetworkError.INVALID_DATA)
             401 -> Result.Error(NetworkError.INVALID_AUTH)
             429 -> Result.Error(NetworkError.RATE_LIMITED)
@@ -61,18 +75,14 @@ object PrimDataSource {
 
     val primError = mutableStateOf<NetworkError?>(null)
 
-    private val json = Json { ignoreUnknownKeys = true }
-
     val disruptions = flow {
-        var resp: HttpResponse? = null
-        get("disruptions_bulk/disruptions/v2").onSuccess {
-            resp = it
+        var disruptions: Disruptions? = null
+        get<Disruptions>("disruptions_bulk/disruptions/v2").onSuccess {
+            disruptions = it
         }.onError {
             primError.value = it
         }
-        if (resp == null) return@flow
-        val content = resp.bodyAsText()
-        val disruptions = json.decodeFromString<Disruptions>(content)
+        if (disruptions == null) return@flow
         val alreadyAdded = mutableSetOf<String>()
         val indexedDisruptions = disruptions.disruptions
             .filter { !it.periods.isEmpty() && alreadyAdded.add(it.title) }
@@ -94,8 +104,8 @@ object PrimDataSource {
     }
 
     suspend fun monitorStop(stop: Stop): Result<MonitorStop, NetworkError> {
-        return get("stop-monitoring?MonitoringRef=STIF%3AStopArea%3ASP%3A${stop.zda}%3A").map {
-            json.decodeFromString<Siri>(it.bodyAsText()).root.delivery.monitorStop.first()
+        return get<Siri>("stop-monitoring?MonitoringRef=STIF%3AStopArea%3ASP%3A${stop.zda}%3A").map {
+            it.root.delivery.monitorStop.first()
         }
     }
 }
