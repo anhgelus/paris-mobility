@@ -267,7 +267,12 @@ data class MonitorStop(
         stop: Stop,
         filter: (StopVisit) -> Boolean = { true }
     ): Map<String, MutableList<StopVisit>> {
-        return stopVisit.filter(filter)
+        return stopVisit.filter {
+            filter(it) && ChronoUnit.MINUTES.between(
+                ZonedDateTime.now(),
+                it.journey.monitored.zonedDateTime
+            ) >= 0
+        }
             .fold<StopVisit, MutableMap<String, MutableList<StopVisit>>>(mutableMapOf()) { acc, visit ->
                 val k = visit.journey.monitored.destinationDisplay.first().value
                 val v = acc[k] ?: mutableListOf()
@@ -324,6 +329,9 @@ data class MonitorStop(
         @SerialName("ExpectedArrivalTime") private val arrivalTime: String? = null,
         @SerialName("ExpectedDepartureTime") private val departureTime: String? = null,
         @SerialName("DepartureStatus") val status: Status,
+        @Transient val zonedDateTime: ZonedDateTime = ZonedDateTime.parse(
+            arrivalTime ?: departureTime!!
+        ).withZoneSameInstant(ZoneId.systemDefault())
     ) {
         init {
             if (arrivalTime == null && departureTime == null)
@@ -331,9 +339,10 @@ data class MonitorStop(
         }
 
         fun displayTime(): String {
-            val t = ZonedDateTime.parse(arrivalTime ?: departureTime!!)
-                .withZoneSameInstant(ZoneId.systemDefault())
+            if (isStopped) return "À quai"
+            val t = zonedDateTime
             val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), t)
+            if (mins == 0L) return "À l'approche"
             if (mins > 45) {
                 val h = if (t.hour < 10) "0${t.hour}" else t.hour.toString()
                 val m = if (t.minute < 10) "0${t.minute}" else t.minute.toString()
