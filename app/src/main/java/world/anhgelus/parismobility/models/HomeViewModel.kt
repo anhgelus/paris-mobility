@@ -1,6 +1,7 @@
 package world.anhgelus.parismobility.models
 
 import android.content.Context
+import androidx.compose.foundation.pager.PagerState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -85,5 +86,9 @@ class HomeViewModel(
             )
             linesRepo.stopMonitoringStop(stop)
         }
+    }
+
+    fun changeTab(state: PagerState, id: Int) {
+        viewModelScope.launch { state.scrollToPage(id) }
     }
 }

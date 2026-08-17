@@ -83,7 +83,8 @@ fun HomeScreen(
                     onUpdateStops = { kind, line, stop, added ->
                         if (added) viewModel.saveStops(ctx, kind, line, stop, "")
                         else viewModel.removeStops(ctx, kind, line, stop, "")
-                    }
+                    },
+                    onClick = { a, b -> viewModel.changeTab(a, b) },
                 )
             }
         }

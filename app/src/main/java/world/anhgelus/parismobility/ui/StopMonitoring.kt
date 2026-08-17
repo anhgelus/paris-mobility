@@ -52,7 +52,7 @@ fun StopsMonitoring(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 8.dp),
-        elevation = CardDefaults.cardElevation(1.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
     ) {
         val modifier = Modifier.padding(16.dp)
         SectionTitle("Prochains passages", modifier)

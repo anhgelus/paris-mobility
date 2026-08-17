@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Switch
@@ -42,43 +45,28 @@ fun ModifyScreen(
     savedStops: Collection<SavedStop>,
     onUpdateLines: (LineKind, Line, Boolean) -> Unit,
     onUpdateStops: (LineKind, Line, Stop, Boolean) -> Unit,
+    onClick: (PagerState, Int) -> Unit
 ) {
-    val modifyBackStack = rememberNavBackStack(Route.Home.Modify)
-
-    val routes = listOf(
-        Triple(Route.Home.Modify, 0, "Lignes"), Triple(Route.Home.Modify.Stops, 1, "Arrêts")
-    )
-
-    val selected = routes.first { it.first == modifyBackStack.last() }.second
+    val pager = rememberPagerState(0) { 2 }
 
     Column(
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        SecondaryTabRow(
-            selectedTabIndex = selected
-        ) {
-            routes.forEach { (dest, index, label) ->
+        SecondaryTabRow(selectedTabIndex = pager.currentPage) {
+            listOf("Lignes", "Arrêts").forEachIndexed { i, name ->
                 Tab(
-                    selected = selected == index,
-                    onClick = {
-                        modifyBackStack.remove(modifyBackStack.last())
-                        modifyBackStack.add(routes.first { it.first == dest }.first)
-                    },
-                    text = { Text(text = label) }
+                    selected = pager.currentPage == i,
+                    onClick = { onClick(pager, i) },
+                    text = { Text(text = name) }
                 )
             }
         }
-        NavDisplay(
-            backStack = modifyBackStack,
-            entryProvider = entryProvider {
-                entry<Route.Home.Modify> {
-                    ModifySavedLines(groups, savedLines, onUpdateLines)
-                }
-                entry<Route.Home.Modify.Stops> {
-                    ModifySavedStops(groups, stops, savedStops, onUpdateStops)
-                }
+        HorizontalPager(state = pager) {
+            when (it) {
+                0 -> ModifySavedLines(groups, savedLines, onUpdateLines)
+                1 -> ModifySavedStops(groups, stops, savedStops, onUpdateStops)
             }
-        )
+        }
     }
 }
 
@@ -90,7 +78,7 @@ fun ModifySavedLines(
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(horizontal = 16.dp)
     ) {
         groups.filter { it.key != LineKind.BUS }.forEach { (kind, lines) ->
             item {
@@ -127,7 +115,7 @@ fun ModifySavedStops(
             entry<Route.Home.Modify.Stops> {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
                     groups.filter { it.key != LineKind.BUS }.forEach { (kind, lines) ->
                         item {
@@ -136,7 +124,7 @@ fun ModifySavedStops(
                                 modifier = Modifier.padding(top = 16.dp)
                             )
                         }
-                        items(lines) {
+                        items(lines.sortedBy { it.name }) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -170,10 +158,10 @@ fun ModifySavedStops(
                             }
                         ) { m ->
                             Text(
-                                text = it.name + " (direction )",
+                                text = it.name,
                                 softWrap = true,
                                 modifier = m.fillMaxWidth()
-                            ) //TODO: add direction
+                            )
                         }
                     }
                 }
