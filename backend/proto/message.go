@@ -12,16 +12,16 @@ type Kind uint8
 
 const (
 	KindResponse Kind = iota
+	KindInvalidRequest
+	KindInternalError
+	KindDisruptions
+	KindMonitoring
+	KindGoodbye
 )
 
 type Flag uint8
 
-const (
-	FlagDefault Flag = iota
-	FlagInvalidRequest
-	FlagInternalError
-	FlagGoodBye
-)
+const () // currently, there is no flag
 
 type Message struct {
 	Kind Kind
@@ -66,8 +66,7 @@ func (err ErrInvalidRequest) ToMessage() *Message {
 		e = err.Err.Error()
 	}
 	return &Message{
-		Kind: KindResponse,
-		Flag: FlagInvalidRequest,
+		Kind: KindInvalidRequest,
 		Body: struct {
 			Message string `cbor:"message"`
 			Error   string `cbor:"error,omitzero"`
@@ -89,8 +88,8 @@ func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 	msg.Kind = Kind(header[0])
 	msg.Flag = Flag(header[1])
 	ln := binary.BigEndian.Uint32(header[2:])
-	body := make([]byte, 0, ln+2)
-	n, err = r.Read(body)
+	rawBody := make([]byte, 0, ln+2)
+	n, err = r.Read(rawBody)
 	read += int64(n)
 	if err != nil {
 		return
@@ -99,7 +98,20 @@ func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 		err = ErrInvalidRequest{Reason: "content malformed"}
 		return
 	}
-	rest, err := cbor.Unmarshal(body[:ln], msg.Body)
+	var rest []byte
+	var body any
+	switch msg.Kind {
+	case KindDisruptions:
+		body = DisruptionsRequest{}
+	case KindMonitoring:
+		body = MonitoringRequest{}
+	case KindGoodbye:
+	default:
+		err = ErrInvalidRequest{Reason: "invalid kind"}
+		return
+	}
+	rest, err = cbor.Unmarshal(rawBody[:ln], &body)
+	msg.Body = body
 	if err != nil {
 		err = ErrInvalidRequest{Reason: "content malformed", Err: err}
 		return
