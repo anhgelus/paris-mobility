@@ -20,6 +20,7 @@ const (
 	FlagDefault Flag = iota
 	FlagInvalidRequest
 	FlagInternalError
+	FlagGoodBye
 )
 
 type Message struct {
