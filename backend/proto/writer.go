@@ -3,7 +3,6 @@ package proto
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 
 	"anhgelus.world/go-cbor"
@@ -47,11 +46,43 @@ func (msg *Message) WriteTo(w io.Writer) (int64, error) {
 	return buf.WriteTo(w)
 }
 
+type ErrInvalidRequest struct {
+	Reason string
+	Err    error
+}
+
+func (err ErrInvalidRequest) Error() string {
+	return err.Reason
+}
+
+func (err ErrInvalidRequest) Unwrap() error {
+	return err.Err
+}
+
+func (err ErrInvalidRequest) ToMessage() *Message {
+	var e string
+	if err.Err != nil {
+		e = err.Err.Error()
+	}
+	return &Message{
+		Kind: KindResponse,
+		Flag: FlagInvalidRequest,
+		Body: struct {
+			Message string `cbor:"message"`
+			Error   string `cbor:"error,omitzero"`
+		}{err.Reason, e},
+	}
+}
+
 func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 	var header [8]byte
 	n, err := r.Read(header[:])
 	read = int64(n)
 	if err != nil {
+		return
+	}
+	if n != len(header) {
+		err = ErrInvalidRequest{Reason: "content malformed"}
 		return
 	}
 	msg.Kind = Kind(header[0])
@@ -63,13 +94,17 @@ func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 	if err != nil {
 		return
 	}
+	if uint32(n) != ln+2 {
+		err = ErrInvalidRequest{Reason: "content malformed"}
+		return
+	}
 	rest, err := cbor.Unmarshal(body[:ln], msg.Body)
 	if err != nil {
+		err = ErrInvalidRequest{Reason: "content malformed", Err: err}
 		return
 	}
 	if len(rest) != 0 {
-		err = errors.New("CBOR contains more than one information")
-		return
+		err = ErrInvalidRequest{Reason: "contains more than one CBOR"}
 	}
 	return
 }
