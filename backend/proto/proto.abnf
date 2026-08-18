@@ -1,0 +1,8 @@
+kind = OCTET
+flags = OCTET
+size = 4OCTET
+
+header = kind flags size CRLF
+body = *OCTET CRLF
+
+message = header body
