@@ -81,10 +81,13 @@ func Handle(ctx context.Context, conn net.Conn) {
 }
 
 func handleDisruptions(ctx context.Context, req proto.DisruptionsRequest) (*proto.Message, error) {
-	resp := make(proto.Disruptions, len(req.Kinds)+len(req.Lines))
+	dis, err := PrimClient(ctx).Disruptions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return &proto.Message{
 		Kind: proto.KindResponse,
-		Body: resp,
+		Body: dis,
 	}, nil
 }
 
