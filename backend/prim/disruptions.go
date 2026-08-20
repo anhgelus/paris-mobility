@@ -75,6 +75,10 @@ type object struct {
 }
 
 func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) (proto.Disruptions, error) {
+	got, ok := c.Cache.Disruptions(req)
+	if ok {
+		return got, nil
+	}
 	var res disruptions
 	err := c.do(ctx, "disruptions_bulk/disruptions/v2", &res)
 	if err != nil {
@@ -113,9 +117,9 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 			ShortMessage: dis.ShortMessage,
 		}
 	}
+	complete := make(proto.Disruptions)
 	dis := make(proto.Disruptions)
 	for _, affected := range res.LinesAffected {
-		//TODO: remove unwanted kinds
 		id := slices.IndexFunc(affected.ImpactedObjects, func(obj object) bool {
 			return obj.Type == "line"
 		})
@@ -131,7 +135,10 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 			}
 			acc = append(acc, mp[id])
 		}
+		complete[affected.Id] = acc
+		//TODO: remove unwanted kinds
 		dis[affected.Id] = acc
 	}
+	go c.Cache.UpdateDisruptions(complete)
 	return dis, nil
 }

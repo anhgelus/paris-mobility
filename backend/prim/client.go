@@ -5,12 +5,24 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+
+	"anhgelus.world/paris-mobility/backend/cache"
 )
 
 type Client struct {
 	http.Client
 	Endpoint string
-	Token    string
+	token    string
+	Cache    *cache.Cache
+}
+
+func New(endpoint, token string, client http.Client, cache *cache.Cache) *Client {
+	return &Client{
+		Client:   client,
+		Endpoint: endpoint,
+		token:    token,
+		Cache:    cache,
+	}
 }
 
 func (c *Client) do(ctx context.Context, t string, v any) error {
@@ -23,7 +35,7 @@ func (c *Client) do(ctx context.Context, t string, v any) error {
 		return err
 	}
 	req = req.WithContext(ctx)
-	req.Header.Add("apiKey", c.Token)
+	req.Header.Add("apiKey", c.token)
 	req.Header.Add("Accept", "application/json")
 	resp, err := c.Do(req)
 	if err != nil {
