@@ -5,14 +5,18 @@ import (
 	_ "embed"
 	"flag"
 	"log/slog"
+	"log/syslog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/nyttikord/logos"
 )
 
 var (
-	config  string = "/etc/paris-mobility.toml"
-	verbose bool
+	config   string = "/etc/paris-mobility.toml"
+	verbose  bool
+	toSyslog bool
 )
 
 //go:embed default.toml
@@ -21,10 +25,30 @@ var defaultConfig []byte
 func init() {
 	flag.StringVar(&config, "config", config, "sets the config path")
 	flag.BoolVar(&verbose, "v", verbose, "increase verbosity")
+	flag.BoolVar(&toSyslog, "syslog", toSyslog, "log to syslog")
 }
 
 func main() {
 	flag.Parse()
+	var h slog.Handler
+	level := slog.LevelInfo
+	if verbose {
+		level = slog.LevelDebug
+	}
+	if toSyslog {
+		var err error
+		h, err = logos.NewSyslog("paris-mobility", syslog.LOG_USER, &logos.Options{
+			Level: level,
+		})
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		h = logos.NewColor(os.Stderr, &logos.Options{
+			Level: level,
+		})
+	}
+	slog.SetDefault(slog.New(h))
 	cfg, err := ParseConfig(config)
 	if err != nil {
 		if !os.IsNotExist(err) {
