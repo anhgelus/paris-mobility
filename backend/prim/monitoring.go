@@ -22,7 +22,7 @@ type journey struct {
 	LineRef        ref
 	DirectionName  []ref
 	Monitored      monitored `json:"MonitoredCall"`
-	VehicleFeature *string   `json:"VehicleFeatureRef"`
+	VehicleFeature []string  `json:"VehicleFeatureRef"`
 }
 
 type monitored struct {
@@ -63,9 +63,9 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.S
 		}
 		var t time.Time
 		if stop.Monitored.ArrivalTime != nil {
-			t, err = time.Parse(time.RFC1123, *stop.Monitored.ArrivalTime)
+			t, err = time.Parse(time.RFC3339, *stop.Monitored.ArrivalTime)
 		} else {
-			t, err = time.Parse(time.RFC1123, *stop.Monitored.DepartureTime)
+			t, err = time.Parse(time.RFC3339, *stop.Monitored.DepartureTime)
 		}
 		if err != nil {
 			return nil, false, err
@@ -77,15 +77,15 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.S
 		for _, s := range stop.DirectionName {
 			dest = append(dest, s.Value)
 		}
-		var f *proto.Feature
-		if stop.VehicleFeature != nil {
-			switch *stop.VehicleFeature {
+		var fs []proto.Feature
+		for _, f := range stop.VehicleFeature {
+			switch f {
 			case "shortTrain":
-				f = new(proto.FeatureShortTrain)
+				fs = append(fs, proto.FeatureShortTrain)
 			case "longTrain":
-				f = new(proto.FeatureLongTrain)
+				fs = append(fs, proto.FeatureLongTrain)
 			default:
-				return nil, false, errors.New("unknown vehicle feature: " + *stop.VehicleFeature)
+				return nil, false, errors.New("unknown vehicle feature: " + f)
 			}
 		}
 		var status proto.Status
@@ -109,12 +109,12 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.S
 		default:
 			return nil, false, errors.New("unknown status: " + stop.Monitored.Status)
 		}
-		res[stop.DirectionName[0].Value] = proto.StopMonitoring{
+		res[stop.Monitored.DestinationDisplay[0].Value] = proto.StopMonitoring{
 			IsStopped:      stop.Monitored.IsStopped,
 			Destination:    dest,
 			Time:           uint64(t.Unix()),
 			Status:         status,
-			VehicleFeature: f,
+			VehicleFeature: fs,
 		}
 	}
 	return res, true, nil

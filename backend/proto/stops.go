@@ -23,9 +23,9 @@ const (
 type Monitoring map[string]StopMonitoring
 
 type StopMonitoring struct {
-	IsStopped      bool     `cbor:"is_stopped"`
-	Destination    []string `cbor:"destination"`
-	Time           uint64   `cbor:"time"`
-	Status         Status   `cbor:"status"`
-	VehicleFeature *Feature `cbor:"vehicle_feature"`
+	IsStopped      bool      `cbor:"is_stopped"`
+	Destination    []string  `cbor:"destination"`
+	Time           uint64    `cbor:"time"`
+	Status         Status    `cbor:"status"`
+	VehicleFeature []Feature `cbor:"vehicle_feature"`
 }
