@@ -3,6 +3,7 @@ package prim
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -10,13 +11,13 @@ import (
 )
 
 type Client struct {
-	http.Client
+	*http.Client
 	Endpoint string
 	token    string
 	Cache    *cache.Cache
 }
 
-func New(endpoint, token string, client http.Client, cache *cache.Cache) *Client {
+func New(endpoint, token string, client *http.Client, cache *cache.Cache) *Client {
 	return &Client{
 		Client:   client,
 		Endpoint: endpoint,
@@ -35,11 +36,14 @@ func (c *Client) do(ctx context.Context, t string, v any) error {
 		return err
 	}
 	req = req.WithContext(ctx)
-	req.Header.Add("apiKey", c.token)
+	req.Header["apiKey"] = []string{c.token}
 	req.Header.Add("Accept", "application/json")
 	resp, err := c.Do(req)
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode > 399 {
+		return fmt.Errorf("invalid status code: %d", resp.StatusCode)
 	}
 	return json.NewDecoder(resp.Body).Decode(&v)
 }

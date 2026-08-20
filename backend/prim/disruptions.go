@@ -94,7 +94,13 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 		alreadyAdded[dis.Title] = struct{}{}
 		cv := make([]proto.Period, 0, len(dis.Periods))
 		for _, p := range dis.Periods {
+			if p.End.Before(time.Now()) {
+				continue
+			}
 			cv = append(cv, proto.Period{Begin: p.Begin.Unix(), End: p.End.Unix()})
+		}
+		if len(cv) == 0 {
+			continue
 		}
 		var sev proto.DisruptionSeverity
 		switch dis.Severity {
@@ -128,16 +134,28 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 		}
 		line := affected.ImpactedObjects[id]
 		acc := make([]proto.Disruption, 0, len(line.DisruptionIds))
-		for _, rawId := range affected.ImpactedObjects[id].DisruptionIds {
-			id := strings.Split(rawId, ":")[2]
-			if len(req.Lines) > 0 && !slices.Contains(req.Lines, id) {
+		accComplete := make([]proto.Disruption, 0, len(line.DisruptionIds))
+		key := strings.Split(affected.Id, ":")[2]
+		for _, id := range line.DisruptionIds {
+			v, ok := mp[id]
+			if !ok {
 				continue
 			}
-			acc = append(acc, mp[id])
+			accComplete = append(accComplete, v)
+			if len(req.Lines) > 0 && !slices.Contains(req.Lines, key) {
+				continue
+			}
+			acc = append(acc, v)
 		}
-		complete[affected.Id] = acc
+		if len(accComplete) == 0 {
+			continue
+		}
+		complete[key] = accComplete
+		if len(acc) == 0 {
+			continue
+		}
 		//TODO: remove unwanted kinds
-		dis[affected.Id] = acc
+		dis[key] = acc
 	}
 	go c.Cache.UpdateDisruptions(complete)
 	return dis, nil

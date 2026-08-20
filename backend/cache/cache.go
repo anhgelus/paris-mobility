@@ -33,6 +33,9 @@ func New() *Cache {
 func (c *Cache) Disruptions(req proto.DisruptionsRequest) (proto.Disruptions, bool) {
 	c.disMu.RLock()
 	defer c.disMu.RUnlock()
+	if len(req.Lines) == 0 {
+		return nil, false
+	}
 	dis := make(proto.Disruptions)
 	for _, line := range req.Lines {
 		v, ok := c.disruptions[line]
