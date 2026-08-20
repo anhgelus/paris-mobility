@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 
 func Handle(ctx context.Context, conn net.Conn) {
 	ch := make(chan any, 1)
+	l := Logger(ctx)
 	for {
 		go func() {
 			var msg proto.Message
@@ -29,10 +29,7 @@ func Handle(ctx context.Context, conn net.Conn) {
 		}()
 		select {
 		case <-ctx.Done():
-			msg := &proto.Message{
-				Kind: proto.KindGoodbye,
-				Body: "",
-			}
+			msg := &proto.Message{Kind: proto.KindGoodbye}
 			err := conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
 			if err == nil {
 				_, _ = msg.WriteTo(conn)
@@ -46,16 +43,20 @@ func Handle(ctx context.Context, conn net.Conn) {
 			}
 			var msg *proto.Message
 			var err error
+			sub, cancel := context.WithTimeout(ctx, 10*time.Second)
 			switch v := got.(type) {
 			case proto.DisruptionsRequest:
-				msg, err = handleDisruptions(ctx, v)
+				l = l.With("kind", "disruptions")
+				msg, err = handleDisruptions(WithLogger(sub, l), v)
 			case proto.MonitoringRequest:
-				msg, err = handleMonitoring(ctx, v)
+				l = l.With("kind", "monitoring")
+				msg, err = handleMonitoring(WithLogger(sub, l), v)
 			case error:
 				err = v
 			default:
 				panic("unknown value type: " + fmt.Sprintf("%T", v))
 			}
+			cancel()
 			if e, ok := errors.AsType[proto.ErrInvalidRequest](err); ok {
 				msg = e.ToMessage()
 				err = nil
@@ -63,18 +64,23 @@ func Handle(ctx context.Context, conn net.Conn) {
 			if err == nil {
 				_, err = msg.WriteTo(conn)
 			}
-			if err != nil {
-				slog.Error("handling message", "error", err)
-				msg := proto.Message{
-					Kind: proto.KindInternalError,
-					Body: "internal error",
-				}
+			if err == nil {
+				continue
+			}
+			l.Error("handling message", "error", err)
+			msg = &proto.Message{
+				Kind: proto.KindInternalError,
+				Body: "internal error",
+			}
+			err = conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
+			if err == nil {
 				_, err = msg.WriteTo(conn)
-				if err != nil {
-					slog.Error("responding internal error", "error", err)
-					conn.Close()
-					return
-				}
+			}
+			if err != nil {
+				l.Error("responding internal error", "error", err)
+				l.Warn("closing connection")
+				conn.Close()
+				return
 			}
 		}
 	}

@@ -17,7 +17,7 @@ func init() {
 	flag.StringVar(&config, "config", config, "sets the config path")
 }
 
-func Main() {
+func main() {
 	flag.Parse()
 	cfg, err := ParseConfig(config)
 	if err != nil {
@@ -39,6 +39,7 @@ func Main() {
 	defer cancel()
 	slog.Info("started")
 	go func() {
+		lg := Logger(ctx)
 		for {
 			conn, err := l.Accept()
 			if err != nil {
@@ -46,11 +47,11 @@ func Main() {
 				case <-ctx.Done():
 					return
 				default:
-					slog.Error("accepting request", "error", err, "ip", conn.RemoteAddr())
+					lg.Error("accepting request", "error", err)
 					continue
 				}
 			}
-			go Handle(ctx, conn)
+			go Handle(WithLogger(ctx, lg.With("ip", conn.RemoteAddr())), conn)
 		}
 	}()
 	<-ctx.Done()
