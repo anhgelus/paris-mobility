@@ -98,9 +98,22 @@ func handleDisruptions(ctx context.Context, req proto.DisruptionsRequest) (*prot
 }
 
 func handleMonitoring(ctx context.Context, req proto.MonitoringRequest) (*proto.Message, error) {
-	resp := make(proto.Monitoring, len(req.Stops))
+	acc := make(map[string]map[string]proto.StopMonitoring, len(req.Stops))
+	cached := make(map[string]map[string]proto.StopMonitoring)
+	cl := PrimClient(ctx)
+	for _, stop := range req.Stops {
+		monitors, toCache, err := cl.Monitoring(ctx, stop)
+		if err != nil {
+			return nil, err
+		}
+		acc[stop] = monitors
+		if toCache {
+			cached[stop] = monitors
+		}
+	}
+	cl.Cache.UpdateStops(cached)
 	return &proto.Message{
 		Kind: proto.KindResponse,
-		Body: resp,
+		Body: acc,
 	}, nil
 }
