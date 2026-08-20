@@ -40,7 +40,7 @@ func (msg *Message) WriteTo(w io.Writer) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	ln := make([]byte, 0, 4)
+	ln := make([]byte, 4)
 	if len(b) > 512 {
 		msg.Flag |= FlagGZipped
 		var buf bytes.Buffer

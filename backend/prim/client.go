@@ -38,6 +38,7 @@ func (c *Client) do(ctx context.Context, t string, v any) error {
 	req = req.WithContext(ctx)
 	req.Header["apiKey"] = []string{c.token}
 	req.Header.Add("Accept", "application/json")
+	req.Header.Add("User-Agent", "ParisMobility/1.0.0")
 	resp, err := c.Do(req)
 	if err != nil {
 		return err

@@ -55,7 +55,6 @@ func (cfg Config) Listen() (l net.Listener, err error) {
 			l.Close()
 		}
 	}()
-	defer l.Close()
 	if kind == "unix" {
 		if cfg.SocketPermission > 0 {
 			err = os.Chmod(cfg.ListenAddr, os.FileMode(cfg.SocketPermission))
