@@ -1,0 +1,10 @@
+# your PRIM token, see https://prim.iledefrance-mobilites.fr
+token = "change me"
+# address to listen to (can be a path to a unix socket)
+listen = ":1900"
+# use HAProxy PROXY protocol v2
+#use_proxy_v2 = true
+# group of the unix socket
+#socket_group = ""
+# permission of the unix socket
+#socket_permission = 0o666

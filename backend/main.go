@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"flag"
 	"log/slog"
 	"os"
@@ -10,18 +11,31 @@ import (
 )
 
 var (
-	config string = "/etc/paris-mobility.toml"
+	config  string = "/etc/paris-mobility.toml"
+	verbose bool
 )
+
+//go:embed default.toml
+var defaultConfig []byte
 
 func init() {
 	flag.StringVar(&config, "config", config, "sets the config path")
+	flag.BoolVar(&verbose, "v", verbose, "increase verbosity")
 }
 
 func main() {
 	flag.Parse()
 	cfg, err := ParseConfig(config)
 	if err != nil {
-		slog.Error("reading config", "error", err, "path", config)
+		if !os.IsNotExist(err) {
+			slog.Error("reading config", "error", err, "path", config)
+			os.Exit(1)
+		}
+		slog.Warn("config file not found, writing default one", "path", config)
+		err = os.WriteFile(config, defaultConfig, 0o600)
+		if err != nil {
+			slog.Error("writing config file", "path", config, "error", err)
+		}
 		os.Exit(1)
 	}
 	slog.Info("starting...")

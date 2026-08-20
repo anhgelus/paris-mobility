@@ -13,7 +13,7 @@ import (
 )
 
 type Config struct {
-	Token            string `toml:"string"`
+	Token            string `toml:"token"`
 	ListenAddr       string `toml:"listen"`
 	UseProxyV2       bool   `toml:"use_proxy_v2"`
 	SocketGroup      any    `toml:"socket_group"`
@@ -23,11 +23,14 @@ type Config struct {
 func ParseConfig(p string) (Config, error) {
 	var cfg Config
 	meta, err := toml.DecodeFile(p, &cfg)
-	if os.IsNotExist(err) {
-		err = os.WriteFile(p, nil, 0o600)
-		if err != nil {
-			return Config{}, err
-		}
+	if err != nil {
+		return cfg, err
+	}
+	if !meta.IsDefined("listen") {
+		return cfg, errors.New("listen address not set")
+	}
+	if !meta.IsDefined("token") {
+		return cfg, errors.New("PRIM token not set")
 	}
 	for _, k := range meta.Undecoded() {
 		println(k.String())
