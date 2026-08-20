@@ -2,6 +2,7 @@ package proto
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/binary"
 	"io"
 
@@ -21,7 +22,9 @@ const (
 
 type Flag uint8
 
-const () // currently, there is no flag
+const (
+	FlagGZipped Flag = 1 << iota
+)
 
 type Message struct {
 	Kind Kind
@@ -33,12 +36,23 @@ func (msg *Message) WriteTo(w io.Writer) (int64, error) {
 	var buf bytes.Buffer
 	buf.Grow(10)
 	buf.WriteRune(rune(msg.Kind))
-	buf.WriteRune(rune(msg.Flag))
 	b, err := cbor.Marshal(msg.Body)
 	if err != nil {
 		return 0, err
 	}
 	ln := make([]byte, 0, 4)
+	if len(b) > 512 {
+		msg.Flag |= FlagGZipped
+		var buf bytes.Buffer
+		w := gzip.NewWriter(&buf)
+		_, err := w.Write(b)
+		if err != nil {
+			return 0, err
+		}
+		w.Close()
+		b, _ = io.ReadAll(&buf)
+	}
+	buf.WriteRune(rune(msg.Flag))
 	binary.BigEndian.PutUint32(ln, uint32(len(b)))
 	buf.Write(ln)
 	buf.WriteString("\r\n")
