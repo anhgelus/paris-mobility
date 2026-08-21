@@ -20,7 +20,7 @@ const (
 	FeatureShortTrain
 )
 
-type Monitoring map[string]StopMonitoring
+type Monitoring map[string][]StopMonitoring
 
 type StopMonitoring struct {
 	IsStopped      bool      `cbor:"is_stopped"`

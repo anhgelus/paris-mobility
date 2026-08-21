@@ -3,6 +3,7 @@ package prim
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"anhgelus.world/paris-mobility/backend/proto"
@@ -33,7 +34,7 @@ type monitored struct {
 	Status             string  `json:"DepartureStatus"`
 }
 
-func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.StopMonitoring, bool, error) {
+func (c *Client) Monitoring(ctx context.Context, zda string) (map[string][]proto.StopMonitoring, bool, error) {
 	got, ok := c.Cache.Stop(zda)
 	if ok {
 		return got, false, nil
@@ -55,17 +56,17 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.S
 		return nil, false, proto.ErrInvalidRequest{Reason: "stop not found"}
 	}
 	visits := v.Siri.ServiceDelivery.StopMonitoringDelivery[0].Stops
-	res := make(map[string]proto.StopMonitoring, len(visits))
-	for _, journey := range visits {
-		stop := journey.Journey
-		if stop.Monitored.ArrivalTime == nil && stop.Monitored.DepartureTime == nil {
+	res := make(map[string][]proto.StopMonitoring)
+	for _, stop := range visits {
+		journey := stop.Journey
+		if journey.Monitored.ArrivalTime == nil && journey.Monitored.DepartureTime == nil {
 			return nil, false, errors.New("arrival time and departure time are absent")
 		}
 		var t time.Time
-		if stop.Monitored.ArrivalTime != nil {
-			t, err = time.Parse(time.RFC3339, *stop.Monitored.ArrivalTime)
+		if journey.Monitored.ArrivalTime != nil {
+			t, err = time.Parse(time.RFC3339, *journey.Monitored.ArrivalTime)
 		} else {
-			t, err = time.Parse(time.RFC3339, *stop.Monitored.DepartureTime)
+			t, err = time.Parse(time.RFC3339, *journey.Monitored.DepartureTime)
 		}
 		if err != nil {
 			return nil, false, err
@@ -73,12 +74,12 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.S
 		if t.Before(time.Now()) {
 			continue
 		}
-		dest := make([]string, 0, len(stop.DirectionName))
-		for _, s := range stop.DirectionName {
+		dest := make([]string, 0, len(journey.DirectionName))
+		for _, s := range journey.DirectionName {
 			dest = append(dest, s.Value)
 		}
 		var fs []proto.Feature
-		for _, f := range stop.VehicleFeature {
+		for _, f := range journey.VehicleFeature {
 			switch f {
 			case "shortTrain":
 				fs = append(fs, proto.FeatureShortTrain)
@@ -89,7 +90,7 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.S
 			}
 		}
 		var status proto.Status
-		switch stop.Monitored.Status {
+		switch journey.Monitored.Status {
 		case "onTime":
 			status = proto.StatusOnTime
 		case "early":
@@ -107,15 +108,20 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string]proto.S
 		case "notExpected":
 			status = proto.StatusNotExpected
 		default:
-			return nil, false, errors.New("unknown status: " + stop.Monitored.Status)
+			return nil, false, errors.New("unknown status: " + journey.Monitored.Status)
 		}
-		res[stop.Monitored.DestinationDisplay[0].Value] = proto.StopMonitoring{
-			IsStopped:      stop.Monitored.IsStopped,
+		res[stop.Journey.LineRef.Value] = append(res[stop.Journey.LineRef.Value], proto.StopMonitoring{
+			IsStopped:      journey.Monitored.IsStopped,
 			Destination:    dest,
 			Time:           uint64(t.Unix()),
 			Status:         status,
 			VehicleFeature: fs,
-		}
+		})
+	}
+	for _, sl := range res {
+		slices.SortFunc(sl, func(a, b proto.StopMonitoring) int {
+			return int(int64(a.Time) - int64(b.Time))
+		})
 	}
 	return res, true, nil
 }

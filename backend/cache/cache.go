@@ -13,7 +13,7 @@ type Cache struct {
 	disMu         sync.RWMutex
 	DisruptionTO  time.Duration
 
-	stops   map[string]map[string]proto.StopMonitoring
+	stops   map[string]map[string][]proto.StopMonitoring
 	stopsCh map[string]chan struct{}
 	stopsMu sync.RWMutex
 	StopsTO time.Duration
@@ -24,7 +24,7 @@ func New() *Cache {
 		disruptions:   make(proto.Disruptions),
 		disruptionsCh: make(map[string]chan struct{}),
 		DisruptionTO:  5 * time.Minute,
-		stops:         make(map[string]map[string]proto.StopMonitoring),
+		stops:         make(map[string]map[string][]proto.StopMonitoring),
 		stopsCh:       make(map[string]chan struct{}),
 		StopsTO:       2 * time.Minute,
 	}
@@ -51,14 +51,14 @@ func (c *Cache) UpdateDisruptions(dis proto.Disruptions) {
 	update(&c.disMu, c.DisruptionTO, c.disruptions, c.disruptionsCh, dis)
 }
 
-func (c *Cache) Stop(zda string) (map[string]proto.StopMonitoring, bool) {
+func (c *Cache) Stop(zda string) (map[string][]proto.StopMonitoring, bool) {
 	c.stopsMu.RLock()
 	defer c.stopsMu.RUnlock()
 	v, ok := c.stops[zda]
 	return v, ok
 }
 
-func (c *Cache) UpdateStops(stops map[string]map[string]proto.StopMonitoring) {
+func (c *Cache) UpdateStops(stops map[string]map[string][]proto.StopMonitoring) {
 	update(&c.stopsMu, c.StopsTO, c.stops, c.stopsCh, stops)
 }
 
