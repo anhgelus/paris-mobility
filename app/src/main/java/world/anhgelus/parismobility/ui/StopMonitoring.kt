@@ -26,10 +26,12 @@ import kotlinx.coroutines.flow.StateFlow
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.LineStops
-import world.anhgelus.parismobility.data.MonitorStop
+import world.anhgelus.parismobility.data.MonitoringStop
+import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.NetworkError
 import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.data.SavedStop
+import world.anhgelus.parismobility.data.Status
 import world.anhgelus.parismobility.data.Stop
 import world.anhgelus.parismobility.data.get
 import world.anhgelus.parismobility.models.LineKind
@@ -41,10 +43,12 @@ fun StopsMonitoring(
     lines: LineGroups,
     stops: LineStops,
     savedStops: Collection<SavedStop>,
-    monitoredStops: StateFlow<Map<Int, Result<MonitorStop, NetworkError>>>,
+    monitoredStops: StateFlow<Result<MonitoringStops, NetworkError>>,
     modifier: Modifier = Modifier,
 ) {
     val monitor by monitoredStops.collectAsStateWithLifecycle()
+    lateinit var res: MonitoringStops
+    monitor.onSuccess { res = it }
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -56,8 +60,11 @@ fun StopsMonitoring(
     ) {
         val modifier = Modifier.padding(16.dp)
         SectionTitle("Prochains passages", modifier)
+        savedStops.forEach { stop ->
+
+        }
         savedStops.mapNotNull { stops[it] }.forEach { (line, stop) ->
-            StopMonitoring(line.kind, lines[line]!!.second, stop, monitor[stop.id], modifier)
+            StopMonitoring(line.kind, lines[line]!!.second, stop, res[stop.id.toString()], modifier)
         }
     }
 }
@@ -67,7 +74,7 @@ fun StopMonitoring(
     kind: LineKind,
     line: Line,
     stop: Stop,
-    monitor: Result<MonitorStop, NetworkError>?,
+    monitor: List<MonitoringStop>?,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -89,39 +96,27 @@ fun StopMonitoring(
                 textAlign = TextAlign.Center,
             )
         }
-        if (monitor != null) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                var error: NetworkError? = null
-                var monit: MonitorStop? = null
-                monitor.onError { error = it }.onSuccess { monit = it }
-                if (error != null) {
-                    Text(
-                        text = error.displayError,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                } else {
-                    val d = monit!!.compact(stop) {
-                        it.journey.line.value.contains(stop.line)
-                    }.entries.sortedBy { it.key }
-                    if (d.isEmpty()) {
-                        Text(
-                            text = "Pas de service",
-                            style = Typography.bodyMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    } else {
-                        d.forEach {
-                            Monitoring(it.key, it.value)
-                        }
-                    }
-                }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (monitor.isNullOrEmpty()) {
+                Text(
+                    text = "Pas de service",
+                    style = Typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            } else {
+                monitor.fold(mutableMapOf<String, MutableList<MonitoringStop>>()) { acc, t ->
+                    acc[t.destination.first()] = acc[t.destination.first()]
+                        ?.also { it.add(t) }
+                        ?: mutableListOf(t)
+                    acc
+                }.forEach { (dest, it) -> Monitoring(dest, it) }
             }
         }
     }
 }
 
 @Composable
-fun Monitoring(dest: String, monitor: MutableList<MonitorStop.StopVisit>) {
+fun Monitoring(dest: String, monitor: MutableList<MonitoringStop>) {
     Column(modifier = Modifier.offset(y = (-3).dp)) {
         Text(
             text = dest,
@@ -133,36 +128,35 @@ fun Monitoring(dest: String, monitor: MutableList<MonitorStop.StopVisit>) {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             monitor.subList(0, min(monitor.size, 10)).forEach {
-                val monit = it.journey.monitored
-                when (monit.status) {
-                    MonitorStop.Status.OnTime, MonitorStop.Status.Early, MonitorStop.Status.Delayed -> Text(
-                        text = monit.displayTime(),
+                when (it.status) {
+                    Status.ON_TIME, Status.EARLY, Status.DELAYED -> Text(
+                        text = it.displayTime(),
                         style = Typography.bodyMedium,
                     )
 
-                    MonitorStop.Status.Cancelled -> Text(
+                    Status.CANCELLED -> Text(
                         text = "Annulé",
                         style = Typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
 
-                    MonitorStop.Status.Missed -> Text(
+                    Status.MISSED -> Text(
                         text = "Râté",
                         style = Typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
 
-                    MonitorStop.Status.Arrived -> Text(
+                    Status.ARRIVED -> Text(
                         text = "Arrivé",
                         style = Typography.bodyMedium
                     )
 
-                    MonitorStop.Status.Departed -> Text(
+                    Status.DEPARTED -> Text(
                         text = "Parti",
                         style = Typography.bodyMedium
                     )
 
-                    MonitorStop.Status.NotExpected -> Text(
+                    Status.NOT_EXPECTED -> Text(
                         text = "Non attendu",
                         style = Typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error

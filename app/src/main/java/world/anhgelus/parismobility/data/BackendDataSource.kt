@@ -5,6 +5,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -43,8 +44,10 @@ class BackendDataSource(
 
     override fun onAvailable(network: Network) {
         super.onAvailable(network)
-        socket =
-            network.socketFactory.createSocket(BuildConfig.SERVER_HOSTNAME, BuildConfig.SERVER_PORT)
+        socket = network.socketFactory.createSocket(
+            BuildConfig.SERVER_HOSTNAME,
+            BuildConfig.SERVER_PORT,
+        )
     }
 
     override fun onLosing(network: Network, maxMsToLive: Int) {
@@ -58,28 +61,44 @@ class BackendDataSource(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    val disruptions = flow {
-        if (socket == null) {
-            emit(Result.Error(NetworkError.NO_INTERNET))
-            return@flow
+    private inline fun <reified R, reified T> get(kind: Kind, req: R): Result<T, NetworkError> {
+        if (socket == null || !socket!!.isConnected) {
+            return Result.Error(NetworkError.NO_INTERNET)
         }
         val sock = socket!!
-        val msg = MessageHeader(Kind.DISRUPTIONS, emptyList(), 0.toUInt()).encode()
-        msg.addAll(
-            Cbor.encodeToByteArray(DisruptionsRequest(emptyList(), emptyList()))
-                .toList()
-        )
+        val req = Cbor.encodeToByteArray(req).toList()
+        val msg = MessageHeader(kind, emptyList(), req.size.toUInt()).encode()
+        msg.addAll(req)
         sock.getOutputStream().write(msg.toByteArray())
         val res = MessageHeader.decode(sock.getInputStream())
-        var result: Result<Disruptions, NetworkError> = when (res.first) {
+        return when (res.first) {
             Kind.RESPONSE -> Result.Ok(Cbor.decodeFromByteArray(res.second))
             Kind.INVALID_REQUEST -> Result.Error(NetworkError.UNKNOWN_ERROR)
             Kind.INTERNAL_ERROR, Kind.DISRUPTIONS, Kind.MONITORING -> Result.Error(NetworkError.SERVER_ERROR)
             Kind.GOODBYE -> throw IllegalArgumentException("Server disconnected")
         }
-        emit(result)
+    }
+
+    val disruptions = flow {
+        emit(
+            get<DisruptionsRequest, Disruptions>(
+                Kind.DISRUPTIONS,
+                DisruptionsRequest(emptyList(), emptyList())
+            ),
+        )
     }
         .flowOn(Dispatchers.IO)
+
+    fun monitorStops(stops: Collection<Stop>): Flow<Result<MonitoringStops, NetworkError>> {
+        return flow {
+            emit(
+                get<MonitoringRequest, MonitoringStops>(
+                    Kind.MONITORING,
+                    MonitoringRequest(stops.map { it.zda.toString() })
+                ),
+            )
+        }
+    }
 
     fun close() {
         if (socket != null) {
@@ -100,7 +119,7 @@ enum class TransportMode {
     object Serializer : KSerializer<TransportMode> {
         override val descriptor: SerialDescriptor
             get() = PrimitiveSerialDescriptor(
-                "world.anhgelus.parismobility.data.Flag.Serializer",
+                "world.anhgelus.parismobility.data.TransportMode.Serializer",
                 PrimitiveKind.BYTE
             )
 
@@ -113,7 +132,7 @@ enum class TransportMode {
 
         override fun deserialize(decoder: Decoder): TransportMode {
             val i = decoder.decodeByte().toInt()
-            if (i >= entries.size) throw IllegalArgumentException("unknown flag")
+            if (i >= entries.size) throw IllegalArgumentException("unknown transport mode")
             return entries[i]
         }
     }
@@ -181,4 +200,9 @@ enum class Flag {
 data class DisruptionsRequest(
     val kinds: List<TransportMode>,
     val lines: List<String>
+)
+
+@Serializable
+data class MonitoringRequest(
+    val stops: List<String>
 )

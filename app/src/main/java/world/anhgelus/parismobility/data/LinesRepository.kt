@@ -11,9 +11,7 @@ import world.anhgelus.parismobility.models.LineKind
 import kotlin.time.Duration.Companion.milliseconds
 
 class LinesRepository(
-    val fetchStopEach: Int,
     private val linesSource: LinesDataSource,
-    private val primSource: PrimDataSource,
     private val backendSource: BackendDataSource,
 ) {
 
@@ -61,15 +59,7 @@ class LinesRepository(
                 delay(500.milliseconds)
                 continue
             }
-            val added = mutableSetOf<Int>()
-            val res =
-                monitoredStops.fold(mutableMapOf<Int, Result<MonitorStop, NetworkError>>()) { acc, stop ->
-                    if (!added.add(stop.zda)) return@fold acc
-                    acc[stop.id] = primSource.monitorStop(stop)
-                    acc
-                }
-            emit(res)
-            delay((fetchStopEach * 1000L).milliseconds)
+            backendSource.monitorStops(monitoredStops).collect { emit(it) }
         }
     }
 

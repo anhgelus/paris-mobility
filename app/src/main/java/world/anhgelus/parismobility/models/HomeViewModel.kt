@@ -13,6 +13,7 @@ import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineStops
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.PreferencesRepository
+import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.Stop
@@ -53,7 +54,7 @@ class HomeViewModel(
     val monitoringStops = linesRepo.monitorStops.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(60_000),
-        initialValue = emptyMap()
+        initialValue = Result.Ok(emptyMap())
     )
 
     fun saveLine(ctx: Context, kind: LineKind, line: Line) {

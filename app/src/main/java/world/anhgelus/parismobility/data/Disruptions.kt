@@ -37,7 +37,7 @@ enum class Severity {
     object Serializer : KSerializer<Severity> {
         override val descriptor: SerialDescriptor
             get() = PrimitiveSerialDescriptor(
-                "world.anhgelus.parismobility.data.Flag.Serializer",
+                "world.anhgelus.parismobility.data.Severity.Serializer",
                 PrimitiveKind.BYTE
             )
 
@@ -50,7 +50,7 @@ enum class Severity {
 
         override fun deserialize(decoder: Decoder): Severity {
             val i = decoder.decodeByte().toInt()
-            if (i >= entries.size) throw IllegalArgumentException("unknown flag")
+            if (i >= entries.size) throw IllegalArgumentException("unknown severity")
             return entries[i]
         }
     }

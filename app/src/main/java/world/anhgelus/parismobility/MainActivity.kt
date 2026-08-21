@@ -2,7 +2,6 @@ package world.anhgelus.parismobility
 
 import android.net.ConnectivityManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,7 +21,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
 import world.anhgelus.parismobility.data.BackendDataSource
 import world.anhgelus.parismobility.data.LinesDataSource
-import world.anhgelus.parismobility.data.PrimDataSource
 import world.anhgelus.parismobility.models.GeneralViewModel
 import world.anhgelus.parismobility.navigation.NavigationBar
 import world.anhgelus.parismobility.navigation.NavigationRoot
@@ -42,7 +40,6 @@ class MainActivity : ComponentActivity() {
                     GeneralViewModel(
                         baseContext,
                         LinesDataSource,
-                        PrimDataSource,
                         BackendDataSource(conn)
                     )
                 }
@@ -53,14 +50,14 @@ class MainActivity : ComponentActivity() {
                         NavigationBar(selectedKey = rootBackStack.last()) { rootBackStack.add(it) }
                     }
                 ) { innerPadding ->
-                    val error by model.primDataSource.primError
-                    if (error != null) {
-                        Toast.makeText(
-                            baseContext,
-                            error!!.displayError,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+//                    val error by model.primDataSource.primError
+//                    if (error != null) {
+//                        Toast.makeText(
+//                            baseContext,
+//                            error!!.displayError,
+//                            Toast.LENGTH_LONG
+//                        ).show()
+//                    }
                     val loading by model.isLoading.collectAsStateWithLifecycle()
                     if (loading) {
                         Column(

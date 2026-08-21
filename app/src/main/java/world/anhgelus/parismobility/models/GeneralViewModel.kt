@@ -11,12 +11,10 @@ import world.anhgelus.parismobility.data.BackendDataSource
 import world.anhgelus.parismobility.data.LinesDataSource
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.PreferencesRepository
-import world.anhgelus.parismobility.data.PrimDataSource
 
 class GeneralViewModel(
     ctx: Context,
     val linesDataSource: LinesDataSource,
-    val primDataSource: PrimDataSource,
     val backendDataSource: BackendDataSource,
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
@@ -35,9 +33,7 @@ class GeneralViewModel(
         _isLoading.update { true }
         viewModelScope.launch {
             linesRepository = LinesRepository(
-                120,
                 linesDataSource,
-                primDataSource,
                 backendDataSource
             )
             preferencesRepository = PreferencesRepository(ctx)

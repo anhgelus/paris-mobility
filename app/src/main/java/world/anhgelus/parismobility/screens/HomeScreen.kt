@@ -23,7 +23,7 @@ import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.flow.StateFlow
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.LineStops
-import world.anhgelus.parismobility.data.MonitorStop
+import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.NetworkError
 import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.data.SavedLine
@@ -97,7 +97,7 @@ fun GeneralScreen(
     savedLines: Collection<SavedLine>,
     stops: LineStops,
     savedStops: Collection<SavedStop>,
-    monitoredStops: StateFlow<Map<Int, Result<MonitorStop, NetworkError>>>,
+    monitoredStops: StateFlow<Result<MonitoringStops, NetworkError>>,
     modifier: Modifier = Modifier,
     onModifyClick: () -> Unit,
 ) {
