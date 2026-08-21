@@ -86,8 +86,7 @@ class BackendDataSource(
                 DisruptionsRequest(emptyList(), emptyList())
             ),
         )
-    }
-        .flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO)
 
     fun monitorStops(stops: Collection<Stop>): Flow<Result<MonitoringStops, NetworkError>> {
         return flow {
@@ -97,7 +96,7 @@ class BackendDataSource(
                     MonitoringRequest(stops.map { it.zda.toString() })
                 ),
             )
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     fun close() {
@@ -174,7 +173,7 @@ data class MessageHeader(
                 acc
             }
             val len = ByteBuffer.wrap(buf, 2, 4).getInt()
-            buf = ByteArray(len + 2)
+            buf = ByteArray(len)
             if (buf.size != input.read(buf)) throw IllegalArgumentException("invalid message")
             if (flags.contains(Flag.GZIP))
                 buf = GZIPInputStream(buf.inputStream()).readBytes()

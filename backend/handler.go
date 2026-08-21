@@ -13,6 +13,7 @@ import (
 func Handle(ctx context.Context, conn net.Conn) {
 	ch := make(chan any, 1)
 	l := Logger(ctx)
+	l.Debug("new connection")
 	for {
 		go func() {
 			var msg proto.Message
@@ -62,6 +63,7 @@ func Handle(ctx context.Context, conn net.Conn) {
 				err = nil
 			}
 			if err == nil {
+				fmt.Println(msg)
 				_, err = msg.WriteTo(conn)
 			}
 			if err == nil {

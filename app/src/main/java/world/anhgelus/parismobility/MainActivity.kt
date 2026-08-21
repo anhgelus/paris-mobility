@@ -50,14 +50,6 @@ class MainActivity : ComponentActivity() {
                         NavigationBar(selectedKey = rootBackStack.last()) { rootBackStack.add(it) }
                     }
                 ) { innerPadding ->
-//                    val error by model.primDataSource.primError
-//                    if (error != null) {
-//                        Toast.makeText(
-//                            baseContext,
-//                            error!!.displayError,
-//                            Toast.LENGTH_LONG
-//                        ).show()
-//                    }
                     val loading by model.isLoading.collectAsStateWithLifecycle()
                     if (loading) {
                         Column(

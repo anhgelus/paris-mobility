@@ -3,6 +3,6 @@ flags = OCTET
 size = 4OCTET
 
 header = kind flags size CRLF
-body = *OCTET CRLF
+body = *OCTET
 
 message = header body

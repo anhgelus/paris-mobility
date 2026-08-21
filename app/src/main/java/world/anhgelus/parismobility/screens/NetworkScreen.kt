@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +36,7 @@ import world.anhgelus.parismobility.data.Disruption
 import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
+import world.anhgelus.parismobility.data.NetworkError
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.DisruptionCard
@@ -55,8 +57,19 @@ fun NetworkScreen(
     val networkBackStack = rememberNavBackStack(Route.Network)
     val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
     var dis: Disruptions? = null
+    var error: NetworkError? = null
     disruptions.onSuccess {
         dis = it
+    }.onError {
+        error = it
+    }
+    if (error != null) {
+        Text(
+            text = error.displayError,
+            color = MaterialTheme.colorScheme.onError,
+            modifier = modifier.background(color = MaterialTheme.colorScheme.error),
+        )
+        return
     }
     NavDisplay(
         backStack = networkBackStack,

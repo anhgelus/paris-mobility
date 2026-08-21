@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"io"
 
 	"anhgelus.world/go-cbor"
@@ -34,7 +36,7 @@ type Message struct {
 
 func (msg *Message) WriteTo(w io.Writer) (int64, error) {
 	var buf bytes.Buffer
-	buf.Grow(10)
+	buf.Grow(8)
 	buf.WriteRune(rune(msg.Kind))
 	b, err := cbor.Marshal(msg.Body)
 	if err != nil {
@@ -57,7 +59,6 @@ func (msg *Message) WriteTo(w io.Writer) (int64, error) {
 	buf.Write(ln)
 	buf.WriteString("\r\n")
 	buf.Write(b)
-	buf.WriteString("\r\n")
 	return buf.WriteTo(w)
 }
 
@@ -90,48 +91,53 @@ func (err ErrInvalidRequest) ToMessage() *Message {
 
 func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 	var header [8]byte
-	n, err := r.Read(header[:])
-	read = int64(n)
+	_, err = io.ReadFull(r, header[:])
 	if err != nil {
-		return
-	}
-	if n != len(header) {
-		err = ErrInvalidRequest{Reason: "content malformed"}
+		if errors.Is(err, io.ErrUnexpectedEOF) {
+			err = ErrInvalidRequest{Reason: "content malformed"}
+		}
 		return
 	}
 	msg.Kind = Kind(header[0])
 	msg.Flag = Flag(header[1])
 	ln := binary.BigEndian.Uint32(header[2:])
-	rawBody := make([]byte, 0, ln+2)
-	n, err = r.Read(rawBody)
-	read += int64(n)
+	rawBody := make([]byte, ln)
+	_, err = io.ReadFull(r, rawBody)
 	if err != nil {
-		return
-	}
-	if uint32(n) != ln+2 {
-		err = ErrInvalidRequest{Reason: "content malformed"}
+		if errors.Is(err, io.ErrUnexpectedEOF) {
+			err = ErrInvalidRequest{Reason: "content malformed"}
+		}
 		return
 	}
 	var rest []byte
 	var body any
 	switch msg.Kind {
 	case KindDisruptions:
-		body = DisruptionsRequest{}
+		var v DisruptionsRequest
+		rest, err = unmarshal(rawBody, &v)
+		body = v
 	case KindMonitoring:
-		body = MonitoringRequest{}
+		var v MonitoringRequest
+		rest, err = unmarshal(rawBody, &v)
+		body = v
 	case KindGoodbye:
 	default:
 		err = ErrInvalidRequest{Reason: "invalid kind"}
 		return
 	}
-	rest, err = cbor.Unmarshal(rawBody[:ln], &body)
-	msg.Body = body
 	if err != nil {
+		fmt.Printf("% x\n", rawBody)
 		err = ErrInvalidRequest{Reason: "content malformed", Err: err}
 		return
 	}
 	if len(rest) != 0 {
+		fmt.Printf("%v (%T)\n", body, body)
 		err = ErrInvalidRequest{Reason: "contains more than one CBOR"}
 	}
+	msg.Body = body
 	return
+}
+
+func unmarshal[T any](b []byte, v *T) ([]byte, error) {
+	return cbor.Unmarshal(b, &v)
 }
