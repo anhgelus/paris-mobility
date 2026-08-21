@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import world.anhgelus.parismobility.data.BackendDataSource
 import world.anhgelus.parismobility.data.LinesDataSource
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.PreferencesRepository
@@ -15,7 +16,8 @@ import world.anhgelus.parismobility.data.PrimDataSource
 class GeneralViewModel(
     ctx: Context,
     val linesDataSource: LinesDataSource,
-    val primDataSource: PrimDataSource
+    val primDataSource: PrimDataSource,
+    val backendDataSource: BackendDataSource,
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
@@ -32,7 +34,12 @@ class GeneralViewModel(
     fun loadData(ctx: Context) {
         _isLoading.update { true }
         viewModelScope.launch {
-            linesRepository = LinesRepository(120, linesDataSource, primDataSource)
+            linesRepository = LinesRepository(
+                120,
+                linesDataSource,
+                primDataSource,
+                backendDataSource
+            )
             preferencesRepository = PreferencesRepository(ctx)
             linesRepository.loadLines(ctx.resources)
             _isLoading.update { false }

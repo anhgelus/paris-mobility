@@ -53,13 +53,13 @@ fun DisruptionCard(disruption: Disruption, modifier: Modifier = Modifier) {
                 .background(if (enabled) color.first else MaterialTheme.colorScheme.surfaceContainerLow)
                 .padding(16.dp)
         ) {
-            Column() {
+            Column {
                 SectionTitle(
                     content = disruption.title,
                     color = if (enabled) color.second else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                val p = disruption.currentOrNextPeriod()
+                val p = disruption.periods.first()
                 Text(
                     text = "Du ${formatLocalDateTime(p.begin)} au ${formatLocalDateTime(p.end)}",
                     style = Typography.bodySmall,

@@ -9,8 +9,8 @@ plugins {
 
 val keys = loadProperties("keys.properties")
 
-fun getPrimToken(): String {
-    return keys["PRIM_TOKEN"] as String? ?: System.getenv("PRIM_TOKEN")
+fun get(k: String): String {
+    return keys[k] as String? ?: System.getenv(k)
 }
 
 android {
@@ -30,7 +30,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "PRIM_TOKEN", "\"${getPrimToken()}\"")
+        buildConfigField("String", "PRIM_TOKEN", "\"${get("PRIM_TOKEN")}\"")
+        buildConfigField("String", "SERVER_HOSTNAME", "\"${get("SERVER_HOSTNAME")}\"")
+        buildConfigField("int", "SERVER_PORT", get("SERVER_PORT"))
     }
 
     buildTypes {
@@ -63,7 +65,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     testImplementation(libs.junit)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
@@ -146,7 +147,7 @@ val updateLinesSvg = tasks.register("updateLinesSvg") {
             "$base&transportMode=$mode",
             zip.absolutePath,
             "application/zip",
-            "apiKey: ${getPrimToken()}"
+            "apiKey: ${get("PRIM_TOKEN")}"
         )
         logger.info("{}'s SVGs downloaded", mode)
         zipTree(zip).forEach {

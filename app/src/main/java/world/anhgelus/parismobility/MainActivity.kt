@@ -1,5 +1,6 @@
 package world.anhgelus.parismobility
 
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
+import world.anhgelus.parismobility.data.BackendDataSource
 import world.anhgelus.parismobility.data.LinesDataSource
 import world.anhgelus.parismobility.data.PrimDataSource
 import world.anhgelus.parismobility.models.GeneralViewModel
@@ -32,10 +34,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        val conn = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+
         setContent {
             ParisMobiliteTheme {
                 val model = viewModel {
-                    GeneralViewModel(baseContext, LinesDataSource, PrimDataSource)
+                    GeneralViewModel(
+                        baseContext,
+                        LinesDataSource,
+                        PrimDataSource,
+                        BackendDataSource(conn)
+                    )
                 }
                 val rootBackStack = rememberNavBackStack(Route.Home)
                 // disable return function for main nav

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import world.anhgelus.parismobility.data.LinesRepository
+import world.anhgelus.parismobility.data.Result
 
 class NetworkViewModel(
     repo: LinesRepository,
@@ -14,6 +15,6 @@ class NetworkViewModel(
         scope = viewModelScope,
         // Start without waiting a listener, because disruptions are deeply linked with lines
         started = SharingStarted.Eagerly,
-        initialValue = emptyMap()
+        initialValue = Result.Ok(emptyMap())
     )
 }

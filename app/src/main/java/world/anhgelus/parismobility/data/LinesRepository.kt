@@ -13,7 +13,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class LinesRepository(
     val fetchStopEach: Int,
     private val linesSource: LinesDataSource,
-    private val primSource: PrimDataSource
+    private val primSource: PrimDataSource,
+    private val backendSource: BackendDataSource,
 ) {
 
     private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
@@ -22,9 +23,9 @@ class LinesRepository(
     private val _stops = MutableStateFlow<LineStops>(mutableMapOf())
     val stops = _stops.asStateFlow()
 
-    val disruptions = primSource.disruptions.onEach { updateLines(it) }
-
-    val primErrors = primSource.primError
+    val disruptions = backendSource.disruptions.onEach { disruptions ->
+        disruptions.onSuccess { updateLines(it) }
+    }
 
     suspend fun loadLines(res: Resources) {
         val lines = linesSource.getLines(res)
@@ -81,7 +82,7 @@ class LinesRepository(
     }
 
     private fun updateLines(
-        disruptions: LineDisruptions,
+        disruptions: Disruptions,
     ) {
         _lines.update { v ->
             v.mapValues { (_, lines) ->
@@ -103,8 +104,6 @@ typealias LineGroups = Map<LineKind, List<Line>>
 operator fun LineGroups.get(saved: SavedLine): Pair<LineKind, Line>? {
     return this[saved.kind]?.firstOrNull { it.id == saved.line }?.let { Pair(saved.kind, it) }
 }
-
-typealias LineDisruptions = Map<String, List<Disruption>>
 
 typealias LineStops = Map<String, List<Stop>>
 
