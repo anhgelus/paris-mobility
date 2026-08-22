@@ -73,7 +73,11 @@ class BackendDataSource(
         val res = MessageHeader.decode(sock.getInputStream())
         return when (res.first) {
             Kind.RESPONSE -> Result.Ok(Cbor.decodeFromByteArray(res.second))
-            Kind.INVALID_REQUEST -> Result.Error(NetworkError.UNKNOWN_ERROR)
+            Kind.INVALID_REQUEST -> Result.Error(
+                NetworkError.UNKNOWN_ERROR,
+                Cbor.decodeFromByteArray<ErrorResponse>(res.second).message
+            )
+
             Kind.INTERNAL_ERROR, Kind.DISRUPTIONS, Kind.MONITORING -> Result.Error(NetworkError.SERVER_ERROR)
             Kind.GOODBYE -> throw IllegalArgumentException("Server disconnected")
         }
@@ -204,4 +208,10 @@ data class DisruptionsRequest(
 @Serializable
 data class MonitoringRequest(
     val stops: List<String>
+)
+
+@Serializable
+data class ErrorResponse(
+    val message: String,
+    val error: String? = null
 )

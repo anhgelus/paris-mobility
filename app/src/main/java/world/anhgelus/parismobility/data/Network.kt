@@ -3,12 +3,12 @@ package world.anhgelus.parismobility.data
 abstract class Result<out R, out E> {
     private val success: Boolean
     private val value: R?
-    private val error: E?
+    private val error: Pair<E, String?>?
 
     private constructor(
         success: Boolean,
         value: R? = null,
-        error: E? = null,
+        error: Pair<E, String?>? = null,
     ) {
         this.success = success
         this.value = value
@@ -22,8 +22,8 @@ abstract class Result<out R, out E> {
         return this
     }
 
-    fun onError(action: (E) -> Unit): Result<R, E> {
-        if (!success) action(error!!)
+    fun onError(action: (E, String?) -> Unit): Result<R, E> {
+        if (!success) action(error!!.first, error.second)
         return this
     }
 
@@ -33,9 +33,10 @@ abstract class Result<out R, out E> {
         }
     }
 
-    data class Error<out R, out E>(val error: E) : Result<R, E>(false, error = error) {
+    data class Error<out R, out E>(val error: E, val data: String? = null) :
+        Result<R, E>(false, error = Pair(error, data)) {
         override suspend fun <T> map(transform: suspend (R) -> T): Result<T, E> {
-            return Error(error)
+            return Error(error, data)
         }
     }
 }
@@ -44,7 +45,6 @@ enum class NetworkError(
     val displayError: String
 ) {
     SERVER_ERROR("Serverside error"),
-    INVALID_AUTH("Cannot login"),
     INVALID_DATA("Data sent is invalid"),
     RATE_LIMITED("Rate limited by the server"),
     NO_INTERNET("No internet available"),

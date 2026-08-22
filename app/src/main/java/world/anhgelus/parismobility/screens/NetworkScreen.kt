@@ -58,14 +58,16 @@ fun NetworkScreen(
     val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
     var dis: Disruptions? = null
     var error: NetworkError? = null
+    var message: String? = null
     disruptions.onSuccess {
         dis = it
-    }.onError {
-        error = it
+    }.onError { kind, msg ->
+        error = kind
+        message = msg
     }
     if (error != null) {
         Text(
-            text = error.displayError,
+            text = error.displayError + if (message != null) ": $message" else "",
             color = MaterialTheme.colorScheme.onError,
             modifier = modifier.background(color = MaterialTheme.colorScheme.error),
         )
