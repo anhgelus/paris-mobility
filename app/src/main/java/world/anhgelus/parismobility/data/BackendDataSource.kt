@@ -67,11 +67,11 @@ class BackendDataSource(
             return Result.Error(NetworkError.NO_INTERNET)
         }
         val sock = socket!!
-        val req = Cbor.encodeToByteArray(req).toList()
-        val msg = MessageHeader(kind, emptyList(), req.size.toUInt()).encode()
-        msg.addAll(req)
-        sock.getOutputStream().write(msg.toByteArray())
-        val res = MessageHeader.decode(sock.getInputStream())
+        val req = Cbor.encodeToByteArray(req)
+        Message(kind, emptyList()).encode(req).let {
+            sock.getOutputStream().write(it)
+        }
+        val res = Message.decode(sock.getInputStream())
         return when (res.first) {
             Kind.RESPONSE -> Result.Ok(Cbor.decodeFromByteArray(res.second))
             Kind.INVALID_REQUEST -> Result.Error(
@@ -82,7 +82,9 @@ class BackendDataSource(
                 }
             )
 
-            Kind.INTERNAL_ERROR, Kind.DISRUPTIONS, Kind.MONITORING -> Result.Error(NetworkError.SERVER_ERROR)
+            Kind.INTERNAL_ERROR, Kind.DISRUPTIONS, Kind.MONITORING ->
+                Result.Error(NetworkError.SERVER_ERROR)
+
             Kind.GOODBYE -> throw IllegalArgumentException("Server disconnected")
         }
     }
@@ -109,12 +111,15 @@ class BackendDataSource(
 
     fun close() {
         if (socket != null) {
-            val msg = MessageHeader(Kind.GOODBYE, emptyList(), 0.toUInt()).encode()
-            socket!!.getOutputStream().write(msg.toByteArray())
+            Message(Kind.GOODBYE, emptyList()).encode(ByteArray(0)).let {
+                socket!!.getOutputStream().write(it)
+            }
             socket!!.close()
         }
     }
 }
+
+private typealias Kind = Message.Kind
 
 @Serializable(with = TransportMode.Serializer::class)
 enum class TransportMode {
@@ -145,13 +150,12 @@ enum class TransportMode {
     }
 }
 
-data class MessageHeader(
+private data class Message(
     val kind: Kind,
     val flags: List<Flag>,
-    val length: UInt,
 ) {
     @OptIn(ExperimentalSerializationApi::class)
-    fun encode(): MutableList<Byte> {
+    fun encode(body: ByteArray): ByteArray {
         val ls = mutableListOf<Byte>()
         ls.add(kind.ordinal.toByte())
         flags.fold(0.toByte()) { acc, it ->
@@ -159,12 +163,22 @@ data class MessageHeader(
         }.let { ls.add(it) }
         ByteBuffer.allocate(4)
             .order(ByteOrder.BIG_ENDIAN)
-            .putInt(length.toInt())
+            .putInt(body.size)
             .array()
             .let { ls.addAll(it.toList()) }
         ls.add('\r'.code.toByte())
         ls.add('\n'.code.toByte())
-        return ls
+        ls.addAll(body.toList())
+        return ls.toByteArray()
+    }
+
+    enum class Kind {
+        RESPONSE,
+        INVALID_REQUEST,
+        INTERNAL_ERROR,
+        DISRUPTIONS,
+        MONITORING,
+        GOODBYE,
     }
 
     companion object {
@@ -187,7 +201,7 @@ data class MessageHeader(
                 val sub = ByteArray(1024)
                 val nn = input.read(sub)
                 if (nn < 0) throw IllegalArgumentException("invalid message")
-                b.add(sub.toList())
+                b.add(sub.slice(0..<nn))
                 n += nn
             }
             buf = b.flatten().toByteArray()
@@ -201,32 +215,23 @@ data class MessageHeader(
     }
 }
 
-enum class Kind {
-    RESPONSE,
-    INVALID_REQUEST,
-    INTERNAL_ERROR,
-    DISRUPTIONS,
-    MONITORING,
-    GOODBYE,
-}
-
 enum class Flag {
     GZIP,
 }
 
 @Serializable
-data class DisruptionsRequest(
+private data class DisruptionsRequest(
     val kinds: List<TransportMode>,
     val lines: List<String>
 )
 
 @Serializable
-data class MonitoringRequest(
+private data class MonitoringRequest(
     val stops: List<String>
 )
 
 @Serializable
-data class ErrorResponse(
+private data class ErrorResponse(
     val message: String,
     val error: String? = null
 )

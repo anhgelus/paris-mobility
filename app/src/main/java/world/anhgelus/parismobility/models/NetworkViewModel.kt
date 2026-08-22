@@ -13,8 +13,7 @@ class NetworkViewModel(
     val lines = repo.lines
     val disruptions = repo.disruptions.stateIn(
         scope = viewModelScope,
-        // Start without waiting a listener, because disruptions are deeply linked with lines
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.WhileSubscribed(30 * 1000, 2 * 60 * 1000),
         initialValue = Result.Ok(emptyMap())
     )
 }

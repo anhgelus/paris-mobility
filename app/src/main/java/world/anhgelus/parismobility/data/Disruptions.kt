@@ -84,7 +84,7 @@ data class Disruption(
     @SerialName("short_message") val shortMessage: String? = null,
 ) : Comparable<Disruption> {
     fun isHappening(): Boolean {
-        return periods.first().begin.isAfter(LocalDateTime.now())
+        return periods.first().begin.isBefore(LocalDateTime.now())
     }
 
     override fun compareTo(other: Disruption): Int {
