@@ -4,6 +4,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -75,7 +76,10 @@ class BackendDataSource(
             Kind.RESPONSE -> Result.Ok(Cbor.decodeFromByteArray(res.second))
             Kind.INVALID_REQUEST -> Result.Error(
                 NetworkError.UNKNOWN_ERROR,
-                Cbor.decodeFromByteArray<ErrorResponse>(res.second).message
+                Cbor.decodeFromByteArray<ErrorResponse>(res.second).let {
+                    it.error?.let { m -> Log.w("BackendData", m) }
+                    it.message
+                }
             )
 
             Kind.INTERNAL_ERROR, Kind.DISRUPTIONS, Kind.MONITORING -> Result.Error(NetworkError.SERVER_ERROR)
@@ -166,7 +170,7 @@ data class MessageHeader(
     companion object {
         fun decode(input: InputStream): Pair<Kind, ByteArray> {
             var buf = ByteArray(8)
-            val n = input.read(buf)
+            var n = input.read(buf)
             if (n != buf.size) throw IllegalArgumentException("invalid message")
             val rawKind = buf[0]
             if (rawKind >= Kind.entries.size) throw IllegalArgumentException("unknown kind")
@@ -178,7 +182,12 @@ data class MessageHeader(
             }
             val len = ByteBuffer.wrap(buf, 2, 4).getInt()
             buf = ByteArray(len)
-            if (buf.size != input.read(buf)) throw IllegalArgumentException("invalid message")
+            n = 0
+            while (n < buf.size) {
+                val nn = input.read(buf.sliceArray(n..<buf.size))
+                if (nn < 0) throw IllegalArgumentException("invalid message")
+                n += nn
+            }
             if (flags.contains(Flag.GZIP))
                 buf = GZIPInputStream(buf.inputStream()).readBytes()
             return Pair(kind, buf)

@@ -63,7 +63,6 @@ func Handle(ctx context.Context, conn net.Conn) {
 				err = nil
 			}
 			if err == nil {
-				fmt.Println(msg)
 				_, err = msg.WriteTo(conn)
 			}
 			if err == nil {
