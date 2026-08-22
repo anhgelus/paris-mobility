@@ -1,5 +1,5 @@
-anhgelus.world/go-cbor v0.0.0-20260816215724-95a22306686d h1:ElJS+2RCJyNHyYrO+aBqZV1ulA3estM7cqcAPE3mFEw=
-anhgelus.world/go-cbor v0.0.0-20260816215724-95a22306686d/go.mod h1:1HewQhUu/+rFTSJ6KV+PznTE5jlGw4P/utyg6hmUmR4=
+anhgelus.world/go-cbor v0.0.0-20260822005926-c45d9b7bc61c h1:YxTlEW1iJS3lXpPXeFUWYFXm5VPkWwjzL0z16o5iP84=
+anhgelus.world/go-cbor v0.0.0-20260822005926-c45d9b7bc61c/go.mod h1:1HewQhUu/+rFTSJ6KV+PznTE5jlGw4P/utyg6hmUmR4=
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/nyttikord/logos v0.2.1 h1:ce/x9/bgfzmrHzki7mp4CWQDEB5FOX/+Zi/fzgt3rGo=
