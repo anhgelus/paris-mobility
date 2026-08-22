@@ -94,16 +94,29 @@ package `)
 	buf.WriteString(`
 
 import "anhgelus.world/paris-mobility/backend/internal"
-
-var Lines = []*internal.Line{`)
+`)
+	groups := make(map[internal.TransportMode][]*internal.Line)
 	for _, line := range lines {
-		buf.WriteString(line.Id)
-		buf.WriteRune(',')
-	}
-	buf.WriteString("}\n")
-	for _, line := range lines {
+		k := line.Mode
+		if line.Submode != nil {
+			k += ":" + *line.Submode
+		}
+		groups[k] = append(groups[k], &line)
 		line.Generate(&buf)
 	}
+	buf.WriteString("var Lines = map[internal.TransportMode][]*internal.Line{\n")
+	for mode, lines := range groups {
+		buf.WriteRune('"')
+		buf.WriteString(string(mode))
+		buf.WriteRune('"')
+		buf.WriteString(": []*internal.Line{")
+		for _, line := range lines {
+			buf.WriteString(line.Id)
+			buf.WriteRune(',')
+		}
+		buf.WriteString("},\n")
+	}
+	buf.WriteRune('}')
 	err = os.WriteFile(target, buf.Bytes(), 0o644)
 	if err != nil {
 		panic(err)

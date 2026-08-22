@@ -9,13 +9,16 @@ import (
 type TransportMode string
 
 const (
-	BusMode       TransportMode = "bus"
-	RailMode      TransportMode = "rail"
-	FunicularMode TransportMode = "funicular"
-	MetroMode     TransportMode = "metro"
-	TramMode      TransportMode = "tram"
-	CablewayMode  TransportMode = "cableway"
-	WaterMode     TransportMode = "water"
+	BusMode           TransportMode = "bus"
+	RailMode          TransportMode = "rail"
+	FunicularMode     TransportMode = "funicular"
+	MetroMode         TransportMode = "metro"
+	TramMode          TransportMode = "tram"
+	CablewayMode      TransportMode = "cableway"
+	WaterMode         TransportMode = "water"
+	RERSubmode        TransportMode = RailMode + ":local"
+	TERSubmode        TransportMode = RailMode + ":regionalRail"
+	TransilienSubmode TransportMode = RailMode + ":suburbanRailway"
 )
 
 func HasSubMode(mode TransportMode) bool {
@@ -39,7 +42,7 @@ type Line struct {
 	Name           string           `json:"name_line"`
 	ShortName      *string          `json:"shortname_line"`
 	Mode           TransportMode    `json:"transportmode"`
-	Submode        *string          `json:"transportsubmode"`
+	Submode        *TransportMode   `json:"transportsubmode"`
 	IdGroupOfLines *string          `json:"id_groupoflines"`
 	NetworkName    *string          `json:"networkname"`
 	Status         *TransportStatus `json:"status"`
@@ -47,6 +50,7 @@ type Line struct {
 
 var parse = template.Must(template.New("").Funcs(template.FuncMap{
 	"nilOrNew":       nilOrNew[string],
+	"nilOrNewMode":   nilOrNew[TransportMode],
 	"nilOrNewStatus": nilOrNew[TransportStatus],
 }).Parse(`
 var {{ .Id }} = &internal.Line{
@@ -54,7 +58,7 @@ var {{ .Id }} = &internal.Line{
 	Name: "{{ .Name }}",
 	ShortName: {{ nilOrNew .ShortName }},
 	Mode: "{{ .Mode }}",
-	Submode: {{ nilOrNew .Submode }},
+	Submode: {{ nilOrNewMode .Submode }},
 	IdGroupOfLines: {{ nilOrNew .IdGroupOfLines }},
 	NetworkName: {{ nilOrNew .NetworkName }},
 	Status: {{ nilOrNewStatus .Status }},
