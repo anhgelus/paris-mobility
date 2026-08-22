@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"anhgelus.world/paris-mobility/backend/internal"
 	"anhgelus.world/paris-mobility/backend/proto"
 )
 
@@ -74,13 +75,51 @@ type object struct {
 	DisruptionIds []string `json:"disruptionIds"`
 }
 
+func completeLines(req proto.DisruptionsRequest) (proto.LineSet, error) {
+	set := make(proto.LineSet, len(req.Lines)+len(req.Kinds)*3)
+	for _, line := range req.Lines {
+		set[line] = struct{}{}
+	}
+	if len(req.Kinds) == 0 {
+		req.Kinds = []proto.TransportMode{
+			proto.TransportMetro,
+			proto.TransportRER,
+			proto.TransportTram,
+			proto.TransportTransilien,
+		}
+	}
+	for _, kind := range req.Kinds {
+		var k internal.TransportMode
+		switch kind {
+		case proto.TransportMetro:
+			k = internal.MetroMode
+		case proto.TransportRER:
+			k = internal.RERSubmode
+		case proto.TransportTram:
+			k = internal.TramMode
+		case proto.TransportTransilien:
+			k = internal.TransilienSubmode
+		default:
+			return nil, proto.ErrInvalidRequest{Reason: "unkown transport kind"}
+		}
+		for _, line := range Lines[k] {
+			set[line.Id] = struct{}{}
+		}
+	}
+	return set, nil
+}
+
 func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) (proto.Disruptions, error) {
-	got, ok := c.Cache.Disruptions(req)
+	set, err := completeLines(req)
+	if err != nil {
+		return nil, err
+	}
+	got, ok := c.Cache.Disruptions(set)
 	if ok {
 		return got, nil
 	}
 	var res disruptions
-	err := c.do(ctx, "disruptions_bulk/disruptions/v2", &res)
+	err = c.do(ctx, "disruptions_bulk/disruptions/v2", &res)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +193,9 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 		if len(acc) == 0 {
 			continue
 		}
-		//TODO: remove unwanted kinds
-		dis[key] = acc
+		if _, ok := set[key]; ok {
+			dis[key] = acc
+		}
 	}
 	go c.Cache.UpdateDisruptions(complete)
 	return dis, nil

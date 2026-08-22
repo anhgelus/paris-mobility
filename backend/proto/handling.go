@@ -8,3 +8,5 @@ type DisruptionsRequest struct {
 type MonitoringRequest struct {
 	Stops []string `cbor:"stops"`
 }
+
+type LineSet map[string]struct{}

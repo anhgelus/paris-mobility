@@ -30,14 +30,14 @@ func New() *Cache {
 	}
 }
 
-func (c *Cache) Disruptions(req proto.DisruptionsRequest) (proto.Disruptions, bool) {
+func (c *Cache) Disruptions(set proto.LineSet) (proto.Disruptions, bool) {
 	c.disMu.RLock()
 	defer c.disMu.RUnlock()
-	if len(req.Lines) == 0 {
+	if len(set) == 0 {
 		return nil, false
 	}
 	dis := make(proto.Disruptions)
-	for _, line := range req.Lines {
+	for line := range set {
 		v, ok := c.disruptions[line]
 		if !ok {
 			return nil, false
