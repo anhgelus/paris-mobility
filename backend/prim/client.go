@@ -10,6 +10,8 @@ import (
 	"anhgelus.world/paris-mobility/backend/cache"
 )
 
+//go:generate go run ../internal/generate_lines/main.go -cache-folder ../build -package prim
+
 type Client struct {
 	*http.Client
 	Endpoint string
