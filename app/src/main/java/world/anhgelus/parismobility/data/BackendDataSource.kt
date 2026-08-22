@@ -181,15 +181,21 @@ data class MessageHeader(
                 acc
             }
             val len = ByteBuffer.wrap(buf, 2, 4).getInt()
-            buf = ByteArray(len)
+            val b = mutableListOf<List<Byte>>()
             n = 0
-            while (n < buf.size) {
-                val nn = input.read(buf.sliceArray(n..<buf.size))
+            while (n < len) {
+                val sub = ByteArray(1024)
+                val nn = input.read(sub)
                 if (nn < 0) throw IllegalArgumentException("invalid message")
+                b.add(sub.toList())
                 n += nn
             }
-            if (flags.contains(Flag.GZIP))
-                buf = GZIPInputStream(buf.inputStream()).readBytes()
+            buf = b.flatten().toByteArray()
+            if (flags.contains(Flag.GZIP)) {
+                buf.inputStream().use { input ->
+                    GZIPInputStream(input).use { buf = it.readBytes() }
+                }
+            }
             return Pair(kind, buf)
         }
     }
