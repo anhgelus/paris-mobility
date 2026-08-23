@@ -1,3 +1,8 @@
 dev:
     go generate ./...
     go run . -v -config dev.toml
+
+test:
+    # extract prim token from config and export it
+    export PRIM_TOKEN=$(sed "/token =/!d;s/token = \"\([^\"]+\)\"/\1/" dev.toml)
+    go test -v ./...

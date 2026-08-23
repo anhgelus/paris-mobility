@@ -13,7 +13,7 @@ class NetworkViewModel(
     val lines = repo.lines
     val disruptions = repo.disruptions.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(30 * 1000, 2 * 60 * 1000),
+        started = SharingStarted.WhileSubscribed(5 * 1000, 2 * 60 * 1000),
         initialValue = Result.Ok(emptyMap())
     )
 }

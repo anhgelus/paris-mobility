@@ -87,7 +87,7 @@ data class MonitoringStop(
     @SerialName("time") private val rawTime: Long,
     @Transient val time: LocalDateTime = LocalDateTime.ofEpochSecond(rawTime, 0, ZoneOffset.UTC),
     val status: Status,
-    @SerialName("vehicle_feature") val vehicleFeatures: List<VehicleFeature>,
+    @SerialName("vehicle_feature") val vehicleFeatures: List<VehicleFeature>? = null,
 ) {
     fun displayTime(): String {
         if (isStopped) return "À quai"

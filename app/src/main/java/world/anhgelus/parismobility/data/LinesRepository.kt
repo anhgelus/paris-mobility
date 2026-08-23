@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.models.LineKind
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 class LinesRepository(
@@ -52,23 +54,33 @@ class LinesRepository(
     }
 
     private var monitoredStops = mutableSetOf<Stop>()
+    private var lastUpdateStops: ZonedDateTime? = null
 
     val monitorStops = flow {
         while (true) {
-            if (monitoredStops.isEmpty()) {
+            if (
+                monitoredStops.isEmpty() || lastUpdateStops?.let {
+                    ChronoUnit.MINUTES.between(it, ZonedDateTime.now()) < 1
+                } ?: false
+            ) {
                 delay(500.milliseconds)
                 continue
             }
-            backendSource.monitorStops(monitoredStops).collect { emit(it) }
+            backendSource.monitorStops(monitoredStops).collect {
+                emit(it)
+                lastUpdateStops = ZonedDateTime.now()
+            }
         }
     }
 
     fun monitorStop(vararg s: Stop) {
         monitoredStops.addAll(s)
+        lastUpdateStops = null
     }
 
     fun stopMonitoringStop(vararg s: Stop) {
         monitoredStops.removeAll(s.toSet())
+        lastUpdateStops = null
     }
 
     private fun updateLines(

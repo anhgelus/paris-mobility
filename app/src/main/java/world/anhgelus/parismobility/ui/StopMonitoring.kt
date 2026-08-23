@@ -61,9 +61,6 @@ fun StopsMonitoring(
     ) {
         val modifier = Modifier.padding(16.dp)
         SectionTitle("Prochains passages", modifier)
-        savedStops.forEach { stop ->
-
-        }
         savedStops.mapNotNull { stops[it] }.forEach { (line, stop) ->
             StopMonitoring(line.kind, lines[line]!!.second, stop, res[stop.id.toString()], modifier)
         }

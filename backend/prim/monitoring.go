@@ -34,7 +34,7 @@ type monitored struct {
 	Status             string  `json:"DepartureStatus"`
 }
 
-func (c *Client) Monitoring(ctx context.Context, zda string) (map[string][]proto.StopMonitoring, bool, error) {
+func (c *Client) Monitoring(ctx context.Context, zda string) ([]proto.StopMonitoring, bool, error) {
 	got, ok := c.Cache.Stop(zda)
 	if ok {
 		return got, false, nil
@@ -56,7 +56,7 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string][]proto
 		return nil, false, proto.ErrInvalidRequest{Reason: "stop not found"}
 	}
 	visits := v.Siri.ServiceDelivery.StopMonitoringDelivery[0].Stops
-	res := make(map[string][]proto.StopMonitoring)
+	res := make([]proto.StopMonitoring, 0, len(visits))
 	for _, stop := range visits {
 		journey := stop.Journey
 		if journey.Monitored.ArrivalTime == nil && journey.Monitored.DepartureTime == nil {
@@ -110,7 +110,7 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string][]proto
 		default:
 			return nil, false, errors.New("unknown status: " + journey.Monitored.Status)
 		}
-		res[stop.Journey.LineRef.Value] = append(res[stop.Journey.LineRef.Value], proto.StopMonitoring{
+		res = append(res, proto.StopMonitoring{
 			IsStopped:      journey.Monitored.IsStopped,
 			Destination:    dest,
 			Time:           uint64(t.Unix()),
@@ -118,10 +118,8 @@ func (c *Client) Monitoring(ctx context.Context, zda string) (map[string][]proto
 			VehicleFeature: fs,
 		})
 	}
-	for _, sl := range res {
-		slices.SortFunc(sl, func(a, b proto.StopMonitoring) int {
-			return int(int64(a.Time) - int64(b.Time))
-		})
-	}
+	slices.SortFunc(res, func(a, b proto.StopMonitoring) int {
+		return int(int64(a.Time) - int64(b.Time))
+	})
 	return res, true, nil
 }
