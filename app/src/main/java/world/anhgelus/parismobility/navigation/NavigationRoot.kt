@@ -26,6 +26,7 @@ import world.anhgelus.parismobility.models.GeneralViewModel
 import world.anhgelus.parismobility.models.HomeViewModel
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.screens.HomeScreen
+import world.anhgelus.parismobility.screens.MapScreen
 import world.anhgelus.parismobility.screens.NetworkScreen
 import kotlin.math.pow
 
@@ -93,6 +94,9 @@ fun NavigationRoot(
             }
             entry<Route.Network> {
                 NetworkScreen(networkViewModel, modif)
+            }
+            entry<Route.Map> {
+                MapScreen(modif)
             }
         },
     )

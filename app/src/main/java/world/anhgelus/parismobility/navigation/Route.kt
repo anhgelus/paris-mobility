@@ -25,6 +25,9 @@ sealed interface Route : NavKey {
         @Serializable
         data class SpecificLine(val kind: LineKind, val line: Line) : Route
     }
+
+    @Serializable
+    data object Map : Route
 }
 
 data class BottomNavItem(
@@ -40,5 +43,9 @@ val TOP_LEVEL_DESTINATIONS = mapOf(
     Route.Network to BottomNavItem(
         painterID = R.drawable.outline_train_24,
         title = "Réseau",
+    ),
+    Route.Map to BottomNavItem(
+        painterID = R.drawable.outline_map_24,
+        title = "Carte",
     )
 )

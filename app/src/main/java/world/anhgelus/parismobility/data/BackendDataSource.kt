@@ -45,10 +45,15 @@ class BackendDataSource(
 
     override fun onAvailable(network: Network) {
         super.onAvailable(network)
-        socket = network.socketFactory.createSocket(
-            BuildConfig.SERVER_HOSTNAME,
-            BuildConfig.SERVER_PORT,
-        )
+        try {
+            socket = network.socketFactory.createSocket(
+                BuildConfig.SERVER_HOSTNAME,
+                BuildConfig.SERVER_PORT,
+            )
+        } catch (e: Exception) {
+            Log.w("BackendData", "cannot connect to backend: " + e.message)
+            socket = null
+        }
     }
 
     override fun onLosing(network: Network, maxMsToLive: Int) {

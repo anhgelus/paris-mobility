@@ -47,8 +47,9 @@ fun StopsMonitoring(
     modifier: Modifier = Modifier,
 ) {
     val monitor by monitoredStops.collectAsStateWithLifecycle()
-    lateinit var res: MonitoringStops
+    var res: MonitoringStops? = null
     monitor.onSuccess { res = it }
+    if (res == null) return
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,

@@ -57,6 +57,7 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -100,7 +101,7 @@ fun request(
             args.addAll(headers.flatMap { listOf("-H", it) })
             args.add(url)
             commandLine(args)
-            args.forEach { logger.info(it) }
+            args.forEach { logger.debug(it) }
         }.standardError.asText.get().let { logger.info(it) }
     } catch (e: ProcessExecutionException) {
         logger.error(e.message)
@@ -157,4 +158,14 @@ val updateLinesSvg = tasks.register("updateLinesSvg") {
             if (!err.isEmpty()) throw Exception(err)
         }
     }
+}
+
+val downloadPlans = tasks.register("downloadPlans") {
+    description = "Download used plans"
+
+    request(
+        url = "https://www.ratp.fr/sites/default/files/plans-lignes/Plans-essentiels/Plan-Metro.1772790495.png",
+        outputPath = file("src/main/res/drawable/plan_metro.png").absolutePath
+    )
+    logger.info("Plans downloaded")
 }
