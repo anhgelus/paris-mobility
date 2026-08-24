@@ -11,9 +11,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import java.time.LocalDateTime
+import java.time.Instant
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -86,20 +85,22 @@ data class MonitoringStop(
     @SerialName("is_stopped") val isStopped: Boolean,
     val destination: List<String>,
     @SerialName("time") private val rawTime: Long,
-    @Transient val time: LocalDateTime = LocalDateTime.ofEpochSecond(rawTime, 0, ZoneOffset.UTC),
+    @Transient val time: ZonedDateTime = ZonedDateTime.ofInstant(
+        Instant.ofEpochSecond(rawTime),
+        ZoneId.systemDefault()
+    ),
     val status: Status,
     @SerialName("vehicle_feature") val vehicleFeatures: List<VehicleFeature>? = null,
 ) {
     fun displayTime(): String {
         if (isStopped) return "À quai"
-        val conv = ZonedDateTime.ofInstant(time, ZoneOffset.UTC, ZoneId.systemDefault())
-        return when (val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), conv)) {
+        return when (val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), time)) {
             0L -> "À l'approche"
             in 1..45 -> "$mins min"
 
             else -> {
-                val h = if (time.hour < 10) "0${time.hour}" else time.hour.toString()
-                val m = if (time.minute < 10) "0${time.minute}" else time.minute.toString()
+                val h = if (time.hour < 10) "0${time.hour}" else time.hour
+                val m = if (time.minute < 10) "0${time.minute}" else time.minute
                 "$h:$m"
             }
         }

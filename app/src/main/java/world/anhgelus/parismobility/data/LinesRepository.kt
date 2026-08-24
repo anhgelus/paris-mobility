@@ -60,7 +60,7 @@ class LinesRepository(
         while (true) {
             if (
                 monitoredStops.isEmpty() || lastUpdateStops?.let {
-                    ChronoUnit.MINUTES.between(it, ZonedDateTime.now()) < 1
+                    ChronoUnit.SECONDS.between(it, ZonedDateTime.now()) < 45
                 } ?: false
             ) {
                 delay(500.milliseconds)

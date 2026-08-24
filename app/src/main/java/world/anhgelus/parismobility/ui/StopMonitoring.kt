@@ -36,6 +36,7 @@ import world.anhgelus.parismobility.data.Stop
 import world.anhgelus.parismobility.data.get
 import world.anhgelus.parismobility.models.LineKind
 import world.anhgelus.parismobility.ui.theme.Typography
+import java.time.ZonedDateTime
 import kotlin.math.min
 
 @Composable
@@ -108,12 +109,14 @@ fun StopMonitoring(
                     fontWeight = FontWeight.Bold
                 )
             } else {
-                monitor.fold(mutableMapOf<String, MutableList<MonitoringStop>>()) { acc, t ->
-                    acc[t.destination.first()] = acc[t.destination.first()]
-                        ?.also { it.add(t) }
-                        ?: mutableListOf(t)
-                    acc
-                }.forEach { (dest, it) -> Monitoring(dest, it) }
+                val now = ZonedDateTime.now()
+                monitor.filter { it.time.isAfter(now) }
+                    .fold(mutableMapOf<String, MutableList<MonitoringStop>>()) { acc, t ->
+                        acc[t.destination.first()] = acc[t.destination.first()]
+                            ?.also { it.add(t) }
+                            ?: mutableListOf(t)
+                        acc
+                    }.forEach { (dest, it) -> Monitoring(dest, it) }
             }
         }
     }

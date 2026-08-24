@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"anhgelus.world/paris-mobility/backend/cache"
+	"anhgelus.world/paris-mobility/backend/internal"
 	"anhgelus.world/paris-mobility/backend/prim"
 	"github.com/nyttikord/logos"
 )
@@ -78,7 +79,7 @@ func main() {
 		os.Kill, os.Interrupt, syscall.SIGTERM,
 	)
 	defer cancel()
-	ctx = context.WithValue(ctx, keyPrimClient, prim.New(
+	ctx = context.WithValue(ctx, internal.KeyPrimClient, prim.New(
 		"https://prim.iledefrance-mobilites.fr/marketplace",
 		cfg.Token,
 		http.DefaultClient,
@@ -86,7 +87,7 @@ func main() {
 	))
 	slog.Info("started")
 	go func() {
-		lg := Logger(ctx)
+		lg := internal.Logger(ctx)
 		for {
 			conn, err := l.Accept()
 			if err != nil {
@@ -98,7 +99,7 @@ func main() {
 				lg.Error("accepting connection", "error", err)
 				continue
 			}
-			go Handle(WithLogger(ctx, lg.With("ip", conn.RemoteAddr())), conn)
+			go Handle(internal.WithLogger(ctx, lg.With("ip", conn.RemoteAddr())), conn)
 		}
 	}()
 	<-ctx.Done()

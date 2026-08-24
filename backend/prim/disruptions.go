@@ -116,6 +116,7 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 	}
 	got, ok := c.Cache.Disruptions(set)
 	if ok {
+		internal.Logger(ctx).Debug("from cache")
 		return got, nil
 	}
 	var res disruptions
@@ -194,6 +195,21 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 			continue
 		}
 		if _, ok := set[key]; ok {
+			slices.SortFunc(acc, func(a, b proto.Disruption) int {
+				begA := time.Unix(a.Periods[0].Begin, 0)
+				begB := time.Unix(b.Periods[0].Begin, 0)
+				now := time.Now()
+				if begA.After(now) && begB.Before(now) {
+					return 1
+				} else if begA.Before(now) && begB.After(now) {
+					return -1
+				}
+				cmp := int(b.Severity) - int(a.Severity)
+				if cmp != 0 {
+					return cmp
+				}
+				return begA.Compare(begB)
+			})
 			dis[key] = acc
 		}
 	}

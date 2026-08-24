@@ -8,12 +8,13 @@ import (
 	"net"
 	"time"
 
+	"anhgelus.world/paris-mobility/backend/internal"
 	"anhgelus.world/paris-mobility/backend/proto"
 )
 
 func Handle(ctx context.Context, conn net.Conn) {
 	ch := make(chan any, 1)
-	l := Logger(ctx)
+	l := internal.Logger(ctx)
 	l.Debug("new connection")
 	for {
 		l := l
@@ -50,10 +51,10 @@ func Handle(ctx context.Context, conn net.Conn) {
 			switch v := got.(type) {
 			case proto.DisruptionsRequest:
 				l = l.With("kind", "disruptions")
-				msg, err = handleDisruptions(WithLogger(sub, l), v)
+				msg, err = handleDisruptions(internal.WithLogger(sub, l), v)
 			case proto.MonitoringRequest:
 				l = l.With("kind", "monitoring")
-				msg, err = handleMonitoring(WithLogger(sub, l), v)
+				msg, err = handleMonitoring(internal.WithLogger(sub, l), v)
 			case error:
 				err = v
 			default:

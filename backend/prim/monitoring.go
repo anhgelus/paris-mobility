@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"time"
 
+	"anhgelus.world/paris-mobility/backend/internal"
 	"anhgelus.world/paris-mobility/backend/proto"
 )
 
@@ -37,6 +39,7 @@ type monitored struct {
 func (c *Client) Monitoring(ctx context.Context, zda string) ([]proto.StopMonitoring, bool, error) {
 	got, ok := c.Cache.Stop(zda)
 	if ok {
+		internal.Logger(ctx).Debug("from cache", "zda", zda)
 		return got, false, nil
 	}
 	var v struct {
@@ -119,6 +122,10 @@ func (c *Client) Monitoring(ctx context.Context, zda string) ([]proto.StopMonito
 		})
 	}
 	slices.SortFunc(res, func(a, b proto.StopMonitoring) int {
+		cmp := strings.Compare(a.Destination[0], b.Destination[0])
+		if cmp != 0 {
+			return cmp
+		}
 		return int(int64(a.Time) - int64(b.Time))
 	})
 	return res, true, nil
