@@ -23,6 +23,7 @@ import kotlinx.serialization.encoding.Encoder
 import world.anhgelus.parismobility.BuildConfig
 import java.io.InputStream
 import java.net.Socket
+import java.net.SocketException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.GZIPInputStream
@@ -73,24 +74,31 @@ class BackendDataSource(
         }
         val sock = socket!!
         val req = Cbor.encodeToByteArray(req)
-        Message(kind, emptyList()).encode(req).let {
-            sock.getOutputStream().write(it)
-        }
-        val res = Message.decode(sock.getInputStream())
-        return when (res.first) {
-            Kind.RESPONSE -> Result.Ok(Cbor.decodeFromByteArray(res.second))
-            Kind.INVALID_REQUEST -> Result.Error(
-                NetworkError.UNKNOWN_ERROR,
-                Cbor.decodeFromByteArray<ErrorResponse>(res.second).let {
-                    it.error?.let { m -> Log.w("BackendData", m) }
-                    it.message
-                }
-            )
+        try {
+            Message(kind, emptyList()).encode(req).let {
+                sock.getOutputStream().write(it)
+            }
+            val res = Message.decode(sock.getInputStream())
+                ?: return Result.Error(NetworkError.SERVER_ERROR)
+            return when (res.first) {
+                Kind.RESPONSE -> Result.Ok(Cbor.decodeFromByteArray(res.second))
+                Kind.INVALID_REQUEST -> Result.Error(
+                    NetworkError.UNKNOWN_ERROR,
+                    Cbor.decodeFromByteArray<ErrorResponse>(res.second).let {
+                        it.error?.let { m -> Log.w("BackendData", m) }
+                        it.message
+                    }
+                )
 
-            Kind.INTERNAL_ERROR, Kind.DISRUPTIONS, Kind.MONITORING ->
-                Result.Error(NetworkError.SERVER_ERROR)
-
-            Kind.GOODBYE -> throw IllegalArgumentException("Server disconnected")
+                Kind.INTERNAL_ERROR -> Result.Error(NetworkError.SERVER_ERROR)
+                //TODO: retry
+                Kind.GOODBYE -> throw IllegalArgumentException("Server disconnected")
+                else -> throw IllegalArgumentException("invalid kind for response")
+            }
+        } catch (e: SocketException) {
+            sock.close()
+            socket = null
+            return Result.Error(NetworkError.SERVER_ERROR, e.message)
         }
     }
 
@@ -187,17 +195,19 @@ private data class Message(
     }
 
     companion object {
-        fun decode(input: InputStream): Pair<Kind, ByteArray> {
+        fun decode(input: InputStream): Pair<Kind, ByteArray>? {
             var buf = ByteArray(8)
             var n = input.read(buf)
+            if (n == -1) return null
             if (n != buf.size) throw IllegalArgumentException("invalid message")
             val rawKind = buf[0]
             if (rawKind >= Kind.entries.size) throw IllegalArgumentException("unknown kind")
             val kind = Kind.entries[buf[0].toInt()]
             val rawFlags = buf[1]
             val flags = Flag.entries.fold(mutableListOf<Flag>()) { acc, it ->
-                if (1.shl(it.ordinal).and(rawFlags.toInt()) != 0) acc.add(it)
-                acc
+                if (1.shl(it.ordinal).and(rawFlags.toInt()) != 0)
+                    acc.add(it).let { acc }
+                else acc
             }
             val len = ByteBuffer.wrap(buf, 2, 4).getInt()
             val b = mutableListOf<List<Byte>>()
