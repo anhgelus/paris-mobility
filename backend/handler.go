@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"time"
 
@@ -68,6 +69,10 @@ func Handle(ctx context.Context, conn net.Conn) {
 			}
 			if err == nil {
 				continue
+			}
+			if errors.Is(err, io.EOF) {
+				conn.Close()
+				return
 			}
 			l.Error("handling message", "error", err)
 			msg = &proto.Message{

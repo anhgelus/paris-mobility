@@ -100,7 +100,7 @@ data class MonitoringStop(
             else -> {
                 val h = if (time.hour < 10) "0${time.hour}" else time.hour.toString()
                 val m = if (time.minute < 10) "0${time.minute}" else time.minute.toString()
-                "à $h:$m"
+                "$h:$m"
             }
         }
     }

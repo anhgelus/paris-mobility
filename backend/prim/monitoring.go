@@ -74,8 +74,8 @@ func (c *Client) Monitoring(ctx context.Context, zda string) ([]proto.StopMonito
 		if t.Before(time.Now()) {
 			continue
 		}
-		dest := make([]string, 0, len(journey.DirectionName))
-		for _, s := range journey.DirectionName {
+		dest := make([]string, 0, len(journey.Monitored.DestinationDisplay))
+		for _, s := range journey.Monitored.DestinationDisplay {
 			dest = append(dest, s.Value)
 		}
 		var fs []proto.Feature

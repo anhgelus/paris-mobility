@@ -54,6 +54,7 @@ class BackendDataSource(
         } catch (e: Exception) {
             Log.w("BackendData", "cannot connect to backend: " + e.message)
             socket = null
+            //TODO: retry
         }
     }
 
@@ -123,12 +124,13 @@ class BackendDataSource(
     }
 
     fun close() {
-        if (socket != null) {
-            Message(Kind.GOODBYE, emptyList()).encode(ByteArray(0)).let {
-                socket!!.getOutputStream().write(it)
-            }
-            socket!!.close()
+        if (socket == null) return
+        val sock = socket!!
+        Message(Kind.GOODBYE, emptyList()).encode(ByteArray(0)).let {
+            sock.getOutputStream().write(it)
         }
+        sock.close()
+        socket = null
     }
 }
 
