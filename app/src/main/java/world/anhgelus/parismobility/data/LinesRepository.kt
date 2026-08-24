@@ -5,12 +5,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.models.LineKind
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 class LinesRepository(
     private val linesSource: LinesDataSource,
@@ -23,8 +23,14 @@ class LinesRepository(
     private val _stops = MutableStateFlow<LineStops>(mutableMapOf())
     val stops = _stops.asStateFlow()
 
-    val disruptions = backendSource.disruptions.onEach { disruptions ->
-        disruptions.onSuccess { updateLines(it) }
+    val disruptions = flow {
+        while (true) {
+            backendSource.disruptions.collect {
+                it.onSuccess { res -> updateLines(res) }
+                emit(it)
+            }
+            delay(1.minutes)
+        }
     }
 
     suspend fun loadLines(res: Resources) {

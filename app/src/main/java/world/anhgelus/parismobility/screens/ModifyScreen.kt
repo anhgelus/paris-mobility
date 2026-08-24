@@ -150,7 +150,7 @@ fun ModifySavedStops(
                     modifier = Modifier
                         .padding(16.dp)
                 ) {
-                    items(stops[line.id] ?: listOf()) {
+                    items(stops[line.id]?.sortedBy { it.name } ?: listOf()) {
                         Select(
                             checked = savedStops.contains(kind, it),
                             onUpdate = { change ->

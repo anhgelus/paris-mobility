@@ -174,45 +174,42 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 		}
 		line := affected.ImpactedObjects[id]
 		acc := make([]proto.Disruption, 0, len(line.DisruptionIds))
-		accComplete := make([]proto.Disruption, 0, len(line.DisruptionIds))
 		key := strings.Split(affected.Id, ":")[2]
 		for _, id := range line.DisruptionIds {
 			v, ok := mp[id]
 			if !ok {
 				continue
 			}
-			accComplete = append(accComplete, v)
-			if len(req.Lines) > 0 && !slices.Contains(req.Lines, key) {
-				continue
-			}
 			acc = append(acc, v)
 		}
-		if len(accComplete) == 0 {
-			continue
-		}
-		complete[key] = accComplete
 		if len(acc) == 0 {
 			continue
 		}
+		slices.SortFunc(acc, func(a, b proto.Disruption) int {
+			begA := time.Unix(a.Periods[0].Begin, 0)
+			begB := time.Unix(b.Periods[0].Begin, 0)
+			now := time.Now()
+			if begA.After(now) && begB.Before(now) {
+				return 1
+			} else if begA.Before(now) && begB.After(now) {
+				return -1
+			}
+			cmp := int(b.Severity) - int(a.Severity)
+			if cmp != 0 {
+				return cmp
+			}
+			return begA.Compare(begB)
+		})
+		complete[key] = acc
 		if _, ok := set[key]; ok {
-			slices.SortFunc(acc, func(a, b proto.Disruption) int {
-				begA := time.Unix(a.Periods[0].Begin, 0)
-				begB := time.Unix(b.Periods[0].Begin, 0)
-				now := time.Now()
-				if begA.After(now) && begB.Before(now) {
-					return 1
-				} else if begA.Before(now) && begB.After(now) {
-					return -1
-				}
-				cmp := int(b.Severity) - int(a.Severity)
-				if cmp != 0 {
-					return cmp
-				}
-				return begA.Compare(begB)
-			})
 			dis[key] = acc
 		}
 	}
-	go c.Cache.UpdateDisruptions(complete)
+	go func() {
+		for line := range set {
+			complete[line] = complete[line]
+		}
+		c.Cache.UpdateDisruptions(complete)
+	}()
 	return dis, nil
 }
