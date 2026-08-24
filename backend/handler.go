@@ -15,6 +15,7 @@ func Handle(ctx context.Context, conn net.Conn) {
 	l := Logger(ctx)
 	l.Debug("new connection")
 	for {
+		l := l
 		go func() {
 			var msg proto.Message
 			_, err := msg.ReadFrom(conn)

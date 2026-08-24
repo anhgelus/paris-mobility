@@ -12,6 +12,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -91,7 +92,8 @@ data class MonitoringStop(
 ) {
     fun displayTime(): String {
         if (isStopped) return "À quai"
-        return when (val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), time)) {
+        val conv = ZonedDateTime.ofInstant(time, ZoneOffset.UTC, ZoneId.systemDefault())
+        return when (val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), conv)) {
             0L -> "À l'approche"
             in 1..45 -> "$mins min"
 
