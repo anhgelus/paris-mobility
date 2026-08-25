@@ -19,7 +19,6 @@ const (
 	KindInternalError
 	KindDisruptions
 	KindMonitoring
-	KindGoodbye
 )
 
 type Flag uint8
@@ -120,7 +119,6 @@ func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 		var v MonitoringRequest
 		rest, err = unmarshal(rawBody, &v)
 		body = v
-	case KindGoodbye:
 	default:
 		err = ErrInvalidRequest{Reason: "invalid kind"}
 		return

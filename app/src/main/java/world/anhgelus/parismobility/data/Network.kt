@@ -47,6 +47,6 @@ enum class NetworkError(
     SERVER_ERROR("Serverside error"),
     INVALID_DATA("Data sent is invalid"),
     RATE_LIMITED("Rate limited by the server"),
-    NO_INTERNET("No internet available"),
+    NOT_CONNECTED("Not connected to the server. Check your internet connection"),
     UNKNOWN_ERROR("Unknown error"),
 }

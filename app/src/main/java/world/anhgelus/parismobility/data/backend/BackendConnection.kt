@@ -8,15 +8,14 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.ExperimentalSerializationApi
 import world.anhgelus.parismobility.BuildConfig
 import java.io.InputStream
 import java.net.Socket
+import java.net.SocketException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.GZIPInputStream
@@ -39,27 +38,21 @@ class BackendConnection(
 
         CoroutineScope(Dispatchers.IO).launch {
             while (true) {
-                waiting?.receive()
-                previousSocket?.let {
-                    _socket.send(it)
-                    continue
-                }
-                connect().also {
-                    _socket.send(it)
-                    previousSocket = it
-                }
-            }
-        }
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true) {
                 val req = sender.receive()
-                socket.receive()?.let { socket ->
-                    req.first.encode(req.second).let {
-                        socket.getOutputStream()?.write(it)
-                    }
-                    Message.decode(socket.getInputStream()).let {
-                        response.send(it)
-                    }
+                try {
+                    val socket = socket()
+                    response.send(
+                        if (socket == null) null
+                    else {
+                        req.first.encode(req.second).let {
+                            socket.getOutputStream()?.write(it)
+                        }
+                        Message.decode(socket.getInputStream())
+                    })
+                } catch (e: SocketException) {
+                    Log.w("BackendConnection", "connection lost: ${e.message}")
+                    previousSocket = null
+                    close()
                 }
             }
         }
@@ -99,11 +92,11 @@ class BackendConnection(
                             BuildConfig.SERVER_HOSTNAME,
                             BuildConfig.SERVER_PORT,
                         )
-                        Log.i("BackendData", "connected to the backend")
+                        Log.i("BackendConnection", "connected to the backend")
                         break
                     } catch (e: Exception) {
                         Log.w(
-                            "BackendData",
+                            "BackendConnection",
                             "cannot connect to the backend: ${e.message}, retrying in $dur seconds"
                         )
                     }
@@ -118,14 +111,22 @@ class BackendConnection(
     fun close() {
         previousSocket?.close()
         previousSocket = null
-        _socket.trySend(null)
+    }
+
+    private var previousSocket: Socket? = null
+
+    private suspend fun socket(): Socket? {
+        waiting?.receive()
+        previousSocket?.let {
+            return it
+        }
+        connect(10.minutes).also {
+            previousSocket = it
+            return it
+        }
     }
 
     private var waiting: Channel<Unit>? = null
-    private var previousSocket: Socket? = null
-
-    private val _socket: Channel<Socket?> = Channel()
-    val socket: ReceiveChannel<Socket?> = _socket
 
     private val sender: Channel<Pair<Message, ByteArray>> = Channel()
     private val response: Channel<Pair<Message.Kind, ByteArray>?> = Channel()
@@ -140,7 +141,6 @@ data class Message(
     val kind: Kind,
     val flags: List<Flag>,
 ) {
-    @OptIn(ExperimentalSerializationApi::class)
     fun encode(body: ByteArray): ByteArray {
         val ls = mutableListOf<Byte>()
         ls.add(kind.ordinal.toByte())
@@ -164,7 +164,6 @@ data class Message(
         INTERNAL_ERROR,
         DISRUPTIONS,
         MONITORING,
-        GOODBYE,
     }
 
     companion object {

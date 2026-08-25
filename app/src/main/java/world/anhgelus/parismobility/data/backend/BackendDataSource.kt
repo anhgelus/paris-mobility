@@ -2,10 +2,6 @@ package world.anhgelus.parismobility.data.backend
 
 import android.net.ConnectivityManager
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -32,12 +28,10 @@ class BackendDataSource(
         kind: Kind,
         req: R,
     ): Result<T, NetworkError> {
-        val socket = conn.socket.receive()
-        if (socket == null || !socket.isConnected) return Result.Error(NetworkError.NO_INTERNET)
         val req = Cbor.encodeToByteArray(req)
         try {
             val res = conn.send(Message(kind, emptyList()), req)
-                ?: return Result.Error(NetworkError.SERVER_ERROR)
+                ?: return Result.Error(NetworkError.NOT_CONNECTED)
             return when (res.first) {
                 Kind.RESPONSE -> Result.Ok(Cbor.Default.decodeFromByteArray(res.second))
                 Kind.INVALID_REQUEST -> Result.Error(
@@ -49,7 +43,6 @@ class BackendDataSource(
                 )
 
                 Kind.INTERNAL_ERROR -> Result.Error(NetworkError.SERVER_ERROR)
-                Kind.GOODBYE -> throw IllegalArgumentException("Server disconnected")
                 else -> throw IllegalArgumentException("invalid kind for response")
             }
         } catch (e: SocketException) {
@@ -58,28 +51,17 @@ class BackendDataSource(
         }
     }
 
-    val disruptions = flow {
-        get<DisruptionsRequest, Disruptions>(
-            Kind.DISRUPTIONS,
-            DisruptionsRequest(emptyList(), emptyList()),
-        ).let { emit(it) }
-    }.flowOn(Dispatchers.IO)
+    suspend fun disruptions() = get<DisruptionsRequest, Disruptions>(
+        Kind.DISRUPTIONS,
+        DisruptionsRequest(emptyList(), emptyList()),
+    )
 
-    fun monitorStops(stops: Collection<Stop>): Flow<Result<MonitoringStops, NetworkError>> {
-        return flow {
-            get<MonitoringRequest, MonitoringStops>(
-                Kind.MONITORING,
-                MonitoringRequest(stops.map { it.zda.toString() })
-            ).let { emit(it) }
-        }.flowOn(Dispatchers.IO)
-    }
+    suspend fun monitorStops(stops: Collection<Stop>) = get<MonitoringRequest, MonitoringStops>(
+        Kind.MONITORING,
+        MonitoringRequest(stops.map { it.zda.toString() })
+    )
 
     fun close() {
-        conn.socket.tryReceive().getOrNull()?.let { socket ->
-            Message(Kind.GOODBYE, emptyList()).encode(ByteArray(0)).let {
-                socket.getOutputStream().write(it)
-            }
-        }
         conn.close()
     }
 }

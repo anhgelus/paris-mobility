@@ -25,19 +25,10 @@ func Handle(ctx context.Context, conn net.Conn) {
 				ch <- err
 				return
 			}
-			if msg.Kind == proto.KindGoodbye {
-				close(ch)
-				return
-			}
 			ch <- msg.Body
 		}()
 		select {
 		case <-ctx.Done():
-			msg := &proto.Message{Kind: proto.KindGoodbye}
-			err := conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
-			if err == nil {
-				_, _ = msg.WriteTo(conn)
-			}
 			conn.Close()
 			return
 		case got, ok := <-ch:

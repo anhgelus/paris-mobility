@@ -1,10 +1,12 @@
 package world.anhgelus.parismobility.data
 
 import android.content.res.Resources
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.LineKind
@@ -26,13 +28,12 @@ class LinesRepository(
 
     val disruptions = flow {
         while (true) {
-            backendSource.disruptions.collect {
-                it.onSuccess { res -> updateLines(res) }
-                emit(it)
-            }
+            val res = backendSource.disruptions()
+            res.onSuccess { updateLines(it) }
+            emit(res)
             delay(1.minutes)
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     suspend fun loadLines(res: Resources) {
         val lines = linesSource.getLines(res)
@@ -73,12 +74,11 @@ class LinesRepository(
                 delay(500.milliseconds)
                 continue
             }
-            backendSource.monitorStops(monitoredStops).collect {
-                emit(it)
-                lastUpdateStops = ZonedDateTime.now()
-            }
+            val res = backendSource.monitorStops(monitoredStops)
+            emit(res)
+            lastUpdateStops = ZonedDateTime.now()
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     fun monitorStop(vararg s: Stop) {
         monitoredStops.addAll(s)
