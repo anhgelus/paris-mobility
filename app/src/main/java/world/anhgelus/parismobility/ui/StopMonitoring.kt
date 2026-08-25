@@ -50,7 +50,7 @@ fun StopsMonitoring(
     val monitor by monitoredStops.collectAsStateWithLifecycle()
     var res: MonitoringStops? = null
     monitor.onSuccess { res = it }
-    if (res == null) return
+    if (res == null) res = emptyMap()
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,

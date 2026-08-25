@@ -37,6 +37,7 @@ import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.NetworkError
+import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.DisruptionCard
@@ -55,7 +56,7 @@ fun NetworkScreen(
     modifier: Modifier = Modifier,
 ) {
     val networkBackStack = rememberNavBackStack(Route.Network)
-    val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
+    val disruptions by viewModel.disruptions.collectAsStateWithLifecycle(Result.Error(NetworkError.NOT_CONNECTED))
     var dis: Disruptions? = null
     var error: NetworkError? = null
     var message: String? = null

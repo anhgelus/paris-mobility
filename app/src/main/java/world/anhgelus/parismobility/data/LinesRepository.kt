@@ -1,12 +1,15 @@
 package world.anhgelus.parismobility.data
 
 import android.content.res.Resources
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.LineKind
@@ -79,6 +82,7 @@ class LinesRepository(
             lastUpdateStops = ZonedDateTime.now()
         }
     }.flowOn(Dispatchers.IO)
+        .shareIn(CoroutineScope(Dispatchers.IO), SharingStarted.Lazily)
 
     fun monitorStop(vararg s: Stop) {
         monitoredStops.addAll(s)

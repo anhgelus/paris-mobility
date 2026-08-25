@@ -41,18 +41,19 @@ class BackendConnection(
                 val req = sender.receive()
                 try {
                     val socket = socket()
-                    response.send(
-                        if (socket == null) null
-                    else {
-                        req.first.encode(req.second).let {
-                            socket.getOutputStream()?.write(it)
-                        }
-                        Message.decode(socket.getInputStream())
-                    })
+                    if (socket == null) {
+                        response.send(null)
+                        continue
+                    }
+                    req.first.encode(req.second).let {
+                        socket.getOutputStream()?.write(it)
+                    }
+                    response.send(Message.decode(socket.getInputStream()))
                 } catch (e: SocketException) {
                     Log.w("BackendConnection", "connection lost: ${e.message}")
                     previousSocket = null
                     close()
+                    response.send(null)
                 }
             }
         }
@@ -117,9 +118,14 @@ class BackendConnection(
 
     private suspend fun socket(): Socket? {
         waiting?.receive()
+        var res: Socket? = null
         previousSocket?.let {
-            return it
+            res = withTimeoutOrNull(10.seconds) {
+                if (it.getInputStream().read(ByteArray(0)) == -1) null
+                else it
+            }
         }
+        if (res != null) return res
         connect(10.minutes).also {
             previousSocket = it
             return it
