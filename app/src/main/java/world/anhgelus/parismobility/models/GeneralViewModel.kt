@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import world.anhgelus.parismobility.data.BackendDataSource
 import world.anhgelus.parismobility.data.LinesDataSource
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.PreferencesRepository
+import world.anhgelus.parismobility.data.backend.BackendDataSource
 
 class GeneralViewModel(
     ctx: Context,

@@ -19,8 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
-import world.anhgelus.parismobility.data.BackendDataSource
 import world.anhgelus.parismobility.data.LinesDataSource
+import world.anhgelus.parismobility.data.backend.BackendConnection
+import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.GeneralViewModel
 import world.anhgelus.parismobility.navigation.NavigationBar
 import world.anhgelus.parismobility.navigation.NavigationRoot
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
                     GeneralViewModel(
                         baseContext,
                         LinesDataSource,
-                        BackendDataSource(conn)
+                        BackendDataSource(BackendConnection(conn))
                     )
                 }
                 val rootBackStack = rememberNavBackStack(Route.Home)
