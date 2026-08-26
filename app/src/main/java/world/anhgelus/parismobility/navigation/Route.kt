@@ -8,26 +8,33 @@ import world.anhgelus.parismobility.models.LineKind
 
 @Serializable
 sealed interface Route : NavKey {
+    fun name(): String?
+
     @Serializable
-    data object Home : Route {
+    open class Helper(val name: String? = null) : Route {
+        override fun name(): String? = name
+    }
+
+    @Serializable
+    data object Home : Helper("Votre réseau") {
         @Serializable
-        data object Modify : Route {
+        data object Modify : Helper() {
             @Serializable
-            data object Stops : Route
+            data object Stops : Helper()
 
             @Serializable
-            data class Stop(val kind: LineKind, val line: Line) : Route
+            data class Stop(val kind: LineKind, val line: Line) : Helper()
         }
     }
 
     @Serializable
-    data object Network : Route {
+    data object Network : Helper("Réseau") {
         @Serializable
-        data class SpecificLine(val kind: LineKind, val line: Line) : Route
+        data class SpecificLine(val kind: LineKind, val line: Line) : Helper()
     }
 
     @Serializable
-    data object Map : Route
+    data object Map : Helper()
 }
 
 data class BottomNavItem(

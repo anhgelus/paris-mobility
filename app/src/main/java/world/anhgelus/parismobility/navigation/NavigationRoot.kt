@@ -10,7 +10,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -36,7 +35,6 @@ fun NavigationRoot(
     ctx: Context,
     model: GeneralViewModel,
     backStack: NavBackStack<NavKey>,
-    innerPadding: PaddingValues
 ) {
     val homeViewModel = viewModel {
         HomeViewModel(
@@ -46,9 +44,7 @@ fun NavigationRoot(
     }
     val networkViewModel = viewModel { NetworkViewModel(model.linesRepository) }
     NavDisplay(
-        modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         backStack = backStack,
         entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
         transitionSpec = {

@@ -5,16 +5,24 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,7 +41,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        val conn = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val conn = BackendConnection(getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager)
 
         setContent {
             ParisMobiliteTheme {
@@ -41,31 +49,55 @@ class MainActivity : ComponentActivity() {
                     GeneralViewModel(
                         baseContext,
                         LinesDataSource,
-                        BackendDataSource(BackendConnection(conn))
+                        BackendDataSource(conn)
                     )
                 }
                 val rootBackStack = rememberNavBackStack(Route.Home)
-                // disable return function for main nav
+                val key = rootBackStack.last()
                 Scaffold(
                     bottomBar = {
-                        NavigationBar(selectedKey = rootBackStack.last()) { rootBackStack.add(it) }
+                        NavigationBar(selectedKey = key) { rootBackStack.add(it) }
                     }
                 ) { innerPadding ->
+                    val connected by conn.isConnected.collectAsStateWithLifecycle()
                     val loading by model.isLoading.collectAsStateWithLifecycle()
-                    if (loading) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(64.dp),
-                                color = MaterialTheme.colorScheme.secondary,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                            )
+                    Column(modifier = Modifier.padding(innerPadding)) {
+                        if (!connected) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .shadow(1.dp)
+                                    .background(MaterialTheme.colorScheme.errorContainer)
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.outline_signal_cellular_connected_no_internet_0_bar_24),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                                Text(
+                                    text = "Déconnecté du serveur.",
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
                         }
-                    } else {
-                        NavigationRoot(baseContext, model, rootBackStack, innerPadding)
+                        if (loading) {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(64.dp),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                )
+                            }
+                        } else {
+                            NavigationRoot(baseContext, model, rootBackStack)
+                        }
                     }
                 }
             }

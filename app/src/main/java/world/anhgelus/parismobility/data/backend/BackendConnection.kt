@@ -9,6 +9,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -37,6 +39,7 @@ class BackendConnection(
         conn.registerNetworkCallback(req, this)
 
         CoroutineScope(Dispatchers.IO).launch {
+            delay(1.seconds)
             while (true) {
                 val req = sender.receive()
                 try {
@@ -58,6 +61,9 @@ class BackendConnection(
             }
         }
     }
+
+    private val _isConnected = MutableStateFlow(true)
+    val isConnected = _isConnected.asStateFlow()
 
     private var network: Network? = null
 
@@ -94,6 +100,7 @@ class BackendConnection(
                             BuildConfig.SERVER_PORT,
                         )
                         Log.i("BackendConnection", "connected to the backend")
+                        _isConnected.value = true
                         break
                     } catch (e: Exception) {
                         Log.w(
@@ -102,6 +109,7 @@ class BackendConnection(
                         )
                     }
                 }
+                _isConnected.value = false
                 delay(dur.seconds)
                 dur = dur.shl(1)
             }
@@ -110,7 +118,10 @@ class BackendConnection(
     }
 
     fun close() {
-        previousSocket?.close()
+        previousSocket?.let {
+            _isConnected.value = false
+            it.close()
+        }
         previousSocket = null
     }
 
@@ -164,6 +175,10 @@ data class Message(
         return ls.toByteArray()
     }
 
+    enum class Flag {
+        GZIP,
+    }
+
     enum class Kind {
         RESPONSE,
         INVALID_REQUEST,
@@ -206,8 +221,4 @@ data class Message(
             return Pair(kind, buf)
         }
     }
-}
-
-enum class Flag {
-    GZIP,
 }
