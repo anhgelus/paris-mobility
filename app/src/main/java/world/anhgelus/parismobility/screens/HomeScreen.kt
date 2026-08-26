@@ -24,8 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.LineStops
 import world.anhgelus.parismobility.data.MonitoringStops
-import world.anhgelus.parismobility.data.NetworkError
-import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.get
@@ -97,7 +95,7 @@ fun GeneralScreen(
     savedLines: Collection<SavedLine>,
     stops: LineStops,
     savedStops: Collection<SavedStop>,
-    monitoredStops: StateFlow<Result<MonitoringStops, NetworkError>>,
+    monitoredStops: StateFlow<MonitoringStops>,
     modifier: Modifier = Modifier,
     onModifyClick: () -> Unit,
 ) {

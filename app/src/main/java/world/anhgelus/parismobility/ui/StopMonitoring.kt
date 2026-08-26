@@ -28,8 +28,6 @@ import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.LineStops
 import world.anhgelus.parismobility.data.MonitoringStop
 import world.anhgelus.parismobility.data.MonitoringStops
-import world.anhgelus.parismobility.data.NetworkError
-import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.Status
 import world.anhgelus.parismobility.data.Stop
@@ -44,13 +42,10 @@ fun StopsMonitoring(
     lines: LineGroups,
     stops: LineStops,
     savedStops: Collection<SavedStop>,
-    monitoredStops: StateFlow<Result<MonitoringStops, NetworkError>>,
+    monitoredStops: StateFlow<MonitoringStops>,
     modifier: Modifier = Modifier,
 ) {
     val monitor by monitoredStops.collectAsStateWithLifecycle()
-    var res: MonitoringStops? = null
-    monitor.onSuccess { res = it }
-    if (res == null) res = emptyMap()
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -67,7 +62,7 @@ fun StopsMonitoring(
                 line.kind,
                 lines[line]!!.second,
                 stop,
-                res[stop.zda.toString()],
+                monitor[stop.zda.toString()],
                 modifier
             )
         }

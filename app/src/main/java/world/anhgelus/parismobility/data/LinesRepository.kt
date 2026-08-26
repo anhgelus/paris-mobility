@@ -5,18 +5,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.LineKind
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class LinesRepository(
     private val linesSource: LinesDataSource,
@@ -31,9 +30,10 @@ class LinesRepository(
 
     val disruptions = flow {
         while (true) {
-            val res = backendSource.disruptions()
-            res.onSuccess { updateLines(it) }
-            emit(res)
+            backendSource.disruptions().onSuccess {
+                updateLines(it)
+                emit(it)
+            }
             delay(1.minutes)
         }
     }.flowOn(Dispatchers.IO)
@@ -68,21 +68,26 @@ class LinesRepository(
     private var lastUpdateStops: ZonedDateTime? = null
 
     val monitorStops = flow {
-        while (true) {
-            if (
-                monitoredStops.isEmpty() || lastUpdateStops?.let {
-                    ChronoUnit.SECONDS.between(it, ZonedDateTime.now()) < 45
-                } ?: false
-            ) {
-                delay(500.milliseconds)
-                continue
+        var previous: Map<String, List<MonitoringStop>>? = null
+        CoroutineScope(Dispatchers.IO).launch {
+            while (true) {
+                if (monitoredStops.isEmpty()) {
+                    delay(500.milliseconds)
+                    continue
+                }
+                backendSource.monitorStops(monitoredStops).onSuccess { previous = it }
+                delay(45.seconds)
             }
-            val res = backendSource.monitorStops(monitoredStops)
-            emit(res)
-            lastUpdateStops = ZonedDateTime.now()
+        }
+        while (true) {
+            delay(
+                previous?.let {
+                    emit(it)
+                    10.seconds
+                } ?: 1.seconds
+            )
         }
     }.flowOn(Dispatchers.IO)
-        .shareIn(CoroutineScope(Dispatchers.IO), SharingStarted.Lazily)
 
     fun monitorStop(vararg s: Stop) {
         monitoredStops.addAll(s)

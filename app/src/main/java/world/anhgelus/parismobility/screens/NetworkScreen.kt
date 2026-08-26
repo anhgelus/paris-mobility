@@ -32,7 +32,6 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.data.Disruption
-import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.models.NetworkViewModel
@@ -54,11 +53,6 @@ fun NetworkScreen(
 ) {
     val networkBackStack = rememberNavBackStack(Route.Network)
     val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
-    var dis: Disruptions? = null
-    disruptions.onSuccess {
-        dis = it
-    }
-    if (dis == null) dis = emptyMap()
     NavDisplay(
         backStack = networkBackStack,
         transitionSpec = transitionSub(),
@@ -72,7 +66,7 @@ fun NetworkScreen(
                 }, modifier)
             }
             entry<Route.Network.SpecificLine> { (kind, line) ->
-                LineScreen(kind, line, dis!![line.id], modifier)
+                LineScreen(kind, line, disruptions[line.id], modifier)
             }
         },
     )

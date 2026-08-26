@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import world.anhgelus.parismobility.data.LinesRepository
-import world.anhgelus.parismobility.data.NetworkError
-import world.anhgelus.parismobility.data.Result
 
 class NetworkViewModel(
     repo: LinesRepository,
@@ -15,6 +13,6 @@ class NetworkViewModel(
     val disruptions = repo.disruptions.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = Result.Error(NetworkError.NOT_CONNECTED)
+        initialValue = emptyMap()
     )
 }

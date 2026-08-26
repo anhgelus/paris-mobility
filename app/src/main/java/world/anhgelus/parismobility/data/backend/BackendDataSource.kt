@@ -5,6 +5,7 @@ import android.util.Log
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -15,8 +16,6 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.MonitoringStops
-import world.anhgelus.parismobility.data.NetworkError
-import world.anhgelus.parismobility.data.Result
 import world.anhgelus.parismobility.data.Stop
 import java.net.SocketException
 
@@ -27,27 +26,30 @@ class BackendDataSource(
     private suspend inline fun <reified R, reified T> get(
         kind: Kind,
         req: R,
-    ): Result<T, NetworkError> {
+    ): Result<T> {
         val req = Cbor.encodeToByteArray(req)
         try {
             val res = conn.send(Message(kind, emptyList()), req)
-                ?: return Result.Error(NetworkError.NOT_CONNECTED)
+                ?: return Result.failure(ConnectionException.Kind.NOT_CONNECTED.exception)
             return when (res.first) {
-                Kind.RESPONSE -> Result.Ok(Cbor.Default.decodeFromByteArray(res.second))
-                Kind.INVALID_REQUEST -> Result.Error(
-                    NetworkError.UNKNOWN_ERROR,
+                Kind.RESPONSE -> Result.success(Cbor.decodeFromByteArray(res.second))
+                Kind.INVALID_REQUEST -> {
                     Cbor.decodeFromByteArray<ErrorResponse>(res.second).let {
                         it.error?.let { m -> Log.w("BackendData", m) }
-                        it.message
                     }
-                )
+                    Result.failure(ConnectionException.Kind.INVALID_DATA.exception)
+                }
 
-                Kind.INTERNAL_ERROR -> Result.Error(NetworkError.SERVER_ERROR)
-                else -> throw IllegalArgumentException("invalid kind for response")
+                Kind.INTERNAL_ERROR -> Result.failure(ConnectionException.Kind.SERVER_ERROR.exception)
+                else -> Result.failure(IllegalArgumentException("invalid kind for response"))
             }
         } catch (e: SocketException) {
             conn.close()
-            return Result.Error(NetworkError.SERVER_ERROR, e.message)
+            e.message?.let { Log.w("BackendData", it) }
+            return Result.failure(ConnectionException.Kind.SERVER_ERROR.exception)
+        } catch (e: SerializationException) {
+            e.message?.let { Log.w("BackendData", it) }
+            return Result.failure(ConnectionException.Kind.SERVER_ERROR.exception.initCause(e))
         }
     }
 
@@ -113,3 +115,21 @@ private data class ErrorResponse(
     val message: String,
     val error: String? = null
 )
+
+data class ConnectionException(
+    val kind: Kind,
+) : Exception() {
+    override val message: String = kind.displayError
+
+    enum class Kind(
+        val displayError: String
+    ) {
+        SERVER_ERROR("Serverside error"),
+        INVALID_DATA("Data sent is invalid"),
+        RATE_LIMITED("Rate limited by the server"),
+        NOT_CONNECTED("Not connected to the server. Check your internet connection"),
+        UNKNOWN_ERROR("Unknown error");
+
+        val exception = ConnectionException(this)
+    }
+}
