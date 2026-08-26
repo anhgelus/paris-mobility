@@ -79,9 +79,6 @@ dependencies {
 
     // datastores
     implementation(libs.androidx.datastore.preferences)
-
-    // http requests
-    implementation(libs.bundles.ktor)
 }
 
 fun request(
