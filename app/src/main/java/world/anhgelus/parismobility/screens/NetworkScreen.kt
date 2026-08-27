@@ -153,14 +153,14 @@ fun LineScreen(
                         .innerShadow(
                             RectangleShape,
                             Shadow(
-                                radius = 4.dp,
+                                radius = 2.dp,
                                 spread = 1.dp,
                                 color = Color.Black,
                             )
                         )
                 )
             }
-            disruptions?.let { dis ->
+            disruptions?.sorted()?.let { dis ->
                 items(minOf(3, dis.size), key = { dis[it].id }) { i ->
                     val it = dis[i]
                     DisruptionCard(

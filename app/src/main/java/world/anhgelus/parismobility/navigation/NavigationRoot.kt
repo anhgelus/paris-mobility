@@ -29,7 +29,6 @@ import world.anhgelus.parismobility.screens.MapScreen
 import world.anhgelus.parismobility.screens.NetworkScreen
 import kotlin.math.pow
 
-
 @Composable
 fun NavigationRoot(
     ctx: Context,

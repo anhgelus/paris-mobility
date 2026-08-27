@@ -185,21 +185,6 @@ func (c *Client) Disruptions(ctx context.Context, req proto.DisruptionsRequest) 
 		if len(acc) == 0 {
 			continue
 		}
-		slices.SortFunc(acc, func(a, b proto.Disruption) int {
-			begA := time.Unix(a.Periods[0].Begin, 0)
-			begB := time.Unix(b.Periods[0].Begin, 0)
-			now := time.Now()
-			if begA.After(now) && begB.Before(now) {
-				return 1
-			} else if begA.Before(now) && begB.After(now) {
-				return -1
-			}
-			cmp := int(b.Severity) - int(a.Severity)
-			if cmp != 0 {
-				return cmp
-			}
-			return begA.Compare(begB)
-		})
 		complete[key] = acc
 		if _, ok := set[key]; ok {
 			dis[key] = acc

@@ -88,8 +88,8 @@ data class Disruption(
     }
 
     override fun compareTo(other: Disruption): Int {
-        val res = periods.first().compareTo(other.periods.first())
-        if (res != 0) return res
+        if (isHappening() != other.isHappening()) return periods.first()
+            .compareTo(other.periods.first())
         return -severity.compareTo(other.severity)
     }
 }
