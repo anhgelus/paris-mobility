@@ -13,30 +13,30 @@ import world.anhgelus.parismobility.data.PreferencesRepository
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 
 class GeneralViewModel(
-    ctx: Context,
-    linesDataSource: LinesDataSource,
-    backendDataSource: BackendDataSource,
+	ctx: Context,
+	linesDataSource: LinesDataSource,
+	backendDataSource: BackendDataSource,
 ) : ViewModel() {
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading = _isLoading.asStateFlow()
+	private val _isLoading = MutableStateFlow(true)
+	val isLoading = _isLoading.asStateFlow()
 
-    val linesRepository = LinesRepository(
-        linesDataSource,
-        backendDataSource
-    )
-    val preferencesRepository = PreferencesRepository(ctx)
+	val linesRepository = LinesRepository(
+		linesDataSource,
+		backendDataSource
+	)
+	val preferencesRepository = PreferencesRepository(ctx)
 
-    init {
-        loadData(ctx)
-    }
+	init {
+		loadData(ctx)
+	}
 
-    fun loadData(ctx: Context) {
-        _isLoading.update { true }
-        viewModelScope.launch {
-            linesRepository.loadLines(ctx.resources)
-            _isLoading.update { false }
-            // after isLoading because this is not a required to start
-            linesRepository.loadStops(ctx.resources)
-        }
-    }
+	fun loadData(ctx: Context) {
+		_isLoading.update { true }
+		viewModelScope.launch {
+			linesRepository.loadLines(ctx.resources)
+			_isLoading.update { false }
+			// after isLoading because this is not a required to start
+			linesRepository.loadStops(ctx.resources)
+		}
+	}
 }

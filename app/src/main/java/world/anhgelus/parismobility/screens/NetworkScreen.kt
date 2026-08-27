@@ -48,142 +48,142 @@ import world.anhgelus.parismobility.models.LineKind as LK
 
 @Composable
 fun NetworkScreen(
-    viewModel: NetworkViewModel,
-    modifier: Modifier = Modifier,
+	viewModel: NetworkViewModel,
+	modifier: Modifier = Modifier,
 ) {
-    val networkBackStack = rememberNavBackStack(Route.Network)
-    val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
-    NavDisplay(
-        backStack = networkBackStack,
-        transitionSpec = transitionSub(),
-        popTransitionSpec = transitionSubPop(),
-        predictivePopTransitionSpec = transitionSubPredictivePop(),
-        entryProvider = entryProvider {
-            entry<Route.Network> {
-                val groups by viewModel.lines.collectAsStateWithLifecycle()
-                GeneralScreen(groups, onClick = { kind, line ->
-                    networkBackStack.add(Route.Network.SpecificLine(kind, line))
-                }, modifier)
-            }
-            entry<Route.Network.SpecificLine> { (kind, line) ->
-                LineScreen(kind, line, disruptions[line.id], modifier)
-            }
-        },
-    )
+	val networkBackStack = rememberNavBackStack(Route.Network)
+	val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
+	NavDisplay(
+		backStack = networkBackStack,
+		transitionSpec = transitionSub(),
+		popTransitionSpec = transitionSubPop(),
+		predictivePopTransitionSpec = transitionSubPredictivePop(),
+		entryProvider = entryProvider {
+			entry<Route.Network> {
+				val groups by viewModel.lines.collectAsStateWithLifecycle()
+				GeneralScreen(groups, onClick = { kind, line ->
+					networkBackStack.add(Route.Network.SpecificLine(kind, line))
+				}, modifier)
+			}
+			entry<Route.Network.SpecificLine> { (kind, line) ->
+				LineScreen(kind, line, disruptions[line.id], modifier)
+			}
+		},
+	)
 }
 
 @Composable
 fun GeneralScreen(
-    groups: LineGroups,
-    onClick: (LK, Line) -> Unit,
-    modifier: Modifier = Modifier,
+	groups: LineGroups,
+	onClick: (LK, Line) -> Unit,
+	modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(32.dp),
-    ) {
-        item {
-            ScreenTitle("Réseau")
-        }
-        items(items = groups.filter { (key, _) -> key != LK.BUS }.toList()) { (kind, lines) ->
-            LineKind(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp),
-                name = kind.displayName,
-                lines = lines,
-                kind = kind,
-                onClick = onClick
-            )
-        }
-    }
+	LazyColumn(
+		modifier = modifier,
+		verticalArrangement = Arrangement.spacedBy(32.dp),
+	) {
+		item {
+			ScreenTitle("Réseau")
+		}
+		items(items = groups.filter { (key, _) -> key != LK.BUS }.toList()) { (kind, lines) ->
+			LineKind(
+				modifier = Modifier
+					.padding(horizontal = 16.dp)
+					.padding(bottom = 16.dp),
+				name = kind.displayName,
+				lines = lines,
+				kind = kind,
+				onClick = onClick
+			)
+		}
+	}
 }
 
 @Composable
 fun LineScreen(
-    kind: LK,
-    line: Line,
-    disruptions: List<Disruption>?,
-    modifier: Modifier = Modifier,
+	kind: LK,
+	line: Line,
+	disruptions: List<Disruption>?,
+	modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = Modifier.background(line.color),
-    ) {
-        val network = when (kind) {
-            LK.RER -> "RER"
-            LK.METRO -> "Métro"
-            LK.TRAM -> "Tram"
-            LK.TRANSILIEN -> "Ligne"
-            else -> line.network!!
-        }
-        val title = "$network ${line.name}"
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Color(
-                        ColorUtils.blendARGB(
-                            line.color.toArgb(),
-                            Color.Black.toArgb(),
-                            0.3f
-                        )
-                    )
-                )
-                .padding(16.dp)
-        ) {
-            Image(
-                painter = painterResource(kind.logoId!!),
-                contentDescription = "Logo du ${kind.displayName}",
-                modifier = Modifier.size(64.dp)
-            )
-            LineImage(kind, line, Modifier.size(64.dp), true)
-        }
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(32.dp),
-            modifier = Modifier.fillMaxHeight(),
-        ) {
-            item {
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(128.dp)
-                        .background(Color.White)
-                        .innerShadow(
-                            RectangleShape,
-                            Shadow(
-                                radius = 2.dp,
-                                spread = 1.dp,
-                                color = Color.Black,
-                            )
-                        )
-                )
-            }
-            disruptions?.sorted()?.let { dis ->
-                items(minOf(3, dis.size), key = { dis[it].id }) { i ->
-                    val it = dis[i]
-                    DisruptionCard(
-                        it.copy(
-                            title = it.title.removePrefix("$title : ").removePrefix("$title - ")
-                        ),
-                        modifier
-                    )
-                }
-                item {
-                    if (dis.size >= 3) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            FilledTonalButton(onClick = {}) {
-                                Text(text = "Voir plus", style = Typography.bodyLarge)
-                            }
-                        }
-                    }
-                }
-            }
-            item { Spacer(modifier = Modifier.padding(bottom = 16.dp)) }
-        }
-    }
+	Column(
+		modifier = Modifier.background(line.color),
+	) {
+		val network = when (kind) {
+			LK.RER -> "RER"
+			LK.METRO -> "Métro"
+			LK.TRAM -> "Tram"
+			LK.TRANSILIEN -> "Ligne"
+			else -> line.network!!
+		}
+		val title = "$network ${line.name}"
+		Row(
+			horizontalArrangement = Arrangement.spacedBy(16.dp),
+			verticalAlignment = Alignment.CenterVertically,
+			modifier = Modifier
+				.fillMaxWidth()
+				.background(
+					Color(
+						ColorUtils.blendARGB(
+							line.color.toArgb(),
+							Color.Black.toArgb(),
+							0.3f
+						)
+					)
+				)
+				.padding(16.dp)
+		) {
+			Image(
+				painter = painterResource(kind.logoId!!),
+				contentDescription = "Logo du ${kind.displayName}",
+				modifier = Modifier.size(64.dp)
+			)
+			LineImage(kind, line, Modifier.size(64.dp), true)
+		}
+		LazyColumn(
+			verticalArrangement = Arrangement.spacedBy(32.dp),
+			modifier = Modifier.fillMaxHeight(),
+		) {
+			item {
+				Spacer(
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(128.dp)
+						.background(Color.White)
+						.innerShadow(
+							RectangleShape,
+							Shadow(
+								radius = 2.dp,
+								spread = 1.dp,
+								color = Color.Black,
+							)
+						)
+				)
+			}
+			disruptions?.sorted()?.let { dis ->
+				items(minOf(3, dis.size), key = { dis[it].id }) { i ->
+					val it = dis[i]
+					DisruptionCard(
+						it.copy(
+							title = it.title.removePrefix("$title : ").removePrefix("$title - ")
+						),
+						modifier
+					)
+				}
+				item {
+					if (dis.size >= 3) {
+						Column(
+							horizontalAlignment = Alignment.CenterHorizontally,
+							modifier = Modifier.fillMaxWidth()
+						) {
+							FilledTonalButton(onClick = {}) {
+								Text(text = "Voir plus", style = Typography.bodyLarge)
+							}
+						}
+					}
+				}
+			}
+			item { Spacer(modifier = Modifier.padding(bottom = 16.dp)) }
+		}
+	}
 }

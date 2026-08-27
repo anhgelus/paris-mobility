@@ -29,103 +29,103 @@ import world.anhgelus.parismobility.models.LineKind
 
 @Composable
 fun LineImage(
-    kind: LineKind,
-    line: Line,
-    modifier: Modifier = Modifier,
-    forceBackground: Boolean = false
+	kind: LineKind,
+	line: Line,
+	modifier: Modifier = Modifier,
+	forceBackground: Boolean = false
 ) {
-    Image(
-        painter = painterResource(line.getResource()),
-        contentDescription = line.name,
-        modifier = modifier
-            .background(
-                color =
-                    if ((isSystemInDarkTheme() || forceBackground) && kind.requiresBackground) Color.White
-                    else Color.Transparent,
-                shape = kind.roundedCornerShape
-            ),
-    )
+	Image(
+		painter = painterResource(line.getResource()),
+		contentDescription = line.name,
+		modifier = modifier
+			.background(
+				color =
+					if ((isSystemInDarkTheme() || forceBackground) && kind.requiresBackground) Color.White
+					else Color.Transparent,
+				shape = kind.roundedCornerShape
+			),
+	)
 }
 
 @Composable
 fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val sev by line.disruptionSeverity
-    var modifier = modifier
-    if (sev != Severity.INFORMATION) {
-        modifier = modifier
+	val sev by line.disruptionSeverity
+	var modifier = modifier
+	if (sev != Severity.INFORMATION) {
+		modifier = modifier
             .border(
                 width = 2.dp,
                 color = sev.color.first,
                 shape = kind.roundedCornerShape
             )
             .padding(8.dp)
-    }
-    Box(
-        modifier = modifier.clickable(onClick = onClick),
-    ) {
-        var modifier: Modifier = Modifier
-        if (sev == Severity.INFORMATION) {
-            modifier = modifier.padding(4.dp)
-        }
-        LineImage(
-            kind = kind,
-            line = line,
-            modifier = modifier,
-        )
-    }
+	}
+	Box(
+		modifier = modifier.clickable(onClick = onClick),
+	) {
+		var modifier: Modifier = Modifier
+		if (sev == Severity.INFORMATION) {
+			modifier = modifier.padding(4.dp)
+		}
+		LineImage(
+			kind = kind,
+			line = line,
+			modifier = modifier,
+		)
+	}
 }
 
 @Composable
 fun LineDetailed(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        LineImage(
-            kind = kind,
-            line = line,
-            modifier = Modifier.size(48.dp),
-        )
-        Text("${kind.displayName} ${line.name}")
-    }
+	Row(
+		modifier = modifier,
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.spacedBy(8.dp),
+	) {
+		LineImage(
+			kind = kind,
+			line = line,
+			modifier = Modifier.size(48.dp),
+		)
+		Text("${kind.displayName} ${line.name}")
+	}
 }
 
 @Composable
 fun LineKind(
-    name: String,
-    kind: LineKind,
-    lines: Collection<Line>,
-    onClick: (LineKind, Line) -> Unit,
-    modifier: Modifier = Modifier
+	name: String,
+	kind: LineKind,
+	lines: Collection<Line>,
+	onClick: (LineKind, Line) -> Unit,
+	modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        SectionTitle(name)
-        LinesRow { size ->
-            lines.forEach {
-                Line(kind, it, onClick = { onClick(kind, it) }, Modifier.size(size))
-            }
-            lines.size
-        }
-    }
+	Column(
+		modifier = modifier,
+		verticalArrangement = Arrangement.spacedBy(16.dp),
+	) {
+		SectionTitle(name)
+		LinesRow { size ->
+			lines.forEach {
+				Line(kind, it, onClick = { onClick(kind, it) }, Modifier.size(size))
+			}
+			lines.size
+		}
+	}
 }
 
 @Composable
 fun LinesRow(modifier: Modifier = Modifier, content: @Composable ((Dp) -> Int)) {
-    val size = 48.dp
-    val items = 6
-    FlowRow(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = modifier.fillMaxWidth(),
-        maxItemsInEachRow = items,
-    ) {
-        val s = content(size)
-        val mod = s % items
-        if (mod != 0)
-            repeat(items - (s % items)) { Spacer(Modifier.size(size)) }
-    }
+	val size = 48.dp
+	val items = 6
+	FlowRow(
+		verticalArrangement = Arrangement.spacedBy(16.dp),
+		horizontalArrangement = Arrangement.SpaceBetween,
+		modifier = modifier.fillMaxWidth(),
+		maxItemsInEachRow = items,
+	) {
+		val s = content(size)
+		val mod = s % items
+		if (mod != 0)
+			repeat(items - (s % items)) { Spacer(Modifier.size(size)) }
+	}
 }

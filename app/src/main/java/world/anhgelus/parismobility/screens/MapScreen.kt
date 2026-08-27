@@ -8,9 +8,9 @@ import world.anhgelus.parismobility.ui.Image
 
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(R.drawable.plan_metro),
-        contentDescription = "Plan du métro",
-        modifier = modifier,
-    )
+	Image(
+		painter = painterResource(R.drawable.plan_metro),
+		contentDescription = "Plan du métro",
+		modifier = modifier,
+	)
 }

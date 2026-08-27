@@ -7,12 +7,12 @@ import kotlinx.coroutines.flow.stateIn
 import world.anhgelus.parismobility.data.LinesRepository
 
 class NetworkViewModel(
-    repo: LinesRepository,
+	repo: LinesRepository,
 ) : ViewModel() {
-    val lines = repo.lines
-    val disruptions = repo.disruptions.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyMap()
-    )
+	val lines = repo.lines
+	val disruptions = repo.disruptions.stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.Eagerly,
+		initialValue = emptyMap()
+	)
 }

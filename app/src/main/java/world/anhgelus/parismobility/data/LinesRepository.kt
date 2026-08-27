@@ -17,111 +17,111 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class LinesRepository(
-    private val linesSource: LinesDataSource,
-    private val backendSource: BackendDataSource,
+	private val linesSource: LinesDataSource,
+	private val backendSource: BackendDataSource,
 ) {
 
-    private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
-    val lines = _lines.asStateFlow()
+	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
+	val lines = _lines.asStateFlow()
 
-    private val _stops = MutableStateFlow<LineStops>(mutableMapOf())
-    val stops = _stops.asStateFlow()
+	private val _stops = MutableStateFlow<LineStops>(mutableMapOf())
+	val stops = _stops.asStateFlow()
 
-    val disruptions = flow {
-        while (true) {
-            backendSource.disruptions().onSuccess {
-                updateLines(it)
-                emit(it)
-            }
-            delay(1.minutes)
-        }
-    }.flowOn(Dispatchers.IO)
+	val disruptions = flow {
+		while (true) {
+			backendSource.disruptions().onSuccess {
+				updateLines(it)
+				emit(it)
+			}
+			delay(1.minutes)
+		}
+	}.flowOn(Dispatchers.IO)
 
-    suspend fun loadLines(res: Resources) {
-        val lines = linesSource.getLines(res)
-        val resp = mutableMapOf<LineKind, List<Line>>()
-        lines.forEach { (mode, lines) ->
-            when (mode) {
-                Line.TransportMode.BUS -> resp[LineKind.BUS] = lines.sorted()
-                Line.TransportMode.TRAM -> resp[LineKind.TRAM] = lines.sorted()
-                Line.TransportMode.METRO -> resp[LineKind.METRO] = lines.sorted()
-                Line.TransportMode.RAIL -> {
-                    resp[LineKind.RER] = lines.filter { it.submode == "local" }.sorted()
-                    resp[LineKind.TRANSILIEN] = lines.filter {
-                        // because the API doesn't contain the data of line V
-                        it.submode == "suburbanRailway" && it.name != "V"
-                    }.sorted()
-                }
+	suspend fun loadLines(res: Resources) {
+		val lines = linesSource.getLines(res)
+		val resp = mutableMapOf<LineKind, List<Line>>()
+		lines.forEach { (mode, lines) ->
+			when (mode) {
+				Line.TransportMode.BUS -> resp[LineKind.BUS] = lines.sorted()
+				Line.TransportMode.TRAM -> resp[LineKind.TRAM] = lines.sorted()
+				Line.TransportMode.METRO -> resp[LineKind.METRO] = lines.sorted()
+				Line.TransportMode.RAIL -> {
+					resp[LineKind.RER] = lines.filter { it.submode == "local" }.sorted()
+					resp[LineKind.TRANSILIEN] = lines.filter {
+						// because the API doesn't contain the data of line V
+						it.submode == "suburbanRailway" && it.name != "V"
+					}.sorted()
+				}
 
-                else -> {} // do nothing with unsupported modes
-            }
-        }
-        _lines.update { resp }
-    }
+				else -> {} // do nothing with unsupported modes
+			}
+		}
+		_lines.update { resp }
+	}
 
-    suspend fun loadStops(res: Resources) {
-        _stops.update { linesSource.getStops(res) }
-    }
+	suspend fun loadStops(res: Resources) {
+		_stops.update { linesSource.getStops(res) }
+	}
 
-    private var monitoredStops = mutableSetOf<Stop>()
+	private var monitoredStops = mutableSetOf<Stop>()
 
-    val monitorStops = flow {
-        var previous: MonitoringStops? = null
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true) {
-                if (monitoredStops.isEmpty()) {
-                    delay(500.milliseconds)
-                    continue
-                }
-                backendSource.monitorStops(monitoredStops).onSuccess {
-                    previous = MonitoringStops(map = it, synced = true)
-                }
-                delay(45.seconds)
-            }
-        }
-        while (true) {
-            (previous?.let {
-                emit(it.update())
-                10.seconds
-            } ?: 1.seconds).let { delay(it) }
-        }
-    }.flowOn(Dispatchers.IO)
+	val monitorStops = flow {
+		var previous: MonitoringStops? = null
+		CoroutineScope(Dispatchers.IO).launch {
+			while (true) {
+				if (monitoredStops.isEmpty()) {
+					delay(500.milliseconds)
+					continue
+				}
+				backendSource.monitorStops(monitoredStops).onSuccess {
+					previous = MonitoringStops(map = it, synced = true)
+				}
+				delay(45.seconds)
+			}
+		}
+		while (true) {
+			(previous?.let {
+				emit(it.update())
+				10.seconds
+			} ?: 1.seconds).let { delay(it) }
+		}
+	}.flowOn(Dispatchers.IO)
 
-    fun monitorStop(vararg s: Stop) {
-        monitoredStops.addAll(s)
-    }
+	fun monitorStop(vararg s: Stop) {
+		monitoredStops.addAll(s)
+	}
 
-    fun stopMonitoringStop(vararg s: Stop) {
-        monitoredStops.removeAll(s.toSet())
-    }
+	fun stopMonitoringStop(vararg s: Stop) {
+		monitoredStops.removeAll(s.toSet())
+	}
 
-    private fun updateLines(
-        disruptions: Disruptions,
-    ) {
-        _lines.update { v ->
-            v.mapValues { (_, lines) ->
-                lines.map { line ->
-                    line.setDisruption(
-                        disruptions[line.id]
-                            ?.filter { it.isHappening() }
-                            ?.minOrNull()
-                            ?.severity
-                    )
-                }
-            }
-        }
-    }
+	private fun updateLines(
+		disruptions: Disruptions,
+	) {
+		_lines.update { v ->
+			v.mapValues { (_, lines) ->
+				lines.map { line ->
+					line.setDisruption(
+						disruptions[line.id]
+							?.filter { it.isHappening() }
+							?.minOrNull()
+							?.severity
+					)
+				}
+			}
+		}
+	}
 }
 
 typealias LineGroups = Map<LineKind, List<Line>>
 
 operator fun LineGroups.get(saved: SavedLine): Pair<LineKind, Line>? {
-    return this[saved.kind]?.firstOrNull { it.id == saved.line }?.let { Pair(saved.kind, it) }
+	return this[saved.kind]?.firstOrNull { it.id == saved.line }?.let { Pair(saved.kind, it) }
 }
 
 typealias LineStops = Map<String, List<Stop>>
 
 operator fun LineStops.get(saved: SavedStop): Pair<SavedLine, Stop>? {
-    return this[saved.line.line]?.firstOrNull { it.id == saved.stop }
-        ?.let { Pair(saved.line, it) }
+	return this[saved.line.line]?.firstOrNull { it.id == saved.stop }
+		?.let { Pair(saved.line, it) }
 }

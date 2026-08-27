@@ -37,70 +37,70 @@ import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
+	override fun onCreate(savedInstanceState: Bundle?) {
+		enableEdgeToEdge()
+		super.onCreate(savedInstanceState)
 
-        val conn = BackendConnection(getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager)
+		val conn = BackendConnection(getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager)
 
-        setContent {
-            ParisMobiliteTheme {
-                val model = viewModel {
-                    GeneralViewModel(
-                        baseContext,
-                        LinesDataSource,
-                        BackendDataSource(conn)
-                    )
-                }
-                val rootBackStack = rememberNavBackStack(Route.Home)
-                val key = rootBackStack.last()
-                Scaffold(
-                    bottomBar = {
-                        NavigationBar(selectedKey = key) { rootBackStack.add(it) }
-                    }
-                ) { innerPadding ->
-                    val connected by conn.isConnected.collectAsStateWithLifecycle()
-                    val loading by model.isLoading.collectAsStateWithLifecycle()
-                    Column(modifier = Modifier.padding(innerPadding)) {
-                        if (!connected) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .shadow(1.dp)
-                                    .background(MaterialTheme.colorScheme.errorContainer)
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.outline_signal_cellular_connected_no_internet_0_bar_24),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                                )
-                                Text(
-                                    text = "Déconnecté du serveur.",
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                )
-                            }
-                        }
-                        if (loading) {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(64.dp),
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                )
-                            }
-                        } else {
-                            NavigationRoot(baseContext, model, rootBackStack)
-                        }
-                    }
-                }
-            }
-        }
-    }
+		setContent {
+			ParisMobiliteTheme {
+				val model = viewModel {
+					GeneralViewModel(
+						baseContext,
+						LinesDataSource,
+						BackendDataSource(conn)
+					)
+				}
+				val rootBackStack = rememberNavBackStack(Route.Home)
+				val key = rootBackStack.last()
+				Scaffold(
+					bottomBar = {
+						NavigationBar(selectedKey = key) { rootBackStack.add(it) }
+					}
+				) { innerPadding ->
+					val connected by conn.isConnected.collectAsStateWithLifecycle()
+					val loading by model.isLoading.collectAsStateWithLifecycle()
+					Column(modifier = Modifier.padding(innerPadding)) {
+						if (!connected) {
+							Row(
+								modifier = Modifier
+									.fillMaxWidth()
+									.shadow(1.dp)
+									.background(MaterialTheme.colorScheme.errorContainer)
+									.padding(16.dp),
+								verticalAlignment = Alignment.CenterVertically,
+								horizontalArrangement = Arrangement.spacedBy(8.dp),
+							) {
+								Icon(
+									painter = painterResource(R.drawable.outline_signal_cellular_connected_no_internet_0_bar_24),
+									contentDescription = null,
+									tint = MaterialTheme.colorScheme.onErrorContainer,
+								)
+								Text(
+									text = "Déconnecté du serveur.",
+									color = MaterialTheme.colorScheme.onErrorContainer,
+								)
+							}
+						}
+						if (loading) {
+							Column(
+								modifier = Modifier.fillMaxSize(),
+								verticalArrangement = Arrangement.Center,
+								horizontalAlignment = Alignment.CenterHorizontally,
+							) {
+								CircularProgressIndicator(
+									modifier = Modifier.size(64.dp),
+									color = MaterialTheme.colorScheme.secondary,
+									trackColor = MaterialTheme.colorScheme.surfaceVariant,
+								)
+							}
+						} else {
+							NavigationRoot(baseContext, model, rootBackStack)
+						}
+					}
+				}
+			}
+		}
+	}
 }

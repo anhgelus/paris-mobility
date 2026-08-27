@@ -11,28 +11,28 @@ import world.anhgelus.parismobility.ui.theme.Typography
 
 @Composable
 fun ScreenTitle(
-    content: String,
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.onBackground,
+	content: String,
+	modifier: Modifier = Modifier,
+	color: Color = MaterialTheme.colorScheme.onBackground,
 ) {
-    Text(
-        text = content,
-        color = color,
-        style = Typography.headlineMedium,
-        modifier = modifier.padding(top = 24.dp),
-    )
+	Text(
+		text = content,
+		color = color,
+		style = Typography.headlineMedium,
+		modifier = modifier.padding(top = 24.dp),
+	)
 }
 
 @Composable
 fun SectionTitle(
-    content: String,
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.onBackground,
+	content: String,
+	modifier: Modifier = Modifier,
+	color: Color = MaterialTheme.colorScheme.onBackground,
 ) {
-    Text(
-        text = content,
-        style = Typography.titleLarge,
-        modifier = modifier,
-        color = color,
-    )
+	Text(
+		text = content,
+		style = Typography.titleLarge,
+		modifier = modifier,
+		color = color,
+	)
 }

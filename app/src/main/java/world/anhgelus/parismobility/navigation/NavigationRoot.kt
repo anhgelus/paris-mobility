@@ -31,68 +31,68 @@ import kotlin.math.pow
 
 @Composable
 fun NavigationRoot(
-    ctx: Context,
-    model: GeneralViewModel,
-    backStack: NavBackStack<NavKey>,
+	ctx: Context,
+	model: GeneralViewModel,
+	backStack: NavBackStack<NavKey>,
 ) {
-    val homeViewModel = viewModel {
-        HomeViewModel(
-            model.preferencesRepository,
-            model.linesRepository,
-        )
-    }
-    val networkViewModel = viewModel { NetworkViewModel(model.linesRepository) }
-    NavDisplay(
-        modifier = Modifier.fillMaxSize(),
-        backStack = backStack,
-        entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
-        transitionSpec = {
-            val scale = 0.95f
-            val duration = 200
-            val delay = duration / 3
-            val easing = EaseInCubic
-            scaleIn(
-                initialScale = scale.pow(0.5f),
-                animationSpec = tween(
-                    delayMillis = delay,
-                    durationMillis = duration,
-                    easing = easing
-                )
-            ) + fadeIn(
-                animationSpec = tween(
-                    delayMillis = delay,
-                    durationMillis = 2 * duration / 3,
-                    easing = easing
-                )
-            ) togetherWith scaleOut(
-                animationSpec = tween(durationMillis = duration, easing = easing),
-                targetScale = scale
-            ) + fadeOut(animationSpec = tween(durationMillis = duration, easing = easing))
-        },
-        predictivePopTransitionSpec = {
-            slideInHorizontally {
-                -it
-            } + fadeIn(
-                initialAlpha = 0.5f,
-                animationSpec = tween(durationMillis = 200, easing = EaseInCubic)
-            ) togetherWith slideOutHorizontally {
-                it
-            } + fadeOut(
-                targetAlpha = 0.9f,
-                animationSpec = tween(durationMillis = 200, easing = EaseInCubic)
-            )
-        },
-        entryProvider = entryProvider {
-            val modif = Modifier.padding(horizontal = 16.dp)
-            entry<Route.Home> {
-                HomeScreen(ctx, homeViewModel, modif)
-            }
-            entry<Route.Network> {
-                NetworkScreen(networkViewModel, modif)
-            }
-            entry<Route.Map> {
-                MapScreen(modif)
-            }
-        },
-    )
+	val homeViewModel = viewModel {
+		HomeViewModel(
+			model.preferencesRepository,
+			model.linesRepository,
+		)
+	}
+	val networkViewModel = viewModel { NetworkViewModel(model.linesRepository) }
+	NavDisplay(
+		modifier = Modifier.fillMaxSize(),
+		backStack = backStack,
+		entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
+		transitionSpec = {
+			val scale = 0.95f
+			val duration = 200
+			val delay = duration / 3
+			val easing = EaseInCubic
+			scaleIn(
+				initialScale = scale.pow(0.5f),
+				animationSpec = tween(
+					delayMillis = delay,
+					durationMillis = duration,
+					easing = easing
+				)
+			) + fadeIn(
+				animationSpec = tween(
+					delayMillis = delay,
+					durationMillis = 2 * duration / 3,
+					easing = easing
+				)
+			) togetherWith scaleOut(
+				animationSpec = tween(durationMillis = duration, easing = easing),
+				targetScale = scale
+			) + fadeOut(animationSpec = tween(durationMillis = duration, easing = easing))
+		},
+		predictivePopTransitionSpec = {
+			slideInHorizontally {
+				-it
+			} + fadeIn(
+				initialAlpha = 0.5f,
+				animationSpec = tween(durationMillis = 200, easing = EaseInCubic)
+			) togetherWith slideOutHorizontally {
+				it
+			} + fadeOut(
+				targetAlpha = 0.9f,
+				animationSpec = tween(durationMillis = 200, easing = EaseInCubic)
+			)
+		},
+		entryProvider = entryProvider {
+			val modif = Modifier.padding(horizontal = 16.dp)
+			entry<Route.Home> {
+				HomeScreen(ctx, homeViewModel, modif)
+			}
+			entry<Route.Network> {
+				NetworkScreen(networkViewModel, modif)
+			}
+			entry<Route.Map> {
+				MapScreen(modif)
+			}
+		},
+	)
 }

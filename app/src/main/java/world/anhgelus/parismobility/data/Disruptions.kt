@@ -22,74 +22,74 @@ typealias Disruptions = Map<String, List<Disruption>>
 
 @Serializable(with = Severity.Serializer::class)
 enum class Severity {
-    INFORMATION,
-    DISRUPT,
-    BLOCKING;
+	INFORMATION,
+	DISRUPT,
+	BLOCKING;
 
-    val color: Pair<Color, Color>
-        @Composable
-        get() = when (this) {
-            INFORMATION -> Pair(Color.Transparent, MaterialTheme.colorScheme.onSurface)
-            DISRUPT -> Pair(CustomColorScheme.warning, CustomColorScheme.onWarning)
-            BLOCKING -> Pair(CustomColorScheme.error, CustomColorScheme.onError)
-        }
+	val color: Pair<Color, Color>
+		@Composable
+		get() = when (this) {
+			INFORMATION -> Pair(Color.Transparent, MaterialTheme.colorScheme.onSurface)
+			DISRUPT -> Pair(CustomColorScheme.warning, CustomColorScheme.onWarning)
+			BLOCKING -> Pair(CustomColorScheme.error, CustomColorScheme.onError)
+		}
 
-    object Serializer : KSerializer<Severity> {
-        override val descriptor: SerialDescriptor
-            get() = PrimitiveSerialDescriptor(
-                "world.anhgelus.parismobility.data.Severity.Serializer",
-                PrimitiveKind.BYTE
-            )
+	object Serializer : KSerializer<Severity> {
+		override val descriptor: SerialDescriptor
+			get() = PrimitiveSerialDescriptor(
+				"world.anhgelus.parismobility.data.Severity.Serializer",
+				PrimitiveKind.BYTE
+			)
 
-        override fun serialize(
-            encoder: Encoder,
-            value: Severity
-        ) {
-            encoder.encodeByte(value.ordinal.toByte())
-        }
+		override fun serialize(
+			encoder: Encoder,
+			value: Severity
+		) {
+			encoder.encodeByte(value.ordinal.toByte())
+		}
 
-        override fun deserialize(decoder: Decoder): Severity {
-            val i = decoder.decodeByte().toInt()
-            if (i >= entries.size) throw IllegalArgumentException("unknown severity")
-            return entries[i]
-        }
-    }
+		override fun deserialize(decoder: Decoder): Severity {
+			val i = decoder.decodeByte().toInt()
+			if (i >= entries.size) throw IllegalArgumentException("unknown severity")
+			return entries[i]
+		}
+	}
 }
 
 @Stable
 @Immutable
 @Serializable
 data class Period(
-    @SerialName("begin") private val beginRaw: Long,
-    @SerialName("end") private val endRaw: Long,
-    @Transient val begin: LocalDateTime = LocalDateTime.ofEpochSecond(beginRaw, 0, ZoneOffset.UTC),
-    @Transient val end: LocalDateTime = LocalDateTime.ofEpochSecond(endRaw, 0, ZoneOffset.UTC),
+	@SerialName("begin") private val beginRaw: Long,
+	@SerialName("end") private val endRaw: Long,
+	@Transient val begin: LocalDateTime = LocalDateTime.ofEpochSecond(beginRaw, 0, ZoneOffset.UTC),
+	@Transient val end: LocalDateTime = LocalDateTime.ofEpochSecond(endRaw, 0, ZoneOffset.UTC),
 ) : Comparable<Period> {
-    override fun compareTo(other: Period): Int {
-        return begin.compareTo(other.begin)
-    }
+	override fun compareTo(other: Period): Int {
+		return begin.compareTo(other.begin)
+	}
 }
 
 @Stable
 @Immutable
 @Serializable
 data class Disruption(
-    val id: String,
-    @SerialName("line_id") val lineId: String,
-    val periods: List<Period>,
-    val severity: Severity,
-    val cause: String,
-    val title: String,
-    val message: String,
-    @SerialName("short_message") val shortMessage: String? = null,
+	val id: String,
+	@SerialName("line_id") val lineId: String,
+	val periods: List<Period>,
+	val severity: Severity,
+	val cause: String,
+	val title: String,
+	val message: String,
+	@SerialName("short_message") val shortMessage: String? = null,
 ) : Comparable<Disruption> {
-    fun isHappening(): Boolean {
-        return periods.first().begin.isBefore(LocalDateTime.now())
-    }
+	fun isHappening(): Boolean {
+		return periods.first().begin.isBefore(LocalDateTime.now())
+	}
 
-    override fun compareTo(other: Disruption): Int {
-        if (isHappening() != other.isHappening()) return periods.first()
-            .compareTo(other.periods.first())
-        return -severity.compareTo(other.severity)
-    }
+	override fun compareTo(other: Disruption): Int {
+		if (isHappening() != other.isHappening()) return periods.first()
+			.compareTo(other.periods.first())
+		return -severity.compareTo(other.severity)
+	}
 }

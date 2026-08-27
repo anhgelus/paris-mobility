@@ -18,35 +18,35 @@ import androidx.compose.ui.graphics.painter.Painter
 
 @Composable
 fun Image(
-    painter: Painter,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    aspectRatio: Float = 1f,
+	painter: Painter,
+	contentDescription: String,
+	modifier: Modifier = Modifier,
+	aspectRatio: Float = 1f,
 ) {
-    var scale by remember {
-        mutableFloatStateOf(1.5f)
-    }
-    var offset by remember {
-        mutableStateOf(Offset.Zero)
-    }
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val state = rememberTransformableState { _, zoomChange, panChange, _ ->
-            scale = (scale * zoomChange).coerceIn(1f..5f)
+	var scale by remember {
+		mutableFloatStateOf(1.5f)
+	}
+	var offset by remember {
+		mutableStateOf(Offset.Zero)
+	}
+	BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+		val state = rememberTransformableState { _, zoomChange, panChange, _ ->
+			scale = (scale * zoomChange).coerceIn(1f..5f)
 
-            val min = minOf(constraints.maxWidth, constraints.maxHeight)
+			val min = minOf(constraints.maxWidth, constraints.maxHeight)
 
-            val maxX = maxOf((min * scale * aspectRatio - constraints.maxWidth) / 2, 0f)
-            val maxY = maxOf((min * scale / aspectRatio - constraints.maxHeight) / 2, 0f)
+			val maxX = maxOf((min * scale * aspectRatio - constraints.maxWidth) / 2, 0f)
+			val maxY = maxOf((min * scale / aspectRatio - constraints.maxHeight) / 2, 0f)
 
-            offset = Offset(
-                x = (offset.x + scale * panChange.x).coerceIn(-maxX..maxX),
-                y = (offset.y + scale * panChange.y).coerceIn(-maxY..maxY)
-            )
-        }
-        Image(
-            painter = painter,
-            contentDescription = contentDescription,
-            modifier = Modifier
+			offset = Offset(
+				x = (offset.x + scale * panChange.x).coerceIn(-maxX..maxX),
+				y = (offset.y + scale * panChange.y).coerceIn(-maxY..maxY)
+			)
+		}
+		Image(
+			painter = painter,
+			contentDescription = contentDescription,
+			modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
                     scaleX = scale
@@ -55,6 +55,6 @@ fun Image(
                     translationY = offset.y
                 }
                 .transformable(state),
-        )
-    }
+		)
+	}
 }
