@@ -16,7 +16,22 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
-typealias MonitoringStops = Map<String, List<MonitoringStop>>
+typealias MonitoringMap = Map<String, List<MonitoringStop>>
+
+@Stable
+@Immutable
+data class MonitoringStops(
+    val map: MonitoringMap,
+    val at: ZonedDateTime = ZonedDateTime.now(),
+    val synced: Boolean = false,
+) {
+    fun update(): MonitoringStops {
+        val at = ZonedDateTime.now()
+        return MonitoringStops(map.mapValues { (_, stop) ->
+            stop.filter { it.time.isAfter(at) }.map { it.update() }
+        }.filter { (_, stop) -> stop.isNotEmpty() }, at)
+    }
+}
 
 @Serializable(with = Status.Serializer::class)
 enum class Status {
@@ -85,24 +100,29 @@ data class MonitoringStop(
     @SerialName("is_stopped") val isStopped: Boolean,
     val destination: List<String>,
     @SerialName("time") private val rawTime: Long,
+    val status: Status,
+    @SerialName("vehicle_feature") val vehicleFeatures: List<VehicleFeature>? = null,
     @Transient val time: ZonedDateTime = ZonedDateTime.ofInstant(
         Instant.ofEpochSecond(rawTime),
         ZoneId.systemDefault()
     ),
-    val status: Status,
-    @SerialName("vehicle_feature") val vehicleFeatures: List<VehicleFeature>? = null,
+    @Transient val displayTime: String = displayTime(isStopped, time)
 ) {
-    fun displayTime(): String {
-        if (isStopped) return "À quai"
-        return when (val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), time)) {
-            0L -> "À l'approche"
-            in 1..45 -> "$mins min"
+    fun update(): MonitoringStop {
+        return MonitoringStop(isStopped, destination, rawTime, status, vehicleFeatures)
+    }
+}
 
-            else -> {
-                val h = if (time.hour < 10) "0${time.hour}" else time.hour
-                val m = if (time.minute < 10) "0${time.minute}" else time.minute
-                "$h:$m"
-            }
+fun displayTime(isStopped: Boolean, time: ZonedDateTime): String {
+    if (isStopped) return "À quai"
+    return when (val mins = ChronoUnit.MINUTES.between(ZonedDateTime.now(), time)) {
+        0L -> "À l'approche"
+        in 1..45 -> "$mins min"
+
+        else -> {
+            val h = if (time.hour < 10) "0${time.hour}" else time.hour
+            val m = if (time.minute < 10) "0${time.minute}" else time.minute
+            "$h:$m"
         }
     }
 }

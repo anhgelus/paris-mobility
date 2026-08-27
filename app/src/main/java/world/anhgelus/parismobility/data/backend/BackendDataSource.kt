@@ -15,7 +15,7 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import world.anhgelus.parismobility.data.Disruptions
-import world.anhgelus.parismobility.data.MonitoringStops
+import world.anhgelus.parismobility.data.MonitoringMap
 import world.anhgelus.parismobility.data.Stop
 import java.net.SocketException
 
@@ -58,7 +58,7 @@ class BackendDataSource(
         DisruptionsRequest(emptyList(), emptyList()),
     )
 
-    suspend fun monitorStops(stops: Collection<Stop>) = get<MonitoringRequest, MonitoringStops>(
+    suspend fun monitorStops(stops: Collection<Stop>) = get<MonitoringRequest, MonitoringMap>(
         Kind.MONITORING,
         MonitoringRequest(stops.map { it.zda.toString() })
     )

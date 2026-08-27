@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.LineKind
-import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -65,38 +64,35 @@ class LinesRepository(
     }
 
     private var monitoredStops = mutableSetOf<Stop>()
-    private var lastUpdateStops: ZonedDateTime? = null
 
     val monitorStops = flow {
-        var previous: Map<String, List<MonitoringStop>>? = null
+        var previous: MonitoringStops? = null
         CoroutineScope(Dispatchers.IO).launch {
             while (true) {
                 if (monitoredStops.isEmpty()) {
                     delay(500.milliseconds)
                     continue
                 }
-                backendSource.monitorStops(monitoredStops).onSuccess { previous = it }
+                backendSource.monitorStops(monitoredStops).onSuccess {
+                    previous = MonitoringStops(map = it, synced = true)
+                }
                 delay(45.seconds)
             }
         }
         while (true) {
-            delay(
-                previous?.let {
-                    emit(it)
-                    10.seconds
-                } ?: 1.seconds
-            )
+            (previous?.let {
+                emit(it.update())
+                10.seconds
+            } ?: 1.seconds).let { delay(it) }
         }
     }.flowOn(Dispatchers.IO)
 
     fun monitorStop(vararg s: Stop) {
         monitoredStops.addAll(s)
-        lastUpdateStops = null
     }
 
     fun stopMonitoringStop(vararg s: Stop) {
         monitoredStops.removeAll(s.toSet())
-        lastUpdateStops = null
     }
 
     private fun updateLines(

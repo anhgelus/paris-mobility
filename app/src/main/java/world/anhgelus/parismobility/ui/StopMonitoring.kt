@@ -53,7 +53,7 @@ fun StopsMonitoring(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
     ) {
         val modifier = Modifier.padding(16.dp)
         SectionTitle("Prochains passages", modifier)
@@ -62,7 +62,7 @@ fun StopsMonitoring(
                 line.kind,
                 lines[line]!!.second,
                 stop,
-                monitor[stop.zda.toString()],
+                monitor.map[stop.zda.toString()],
                 modifier
             )
         }
@@ -111,14 +111,14 @@ fun StopMonitoring(
                             ?.also { it.add(t) }
                             ?: mutableListOf(t)
                         acc
-                    }.forEach { (dest, it) -> Monitoring(dest, it) }
+                    }.forEach { (dest, it) -> Monitor(dest, it) }
             }
         }
     }
 }
 
 @Composable
-fun Monitoring(dest: String, monitor: MutableList<MonitoringStop>) {
+fun Monitor(dest: String, monitor: MutableList<MonitoringStop>) {
     Column(modifier = Modifier.offset(y = (-3).dp)) {
         Text(
             text = dest,
@@ -132,7 +132,7 @@ fun Monitoring(dest: String, monitor: MutableList<MonitoringStop>) {
             monitor.subList(0, min(monitor.size, 10)).forEach {
                 when (it.status) {
                     Status.ON_TIME, Status.EARLY, Status.DELAYED -> Text(
-                        text = it.displayTime(),
+                        text = it.displayTime,
                         style = Typography.bodyMedium,
                     )
 
