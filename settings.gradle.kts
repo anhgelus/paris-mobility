@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Paris Mobilité"
 include(":app")
+includeBuild("build-logic")

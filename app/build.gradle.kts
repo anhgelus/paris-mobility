@@ -1,7 +1,9 @@
 import com.android.ide.common.vectordrawable.Svg2Vector
 import org.jetbrains.kotlin.konan.properties.loadProperties
+import world.anhgelus.parismobility.plugin.DownloadPlansTask
 
 plugins {
+    id("world.anhgelus.parismobility")
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.jetbrains.kotlin.serialization)
@@ -30,7 +32,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "PRIM_TOKEN", "\"${get("PRIM_TOKEN")}\"")
         buildConfigField("String", "SERVER_HOSTNAME", "\"${get("SERVER_HOSTNAME")}\"")
         buildConfigField("int", "SERVER_PORT", get("SERVER_PORT"))
     }
@@ -157,12 +158,6 @@ val updateLinesSvg = tasks.register("updateLinesSvg") {
     }
 }
 
-val downloadPlans = tasks.register("downloadPlans") {
-    description = "Download used plans"
-
-    request(
-        url = "https://www.ratp.fr/sites/default/files/plans-lignes/Plans-essentiels/Plan-Metro.1772790495.png",
-        outputPath = file("src/main/res/drawable/plan_metro.png").absolutePath
-    )
-    logger.info("Plans downloaded")
+tasks.named<DownloadPlansTask>("downloadPlans").configure {
+    target = file("src/main/res/drawable/plan_metro.png").absolutePath
 }
