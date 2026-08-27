@@ -1,8 +1,8 @@
 package world.anhgelus.parismobility.plugin
 
 import com.android.ide.common.vectordrawable.Svg2Vector
-import kotlinx.coroutines.runBlocking
 import org.gradle.api.DefaultTask
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
@@ -16,7 +16,7 @@ abstract class UpdateLinesSvgTask : DefaultTask() {
 	abstract val target: Property<String>
 
 	@get:Input
-	abstract val modes: Property<List<String>>
+	abstract val modes: ListProperty<String>
 
 	@get:Input
 	abstract val token: Property<String>
@@ -29,14 +29,13 @@ abstract class UpdateLinesSvgTask : DefaultTask() {
 	}
 
 	private fun get(mode: String) {
-		val b = runBlocking {
-			DataGeneratorPlugin.INSTANCE.primRequest(
-				token.get(),
-				"getIcon/sprite?usage=signage_spaces&format=zip_svg&style=colored&getAll=true&transportMode=$mode",
-				"application/zip"
-			)
-		}
-		ZipInputStream(b.inputStream()).use { ins ->
+		val b = DataGeneratorPlugin.INSTANCE.primRequest(
+			token.get(),
+			"getIcon/sprite?usage=signage_spaces&format=zip_svg&style=colored&getAll=true&transportMode=$mode",
+			"application/zip"
+		)
+
+		ZipInputStream(b.byteInputStream()).use { ins ->
 			var ze = ins.nextEntry
 			while (ze != null) {
 				ins.readAllBytes().let {
