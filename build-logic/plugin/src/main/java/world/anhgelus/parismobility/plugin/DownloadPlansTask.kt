@@ -17,7 +17,8 @@ abstract class DownloadPlansTask : DefaultTask() {
 		f.createNewFile()
 		DataGeneratorPlugin.INSTANCE
 			.request("https://www.ratp.fr/sites/default/files/plans-lignes/Plans-essentiels/Plan-Metro.1772790495.png")
-			.let { f.writeText(it) }
+			.getOrThrow()
+			.let { f.writeBytes(it) }
 		logger.info("Plan downloaded...")
 	}
 }

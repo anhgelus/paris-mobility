@@ -7,6 +7,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
@@ -33,22 +34,22 @@ abstract class UpdateLinesSvgTask : DefaultTask() {
 			token.get(),
 			"getIcon/sprite?usage=signage_spaces&format=zip_svg&style=colored&getAll=true&transportMode=$mode",
 			"application/zip"
-		)
-
-		ZipInputStream(b.byteInputStream()).use { ins ->
-			var ze = ins.nextEntry
-			while (ze != null) {
-				ins.readAllBytes().let {
-					val name = ze.name.split(":")[2].split(".")[0].lowercase()
-					val f = File(Path(target.get(), "line_$name.xml").pathString)
-					if (!f.createNewFile()) continue
-					val p = Path(project.buildTreePath, "tmp", "$name.svg")
-					val tmp = File(p.pathString)
-					tmp.createNewFile()
-					val err = Svg2Vector.parseSvgToXml(p, f.outputStream())
-					if (!err.isEmpty()) throw Exception(err)
+		).getOrThrow().inputStream().use { b ->
+			ZipInputStream(b).use { ins ->
+				var ze: ZipEntry? = null
+				while (ins.nextEntry.also { ze = it } != null) {
+					println(ze!!.name)
+					ins.readAllBytes().let {
+						val name = ze!!.name.split(":")[2].split(".")[0].lowercase()
+						val f = File(Path(target.get(), "line_$name.xml").pathString)
+						if (!f.createNewFile()) continue
+						val p = Path(project.buildTreePath, "tmp", "$name.svg")
+						val tmp = File(p.pathString)
+						tmp.createNewFile()
+						val err = Svg2Vector.parseSvgToXml(p, f.outputStream())
+						if (!err.isEmpty()) throw Exception(err)
+					}
 				}
-				ze = ins.nextEntry
 			}
 		}
 	}

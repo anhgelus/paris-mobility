@@ -6,7 +6,6 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.nio.charset.StandardCharsets.UTF_8
 
 class DataGeneratorPlugin : Plugin<Project> {
 	val client: HttpClient = HttpClient.newHttpClient()
@@ -37,16 +36,19 @@ class DataGeneratorPlugin : Plugin<Project> {
 	fun request(
 		url: String,
 		builder: (HttpRequest.Builder) -> HttpRequest.Builder = { it }
-	): String {
-		return HttpRequest.newBuilder(URI(url)).GET()
+	): Result<ByteArray> {
+		return HttpRequest.newBuilder(URI(url))
+			.GET()
 			.let { builder(it) }
 			.let {
-				client.send(it.build(), HttpResponse.BodyHandlers.ofString(UTF_8))
-					.body()
+				client.send(it.build(), HttpResponse.BodyHandlers.ofByteArray())
+			}.let {
+				if (it.statusCode() >= 400) Result.failure(Exception("Invalid status code: ${it.statusCode()}"))
+				else Result.success(it.body())
 			}
 	}
 
-	fun dataRequest(dataset: String): String {
+	fun dataRequest(dataset: String): Result<ByteArray> {
 		return request("https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/$dataset")
 	}
 
@@ -54,7 +56,7 @@ class DataGeneratorPlugin : Plugin<Project> {
 		token: String,
 		sub: String,
 		accept: String
-	): String {
+	): Result<ByteArray> {
 		return request("https://prim.iledefrance-mobilites.fr/marketplace/ilico/$sub") {
 			it.headers("Accept", accept, "apiKey", token)
 		}
