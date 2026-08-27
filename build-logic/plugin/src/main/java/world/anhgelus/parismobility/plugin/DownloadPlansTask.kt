@@ -19,6 +19,6 @@ abstract class DownloadPlansTask : DefaultTask() {
 			.request("https://www.ratp.fr/sites/default/files/plans-lignes/Plans-essentiels/Plan-Metro.1772790495.png")
 			.getOrThrow()
 			.let { f.writeBytes(it) }
-		logger.info("Plan downloaded...")
+		logger.info("Plan downloaded.")
 	}
 }

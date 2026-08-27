@@ -24,13 +24,13 @@ abstract class DownloadLinesSvgTask : DefaultTask() {
 
 	@TaskAction
 	fun action() {
-		logger.info("Downloading svg for ${modes.get().joinToString(separator = " ")}...")
+		logger.info("Downloading SVGs for ${modes.get().joinToString(separator = " ")}...")
 		modes.get().forEach { get(it) }
-		logger.info("SVG downloaded")
+		logger.info("SVGs downloaded")
 	}
 
 	private fun get(mode: String) {
-		val b = DataGeneratorPlugin.INSTANCE.primRequest(
+		DataGeneratorPlugin.INSTANCE.primRequest(
 			token.get(),
 			"getIcon/sprite?usage=signage_spaces&format=zip_svg&style=colored&getAll=true&transportMode=$mode",
 			"application/zip"
@@ -38,7 +38,6 @@ abstract class DownloadLinesSvgTask : DefaultTask() {
 			ZipInputStream(b).use { ins ->
 				var ze: ZipEntry? = null
 				while (ins.nextEntry.also { ze = it } != null) {
-					println(ze!!.name)
 					ins.readAllBytes().let {
 						val name = ze!!.name.split(":")[2].split(".")[0].lowercase()
 						val f = File(Path(target.get(), "line_$name.xml").pathString)

@@ -92,7 +92,7 @@ class DataGeneratorPlugin : Plugin<Project> {
 			INSTANCE.dataRequest(dataset)
 				.getOrThrow()
 				.let { f.writeBytes(it) }
-			logger.info("$dataName downloaded...")
+			logger.info("$dataName downloaded.")
 		}
 	}
 }
