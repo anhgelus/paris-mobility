@@ -1,7 +1,13 @@
 package world.anhgelus.parismobility.plugin
 
+import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.TaskAction
+import java.io.File
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -25,11 +31,15 @@ class DataGeneratorPlugin : Plugin<Project> {
 			group = "data"
 			description = "Download lines"
 		}
+		val dlStops = target.tasks.register("downloadStops", DownloadStopsTask::class.java) {
+			group = "data"
+			description = "Download stops"
+		}
 		target.tasks.register("downloadData") {
 			group = "data"
 			description = "Download required data"
 
-			dependsOn(dlLinesSvg.name, dlPlan.name, dlLines.name)
+			dependsOn(dlLinesSvg.name, dlPlan.name, dlLines.name, dlStops.name)
 		}
 	}
 
@@ -66,4 +76,29 @@ class DataGeneratorPlugin : Plugin<Project> {
 			it.headers("Accept", accept, "apiKey", token)
 		}
 	}
+
+	abstract class DataDownload(
+		@Internal val dataName: String,
+		@Internal val dataset: String,
+	) : DefaultTask() {
+		@get:Input
+		abstract val target: Property<String>
+
+		@TaskAction
+		fun action() {
+			logger.info("Downloading $dataName...")
+			val f = File(target.get())
+			f.createNewFile()
+			INSTANCE.dataRequest(dataset)
+				.getOrThrow()
+				.let { f.writeBytes(it) }
+			logger.info("$dataName downloaded...")
+		}
+	}
 }
+
+abstract class DownloadLinesTask :
+	DataGeneratorPlugin.DataDownload("lines", "referentiel-des-lignes")
+
+abstract class DownloadStopsTask :
+	DataGeneratorPlugin.DataDownload("stops", "emplacement-des-gares-idf")

@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.konan.properties.loadProperties
 import world.anhgelus.parismobility.plugin.DownloadLinesSvgTask
 import world.anhgelus.parismobility.plugin.DownloadLinesTask
 import world.anhgelus.parismobility.plugin.DownloadPlansTask
+import world.anhgelus.parismobility.plugin.DownloadStopsTask
 
 plugins {
     id("world.anhgelus.parismobility")
@@ -83,42 +84,6 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 }
 
-fun request(
-    url: String,
-    outputPath: String,
-    accept: String = "application/json",
-    vararg headers: String
-) {
-    try {
-        providers.exec {
-            val args = mutableListOf(
-                "curl", "-H", "Accept: $accept",
-                "--fail-with-body",
-                "-v",
-                "-o", outputPath,
-            )
-            args.addAll(headers.flatMap { listOf("-H", it) })
-            args.add(url)
-            commandLine(args)
-            args.forEach { logger.debug(it) }
-        }.standardError.asText.get().let { logger.info(it) }
-    } catch (e: ProcessExecutionException) {
-        logger.error(e.message)
-        logger.info("url: $url")
-        throw e.cause ?: e
-    }
-}
-
-val downloadStops = tasks.register("downloadStopsJson") {
-    description = "Download JSON describing stops"
-
-    request(
-        url = "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/emplacement-des-gares-idf/exports/json",
-        outputPath = file("src/main/res/raw/stops.json").absolutePath
-    )
-    logger.info("Stops data downloaded")
-}
-
 tasks.named<DownloadPlansTask>("downloadPlans").configure {
     target = file("src/main/res/drawable/plan_metro.png").absolutePath
 }
@@ -130,5 +95,9 @@ tasks.named<DownloadLinesSvgTask>("downloadLinesSvg").configure {
 }
 
 tasks.named<DownloadLinesTask>("downloadLines").configure {
+    target = file("src/main/res/raw/lines.json").absolutePath
+}
+
+tasks.named<DownloadStopsTask>("downloadStops").configure {
     target = file("src/main/res/raw/stops.json").absolutePath
 }
