@@ -1,6 +1,6 @@
-import com.android.ide.common.vectordrawable.Svg2Vector
 import org.jetbrains.kotlin.konan.properties.loadProperties
 import world.anhgelus.parismobility.plugin.DownloadPlansTask
+import world.anhgelus.parismobility.plugin.UpdateLinesSvgTask
 
 plugins {
     id("world.anhgelus.parismobility")
@@ -108,11 +108,6 @@ fun request(
     }
 }
 
-tasks.register("updateLines") {
-    description = "Update lines data"
-    dependsOn(downloadLines, updateLinesSvg)
-}
-
 val downloadLines = tasks.register("downloadLinesJson") {
     description = "Download JSON describing lines"
 
@@ -133,31 +128,12 @@ val downloadStops = tasks.register("downloadStopsJson") {
     logger.info("Stops data downloaded")
 }
 
-val updateLinesSvg = tasks.register("updateLinesSvg") {
-    description = "Update lines' SVG"
-
-    mkdir("build/intermediates/res/lines/")
-
-    val base =
-        "https://prim.iledefrance-mobilites.fr/marketplace/ilico/getIcon/sprite?usage=signage_spaces&format=zip_svg&style=colored&getAll=true"
-    listOf("metro", "rer", "tram", "train").forEach { mode ->
-        val zip = file("build/intermediates/res/lines/$mode.zip")
-        request(
-            "$base&transportMode=$mode",
-            zip.absolutePath,
-            "application/zip",
-            "apiKey: ${get("PRIM_TOKEN")}"
-        )
-        logger.info("{}'s SVGs downloaded", mode)
-        zipTree(zip).forEach {
-            val name = it.name.split(":")[2].split(".")[0].lowercase()
-            val dest = file("src/main/res/drawable/line_$name.xml")
-            val err = Svg2Vector.parseSvgToXml(it.toPath(), dest.outputStream())
-            if (!err.isEmpty()) throw Exception(err)
-        }
-    }
-}
-
 tasks.named<DownloadPlansTask>("downloadPlans").configure {
     target = file("src/main/res/drawable/plan_metro.png").absolutePath
+}
+
+tasks.named<UpdateLinesSvgTask>("updateLinesSvg").configure {
+    target = file("src/main/res/drawable").absolutePath
+    modes = listOf("metro", "rer", "tram", "train")
+    token = get("PRIM_TOKEN")
 }

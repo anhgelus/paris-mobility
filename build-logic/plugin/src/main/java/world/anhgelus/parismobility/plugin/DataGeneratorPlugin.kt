@@ -17,10 +17,19 @@ class DataGeneratorPlugin : Plugin<Project> {
 
 	override fun apply(target: Project) {
 		INSTANCE = this
-		val dlPlan = target.tasks.register("downloadPlans", DownloadPlansTask::class.java)
-		dlPlan.configure {
+		val dlPlan = target.tasks.register("downloadPlans", DownloadPlansTask::class.java) {
 			group = "data"
 			description = "Download plans"
+		}
+		val upLines = target.tasks.register("updateLinesSvg", UpdateLinesSvgTask::class.java) {
+			group = "data"
+			description = "Update lines SVG"
+		}
+		target.tasks.register("updateData") {
+			group = "data"
+			description = "Update every data"
+
+			dependsOn(upLines.name, dlPlan.name)
 		}
 	}
 

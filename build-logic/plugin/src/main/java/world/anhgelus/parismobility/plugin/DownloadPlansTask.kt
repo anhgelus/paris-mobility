@@ -15,11 +15,13 @@ abstract class DownloadPlansTask : DefaultTask() {
 
 	@TaskAction
 	fun action() {
+		logger.info("Downloading metro plan...")
 		runBlocking {
 			DataGeneratorPlugin.INSTANCE
 				.client
 				.get("https://www.ratp.fr/sites/default/files/plans-lignes/Plans-essentiels/Plan-Metro.1772790495.png")
 				.bodyAsBytes()
 		}.let { File(target.get()).writeBytes(it) }
+		logger.info("Plan downloaded...")
 	}
 }
