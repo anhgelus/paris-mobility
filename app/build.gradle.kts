@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.konan.properties.loadProperties
+import world.anhgelus.parismobility.plugin.DownloadLinesSvgTask
+import world.anhgelus.parismobility.plugin.DownloadLinesTask
 import world.anhgelus.parismobility.plugin.DownloadPlansTask
-import world.anhgelus.parismobility.plugin.UpdateLinesSvgTask
 
 plugins {
     id("world.anhgelus.parismobility")
@@ -108,16 +109,6 @@ fun request(
     }
 }
 
-val downloadLines = tasks.register("downloadLinesJson") {
-    description = "Download JSON describing lines"
-
-    request(
-        url = "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/referentiel-des-lignes/exports/json",
-        outputPath = file("src/main/res/raw/lines.json").absolutePath
-    )
-    logger.info("Lines data downloaded")
-}
-
 val downloadStops = tasks.register("downloadStopsJson") {
     description = "Download JSON describing stops"
 
@@ -132,8 +123,12 @@ tasks.named<DownloadPlansTask>("downloadPlans").configure {
     target = file("src/main/res/drawable/plan_metro.png").absolutePath
 }
 
-tasks.named<UpdateLinesSvgTask>("updateLinesSvg").configure {
+tasks.named<DownloadLinesSvgTask>("downloadLinesSvg").configure {
     target = file("src/main/res/drawable").absolutePath
     modes = listOf("metro", "rer", "tram", "train")
     token = get("PRIM_TOKEN")
+}
+
+tasks.named<DownloadLinesTask>("downloadLines").configure {
+    target = file("src/main/res/raw/stops.json").absolutePath
 }

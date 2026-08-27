@@ -12,7 +12,7 @@ import java.util.zip.ZipInputStream
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
-abstract class UpdateLinesSvgTask : DefaultTask() {
+abstract class DownloadLinesSvgTask : DefaultTask() {
 	@get:Input
 	abstract val target: Property<String>
 

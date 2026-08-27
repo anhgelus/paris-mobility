@@ -16,15 +16,20 @@ class DataGeneratorPlugin : Plugin<Project> {
 			group = "data"
 			description = "Download plans"
 		}
-		val upLines = target.tasks.register("updateLinesSvg", UpdateLinesSvgTask::class.java) {
+		val dlLinesSvg =
+			target.tasks.register("downloadLinesSvg", DownloadLinesSvgTask::class.java) {
+				group = "data"
+				description = "Download lines SVG"
+			}
+		val dlLines = target.tasks.register("downloadLines", DownloadLinesTask::class.java) {
 			group = "data"
-			description = "Update lines SVG"
+			description = "Download lines"
 		}
-		target.tasks.register("updateData") {
+		target.tasks.register("downloadData") {
 			group = "data"
-			description = "Update every data"
+			description = "Download required data"
 
-			dependsOn(upLines.name, dlPlan.name)
+			dependsOn(dlLinesSvg.name, dlPlan.name, dlLines.name)
 		}
 	}
 
@@ -49,7 +54,7 @@ class DataGeneratorPlugin : Plugin<Project> {
 	}
 
 	fun dataRequest(dataset: String): Result<ByteArray> {
-		return request("https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/$dataset")
+		return request("https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/$dataset/exports/json")
 	}
 
 	fun primRequest(
