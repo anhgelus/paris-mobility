@@ -71,12 +71,12 @@ fun HomeScreen(
 					savedLines = savedLines,
 					savedStops = savedStops,
 					onUpdateLines = { kind, line, added ->
-						if (added) viewModel.saveLine(ctx, kind, line.line)
-						else viewModel.removeLine(ctx, kind, line.line)
+						if (added) viewModel.saveLine(ctx, kind, line)
+						else viewModel.removeLine(ctx, kind, line)
 					},
 					onUpdateStops = { kind, line, stop, added ->
-						if (added) viewModel.saveStops(ctx, kind, line.line, stop, "")
-						else viewModel.removeStops(ctx, kind, line.line, stop, "")
+						if (added) viewModel.saveStops(ctx, kind, line, stop, "")
+						else viewModel.removeStops(ctx, kind, line, stop, "")
 					},
 					onClick = { a, b -> viewModel.changeTab(a, b) },
 				)

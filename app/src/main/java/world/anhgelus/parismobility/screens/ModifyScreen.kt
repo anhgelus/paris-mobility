@@ -26,7 +26,6 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.LineGroups
-import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.data.STOPS
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
@@ -42,8 +41,8 @@ fun ModifyScreen(
 	groups: LineGroups,
 	savedLines: Collection<SavedLine>,
 	savedStops: Collection<SavedStop>,
-	onUpdateLines: (LineKind, LineState, Boolean) -> Unit,
-	onUpdateStops: (LineKind, LineState, Stop, Boolean) -> Unit,
+	onUpdateLines: (LineKind, String, Boolean) -> Unit,
+	onUpdateStops: (LineKind, String, Stop, Boolean) -> Unit,
 	onClick: (PagerState, Int) -> Unit
 ) {
 	val pager = rememberPagerState(0) { 2 }
@@ -73,7 +72,7 @@ fun ModifyScreen(
 fun ModifySavedLines(
 	groups: LineGroups,
 	savedLines: Collection<SavedLine>,
-	onUpdate: (LineKind, LineState, Boolean) -> Unit,
+	onUpdate: (LineKind, String, Boolean) -> Unit,
 ) {
 	LazyColumn(
 		verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -86,11 +85,11 @@ fun ModifySavedLines(
 					modifier = Modifier.padding(top = 16.dp)
 				)
 			}
-			items(lines) {
+			items(lines.values.toList()) {
 				Select(
 					checked = savedLines.contains(kind, it.line),
 					onUpdate = { change ->
-						onUpdate(kind, it, change)
+						onUpdate(kind, it.line.id, change)
 					}
 				) { m ->
 					LineDetailed(kind, it.line, m)
@@ -104,7 +103,7 @@ fun ModifySavedLines(
 fun ModifySavedStops(
 	groups: LineGroups,
 	savedStops: Collection<SavedStop>,
-	onUpdateStops: (LineKind, LineState, Stop, Boolean) -> Unit,
+	onUpdateStops: (LineKind, String, Stop, Boolean) -> Unit,
 ) {
 	val modifyBackStack = rememberNavBackStack(Route.Home.Modify.Stops)
 	NavDisplay(
@@ -122,12 +121,17 @@ fun ModifySavedStops(
 								modifier = Modifier.padding(top = 16.dp)
 							)
 						}
-						items(lines.sortedBy { it.line.name }) {
+						items(lines.values.sortedBy { it.line.name }) {
 							Row(
 								modifier = Modifier
 									.fillMaxWidth()
 									.clickable(onClick = {
-										modifyBackStack.add(Route.Home.Modify.Stop(kind, it))
+										modifyBackStack.add(
+											Route.Home.Modify.Stop(
+												kind,
+												it.line.id
+											)
+										)
 									}),
 								horizontalArrangement = Arrangement.SpaceBetween,
 								verticalAlignment = Alignment.CenterVertically,
@@ -148,7 +152,7 @@ fun ModifySavedStops(
 					modifier = Modifier
 						.padding(16.dp)
 				) {
-					items(STOPS[line.line.id]?.values?.sortedBy { it.name } ?: listOf()) {
+					items(STOPS[line]?.values?.sortedBy { it.name } ?: listOf()) {
 						Select(
 							checked = savedStops.contains(kind, it),
 							onUpdate = { change ->

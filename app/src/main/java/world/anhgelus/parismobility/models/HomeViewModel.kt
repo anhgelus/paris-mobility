@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.PreferencesRepository
@@ -46,33 +45,33 @@ class HomeViewModel(
 		initialValue = MonitoringStops(emptyMap())
 	)
 
-	fun saveLine(ctx: Context, kind: LineKind, line: Line) {
+	fun saveLine(ctx: Context, kind: LineKind, line: String) {
 		viewModelScope.launch {
-			preferencesRepo.addLines(ctx, SavedLine(kind, line.id))
+			preferencesRepo.addLines(ctx, SavedLine(kind, line))
 		}
 	}
 
-	fun removeLine(ctx: Context, kind: LineKind, line: Line) {
+	fun removeLine(ctx: Context, kind: LineKind, line: String) {
 		viewModelScope.launch {
-			preferencesRepo.removeLines(ctx, SavedLine(kind, line.id))
+			preferencesRepo.removeLines(ctx, SavedLine(kind, line))
 		}
 	}
 
-	fun saveStops(ctx: Context, kind: LineKind, line: Line, stop: Stop, direction: String) {
+	fun saveStops(ctx: Context, kind: LineKind, line: String, stop: Stop, direction: String) {
 		viewModelScope.launch {
 			preferencesRepo.addStops(
 				ctx,
-				SavedStop(SavedLine(kind, line.id), stop.id, direction)
+				SavedStop(SavedLine(kind, line), stop.id, direction)
 			)
 			linesRepo.monitorStop(stop)
 		}
 	}
 
-	fun removeStops(ctx: Context, kind: LineKind, line: Line, stop: Stop, direction: String) {
+	fun removeStops(ctx: Context, kind: LineKind, line: String, stop: Stop, direction: String) {
 		viewModelScope.launch {
 			preferencesRepo.removeStops(
 				ctx,
-				SavedStop(SavedLine(kind, line.id), stop.id, direction)
+				SavedStop(SavedLine(kind, line), stop.id, direction)
 			)
 			linesRepo.stopMonitoringStop(stop)
 		}

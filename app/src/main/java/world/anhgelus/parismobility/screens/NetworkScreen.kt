@@ -54,6 +54,7 @@ fun NetworkScreen(
 ) {
 	val networkBackStack = rememberNavBackStack(Route.Network)
 	val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
+	val groups by viewModel.lines.collectAsStateWithLifecycle()
 	NavDisplay(
 		backStack = networkBackStack,
 		transitionSpec = transitionSub(),
@@ -61,13 +62,12 @@ fun NetworkScreen(
 		predictivePopTransitionSpec = transitionSubPredictivePop(),
 		entryProvider = entryProvider {
 			entry<Route.Network> {
-				val groups by viewModel.lines.collectAsStateWithLifecycle()
 				GeneralScreen(groups, onClick = { kind, line ->
-					networkBackStack.add(Route.Network.SpecificLine(kind, line))
+					networkBackStack.add(Route.Network.SpecificLine(kind, line.line.id))
 				}, modifier)
 			}
 			entry<Route.Network.SpecificLine> { (kind, line) ->
-				LineScreen(kind, line.line, disruptions[line.line.id], modifier)
+				LineScreen(kind, groups[kind]!![line]!!.line, disruptions[line], modifier)
 			}
 		},
 	)
@@ -92,7 +92,7 @@ fun GeneralScreen(
 					.padding(horizontal = 16.dp)
 					.padding(bottom = 16.dp),
 				name = kind.displayName,
-				lines = lines,
+				lines = lines.values,
 				kind = kind,
 				onClick = onClick
 			)

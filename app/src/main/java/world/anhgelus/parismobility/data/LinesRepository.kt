@@ -23,8 +23,6 @@ class LinesRepository(
 	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
 	val lines = _lines.asStateFlow()
 
-	val stops = STOPS
-
 	val disruptions = flow {
 		while (true) {
 			backendSource.disruptions().onSuccess {
@@ -37,21 +35,29 @@ class LinesRepository(
 
 	fun loadLines() {
 		val lines = linesSource.getLines()
-		val resp = mutableMapOf<LineKind, List<LineState>>()
+		val resp = mutableMapOf<LineKind, Map<String, LineState>>()
 		lines.forEach { (mode, lines) ->
 			when (mode) {
-				Line.TransportMode.BUS -> resp[LineKind.BUS] = lines.sorted()
-				Line.TransportMode.TRAM -> resp[LineKind.TRAM] = lines.sorted()
-				Line.TransportMode.METRO -> resp[LineKind.METRO] = lines.sorted()
+				Line.TransportMode.BUS -> mapOf(LineKind.BUS to lines)
+				Line.TransportMode.TRAM -> mapOf(LineKind.TRAM to lines)
+				Line.TransportMode.METRO -> mapOf(LineKind.METRO to lines)
 				Line.TransportMode.RAIL -> {
-					resp[LineKind.RER] = lines.filter { it.line.submode == "local" }.sorted()
-					resp[LineKind.TRANSILIEN] = lines.filter {
-						// because the API doesn't contain the data of line V
-						it.line.submode == "suburbanRailway" && it.line.name != "V"
-					}.sorted()
+					mapOf(
+						LineKind.RER to lines.filter { it.line.submode == "local" },
+						LineKind.TRANSILIEN to lines.filter {
+							// because the API doesn't contain the data of line V
+							it.line.submode == "suburbanRailway" && it.line.name != "V"
+						},
+					)
 				}
 
-				else -> {} // do nothing with unsupported modes
+				else -> return@forEach // do nothing with unsupported modes
+			}.let { map ->
+				resp.putAll(map.mapValues { (_, lines) ->
+					lines.sorted().fold(mutableMapOf()) { acc, line ->
+						acc.also { acc[line.line.id] = line }
+					}
+				})
 			}
 		}
 		_lines.update { resp }
@@ -94,7 +100,7 @@ class LinesRepository(
 	) {
 		_lines.update { v ->
 			v.mapValues { (_, lines) ->
-				lines.map { line ->
+				lines.mapValues { (_, line) ->
 					line.setDisruption(
 						disruptions[line.line.id]
 							?.filter { it.isHappening() }
@@ -107,10 +113,10 @@ class LinesRepository(
 	}
 }
 
-typealias LineGroups = Map<LineKind, List<LineState>>
+typealias LineGroups = Map<LineKind, Map<String, LineState>>
 
 operator fun LineGroups.get(saved: SavedLine): Pair<LineKind, LineState>? {
-	return this[saved.kind]?.firstOrNull { it.line.id == saved.line }?.let { Pair(saved.kind, it) }
+	return this[saved.kind]?.get(saved.line)?.let { Pair(saved.kind, it) }
 }
 
 typealias LineStops = Map<String, List<Stop>>
