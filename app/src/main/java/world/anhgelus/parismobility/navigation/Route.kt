@@ -3,7 +3,7 @@ package world.anhgelus.parismobility.navigation
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import world.anhgelus.parismobility.R
-import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.models.LineKind
 
 @Serializable
@@ -23,14 +23,14 @@ sealed interface Route : NavKey {
 			data object Stops : Helper()
 
 			@Serializable
-			data class Stop(val kind: LineKind, val line: Line) : Helper()
+			data class Stop(val kind: LineKind, val line: LineState) : Helper()
 		}
 	}
 
 	@Serializable
 	data object Network : Helper("Réseau") {
 		@Serializable
-		data class SpecificLine(val kind: LineKind, val line: Line) : Helper()
+		data class SpecificLine(val kind: LineKind, val line: LineState) : Helper()
 	}
 
 	@Serializable

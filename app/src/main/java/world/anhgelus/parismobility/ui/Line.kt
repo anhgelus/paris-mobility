@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import world.anhgelus.parismobility.data.Line
+import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.data.Severity
 import world.anhgelus.parismobility.models.LineKind
 
@@ -35,7 +36,7 @@ fun LineImage(
 	forceBackground: Boolean = false
 ) {
 	Image(
-		painter = painterResource(line.getResource()),
+		painter = painterResource(line.icon),
 		contentDescription = line.name,
 		modifier = modifier
 			.background(
@@ -48,17 +49,17 @@ fun LineImage(
 }
 
 @Composable
-fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun Line(kind: LineKind, line: LineState, onClick: () -> Unit, modifier: Modifier = Modifier) {
 	val sev by line.disruptionSeverity
 	var modifier = modifier
 	if (sev != Severity.INFORMATION) {
 		modifier = modifier
-            .border(
-                width = 2.dp,
-                color = sev.color.first,
-                shape = kind.roundedCornerShape
-            )
-            .padding(8.dp)
+			.border(
+				width = 2.dp,
+				color = sev.color.first,
+				shape = kind.roundedCornerShape
+			)
+			.padding(8.dp)
 	}
 	Box(
 		modifier = modifier.clickable(onClick = onClick),
@@ -69,7 +70,7 @@ fun Line(kind: LineKind, line: Line, onClick: () -> Unit, modifier: Modifier = M
 		}
 		LineImage(
 			kind = kind,
-			line = line,
+			line = line.line,
 			modifier = modifier,
 		)
 	}
@@ -95,8 +96,8 @@ fun LineDetailed(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
 fun LineKind(
 	name: String,
 	kind: LineKind,
-	lines: Collection<Line>,
-	onClick: (LineKind, Line) -> Unit,
+	lines: Collection<LineState>,
+	onClick: (LineKind, LineState) -> Unit,
 	modifier: Modifier = Modifier
 ) {
 	Column(

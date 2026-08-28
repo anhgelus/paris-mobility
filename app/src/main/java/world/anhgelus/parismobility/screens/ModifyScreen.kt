@@ -25,9 +25,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.R
-import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
-import world.anhgelus.parismobility.data.LineStops
+import world.anhgelus.parismobility.data.LineState
+import world.anhgelus.parismobility.data.STOPS
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.Stop
@@ -41,10 +41,9 @@ import world.anhgelus.parismobility.ui.SectionTitle
 fun ModifyScreen(
 	groups: LineGroups,
 	savedLines: Collection<SavedLine>,
-	stops: LineStops,
 	savedStops: Collection<SavedStop>,
-	onUpdateLines: (LineKind, Line, Boolean) -> Unit,
-	onUpdateStops: (LineKind, Line, Stop, Boolean) -> Unit,
+	onUpdateLines: (LineKind, LineState, Boolean) -> Unit,
+	onUpdateStops: (LineKind, LineState, Stop, Boolean) -> Unit,
 	onClick: (PagerState, Int) -> Unit
 ) {
 	val pager = rememberPagerState(0) { 2 }
@@ -64,7 +63,7 @@ fun ModifyScreen(
 		HorizontalPager(state = pager) {
 			when (it) {
 				0 -> ModifySavedLines(groups, savedLines, onUpdateLines)
-				1 -> ModifySavedStops(groups, stops, savedStops, onUpdateStops)
+				1 -> ModifySavedStops(groups, savedStops, onUpdateStops)
 			}
 		}
 	}
@@ -74,7 +73,7 @@ fun ModifyScreen(
 fun ModifySavedLines(
 	groups: LineGroups,
 	savedLines: Collection<SavedLine>,
-	onUpdate: (LineKind, Line, Boolean) -> Unit,
+	onUpdate: (LineKind, LineState, Boolean) -> Unit,
 ) {
 	LazyColumn(
 		verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -89,12 +88,12 @@ fun ModifySavedLines(
 			}
 			items(lines) {
 				Select(
-					checked = savedLines.contains(kind, it),
+					checked = savedLines.contains(kind, it.line),
 					onUpdate = { change ->
 						onUpdate(kind, it, change)
 					}
 				) { m ->
-					LineDetailed(kind, it, m)
+					LineDetailed(kind, it.line, m)
 				}
 			}
 		}
@@ -104,9 +103,8 @@ fun ModifySavedLines(
 @Composable
 fun ModifySavedStops(
 	groups: LineGroups,
-	stops: LineStops,
 	savedStops: Collection<SavedStop>,
-	onUpdateStops: (LineKind, Line, Stop, Boolean) -> Unit,
+	onUpdateStops: (LineKind, LineState, Stop, Boolean) -> Unit,
 ) {
 	val modifyBackStack = rememberNavBackStack(Route.Home.Modify.Stops)
 	NavDisplay(
@@ -124,17 +122,17 @@ fun ModifySavedStops(
 								modifier = Modifier.padding(top = 16.dp)
 							)
 						}
-						items(lines.sortedBy { it.name }) {
+						items(lines.sortedBy { it.line.name }) {
 							Row(
 								modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(onClick = {
-                                        modifyBackStack.add(Route.Home.Modify.Stop(kind, it))
-                                    }),
+									.fillMaxWidth()
+									.clickable(onClick = {
+										modifyBackStack.add(Route.Home.Modify.Stop(kind, it))
+									}),
 								horizontalArrangement = Arrangement.SpaceBetween,
 								verticalAlignment = Alignment.CenterVertically,
 							) {
-								LineDetailed(kind, it)
+								LineDetailed(kind, it.line)
 								Icon(
 									painter = painterResource(R.drawable.baseline_keyboard_arrow_right_24),
 									contentDescription = "Continue"
@@ -150,7 +148,7 @@ fun ModifySavedStops(
 					modifier = Modifier
 						.padding(16.dp)
 				) {
-					items(stops[line.id]?.sortedBy { it.name } ?: listOf()) {
+					items(STOPS[line.line.id]?.values?.sortedBy { it.name } ?: listOf()) {
 						Select(
 							checked = savedStops.contains(kind, it),
 							onUpdate = { change ->
@@ -178,8 +176,8 @@ fun Select(
 ) {
 	Row(
 		modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = { onUpdate(!checked) }),
+			.fillMaxWidth()
+			.clickable(onClick = { onUpdate(!checked) }),
 		horizontalArrangement = Arrangement.SpaceBetween,
 		verticalAlignment = Alignment.CenterVertically,
 	) {

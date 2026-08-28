@@ -23,11 +23,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.StateFlow
-import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
-import world.anhgelus.parismobility.data.LineStops
+import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.data.MonitoringStop
 import world.anhgelus.parismobility.data.MonitoringStops
+import world.anhgelus.parismobility.data.STOPS
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.Status
 import world.anhgelus.parismobility.data.Stop
@@ -40,7 +40,6 @@ import kotlin.math.min
 @Composable
 fun StopsMonitoring(
 	lines: LineGroups,
-	stops: LineStops,
 	savedStops: Collection<SavedStop>,
 	monitoredStops: StateFlow<MonitoringStops>,
 	modifier: Modifier = Modifier,
@@ -57,22 +56,23 @@ fun StopsMonitoring(
 	) {
 		val modifier = Modifier.padding(16.dp)
 		SectionTitle("Prochains passages", modifier)
-		savedStops.mapNotNull { stops[it] }.forEach { (line, stop) ->
-			StopMonitoring(
-				line.kind,
-				lines[line]!!.second,
-				stop,
-				monitor.map[stop.zda.toString()],
-				modifier
-			)
-		}
+		savedStops.mapNotNull { STOPS[it.line.line]?.get(it.stop)?.let { s -> Pair(it.line, s) } }
+			.forEach { (line, stop) ->
+				StopMonitoring(
+					line.kind,
+					lines[line]!!.second,
+					stop,
+					monitor.map[stop.zda.toString()],
+					modifier
+				)
+			}
 	}
 }
 
 @Composable
 fun StopMonitoring(
 	kind: LineKind,
-	line: Line,
+	line: LineState,
 	stop: Stop,
 	monitor: List<MonitoringStop>?,
 	modifier: Modifier = Modifier

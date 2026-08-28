@@ -22,7 +22,6 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.flow.StateFlow
 import world.anhgelus.parismobility.data.LineGroups
-import world.anhgelus.parismobility.data.LineStops
 import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
@@ -49,7 +48,6 @@ fun HomeScreen(
 
 	val lines by viewModel.lines.collectAsStateWithLifecycle()
 	val savedLines by viewModel.savedLines.collectAsStateWithLifecycle()
-	val stops by viewModel.stops.collectAsStateWithLifecycle()
 	val savedStops by viewModel.savedStops.collectAsStateWithLifecycle()
 
 	NavDisplay(
@@ -62,7 +60,6 @@ fun HomeScreen(
 				GeneralScreen(
 					lines,
 					savedLines,
-					stops,
 					savedStops,
 					viewModel.monitoringStops,
 					modifier
@@ -72,15 +69,14 @@ fun HomeScreen(
 				ModifyScreen(
 					groups = lines,
 					savedLines = savedLines,
-					stops = stops,
 					savedStops = savedStops,
 					onUpdateLines = { kind, line, added ->
-						if (added) viewModel.saveLine(ctx, kind, line)
-						else viewModel.removeLine(ctx, kind, line)
+						if (added) viewModel.saveLine(ctx, kind, line.line)
+						else viewModel.removeLine(ctx, kind, line.line)
 					},
 					onUpdateStops = { kind, line, stop, added ->
-						if (added) viewModel.saveStops(ctx, kind, line, stop, "")
-						else viewModel.removeStops(ctx, kind, line, stop, "")
+						if (added) viewModel.saveStops(ctx, kind, line.line, stop, "")
+						else viewModel.removeStops(ctx, kind, line.line, stop, "")
 					},
 					onClick = { a, b -> viewModel.changeTab(a, b) },
 				)
@@ -93,7 +89,6 @@ fun HomeScreen(
 fun GeneralScreen(
 	groups: LineGroups,
 	savedLines: Collection<SavedLine>,
-	stops: LineStops,
 	savedStops: Collection<SavedStop>,
 	monitoredStops: StateFlow<MonitoringStops>,
 	modifier: Modifier = Modifier,
@@ -117,7 +112,7 @@ fun GeneralScreen(
 				lines.size
 			}
 		}
-		StopsMonitoring(groups, stops, savedStops, monitoredStops)
+		StopsMonitoring(groups, savedStops, monitoredStops)
 		Column(
 			horizontalAlignment = Alignment.CenterHorizontally,
 			modifier = Modifier.fillMaxWidth()

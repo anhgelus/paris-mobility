@@ -27,22 +27,27 @@ abstract class GenerateDataTask : DefaultTask() {
 				val acc = StringBuilder()
 				acc.append("val MODES = mapOf(\n")
 				map.forEach { (mode, lines) ->
-					acc.append("\tTransportMode.${mode} to mapOf(\n")
+					if (mode == Line.TransportMode.BUS || mode == Line.TransportMode.CABLEWAY || mode == Line.TransportMode.FUNICULAR)
+						return@forEach
+					acc.append("\tLine.TransportMode.${mode} to mapOf(\n")
 					lines.forEach {
+						if ((it.network == null && it.mode == Line.TransportMode.RAIL) ||
+							(it.network == "TER")
+						) return@forEach
 						acc.append(
 							"""
 							|		"${it.id}" to Line(
 							|			"${it.id}", 
 							|			"${it.name}",
 							|			"${it.shortName}",
-							|			TransportMode.${it.mode},
+							|			Line.TransportMode.${it.mode},
 							|			${it.submode?.let { s -> "\"$s\"" }},
 							|			${it.groupOfLines?.let { s -> "\"$s\"" }},
-							|			${it.network?.let { s -> "\"$s\"" }},
-							|			${it.status},
+							|			${it.network.let { s -> "\"$s\"" }},
+							|			Line.Status.${it.status},
 							|			Color("#${it.rawColor}".toColorInt()),
 							|			Color("#${it.rawTextColor}".toColorInt()),
-							|			R.drawable.line_${it.id.lowercase()},
+							|			R.drawable.line_${if (it.name != "V") it.id.lowercase() else "v"},
 							|		),
 							|""".trimMargin()
 						)
@@ -68,7 +73,7 @@ abstract class GenerateDataTask : DefaultTask() {
 					acc.append("\t\"$line\" to mapOf(\n")
 					stops.forEach {
 						acc.append(
-							"""|		${it.id} to Stop(${it.id}, "${it.name}", "${it.line}", ${it.zda}),
+							"""|		${it.id} to Stop(${it.id}, "${it.line}", "${it.name}", ${it.zda}),
 						|""".trimMargin()
 						)
 					}
@@ -91,8 +96,11 @@ const val template = """package world.anhgelus.parismobility.data
 
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.toColorInt
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import world.anhgelus.parismobility.R
 
+@Serializable
 data class Line(
 	val id: String,
 	val name: String,
@@ -102,10 +110,11 @@ data class Line(
 	val groupOfLines: String? = null,
 	val network: String? = null,
 	val status: Status = Status.INACTIVE,
-	val color: Color,
-	val textColor: String,
+	@Transient val color: Color = Color.White,
+	@Transient val textColor: Color = Color.Black,
 	val icon: Int,
 ) {
+	@Serializable
 	enum class TransportMode {
 		BUS,
 		RAIL,
@@ -116,12 +125,14 @@ data class Line(
 		WATER
 	}
 
+	@Serializable
 	enum class Status {
 		ACTIVE,
 		INACTIVE
 	}
 }
 
+@Serializable
 data class Stop(
 	val id: Int,
 	val line: String,

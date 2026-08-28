@@ -9,11 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -60,7 +57,6 @@ class MainActivity : ComponentActivity() {
 					}
 				) { innerPadding ->
 					val connected by conn.isConnected.collectAsStateWithLifecycle()
-					val loading by model.isLoading.collectAsStateWithLifecycle()
 					Column(modifier = Modifier.padding(innerPadding)) {
 						if (!connected) {
 							Row(
@@ -83,21 +79,7 @@ class MainActivity : ComponentActivity() {
 								)
 							}
 						}
-						if (loading) {
-							Column(
-								modifier = Modifier.fillMaxSize(),
-								verticalArrangement = Arrangement.Center,
-								horizontalAlignment = Alignment.CenterHorizontally,
-							) {
-								CircularProgressIndicator(
-									modifier = Modifier.size(64.dp),
-									color = MaterialTheme.colorScheme.secondary,
-									trackColor = MaterialTheme.colorScheme.surfaceVariant,
-								)
-							}
-						} else {
-							NavigationRoot(baseContext, model, rootBackStack)
-						}
+						NavigationRoot(baseContext, model, rootBackStack)
 					}
 				}
 			}

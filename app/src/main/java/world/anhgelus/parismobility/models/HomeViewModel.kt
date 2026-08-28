@@ -10,14 +10,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.data.Line
-import world.anhgelus.parismobility.data.LineStops
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.PreferencesRepository
+import world.anhgelus.parismobility.data.STOPS
 import world.anhgelus.parismobility.data.SavedLine
 import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.Stop
-import world.anhgelus.parismobility.data.get
 
 class HomeViewModel(
 	private val preferencesRepo: PreferencesRepository,
@@ -31,19 +30,9 @@ class HomeViewModel(
 		initialValue = emptySet()
 	)
 
-	val stops: StateFlow<LineStops> = linesRepo.stops.onEach { mp ->
-		linesRepo.monitorStop(
-			s = savedStops.value.mapNotNull { s -> mp[s]?.second }.toTypedArray(),
-		)
-	}.stateIn(
-		scope = viewModelScope,
-		started = SharingStarted.WhileSubscribed(60_000),
-		initialValue = emptyMap()
-	)
-
 	val savedStops: StateFlow<Set<SavedStop>> = preferencesRepo.stopsFlow.onEach { mp ->
 		linesRepo.monitorStop(
-			s = mp.mapNotNull { s -> stops.value[s]?.second }.toTypedArray(),
+			s = mp.mapNotNull { s -> STOPS[s.line.line]?.get(s.stop) }.toTypedArray(),
 		)
 	}.stateIn(
 		scope = viewModelScope,

@@ -1,6 +1,5 @@
 package world.anhgelus.parismobility.data
 
-import android.content.res.Resources
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -24,8 +23,7 @@ class LinesRepository(
 	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
 	val lines = _lines.asStateFlow()
 
-	private val _stops = MutableStateFlow<LineStops>(mutableMapOf())
-	val stops = _stops.asStateFlow()
+	val stops = STOPS
 
 	val disruptions = flow {
 		while (true) {
@@ -37,19 +35,19 @@ class LinesRepository(
 		}
 	}.flowOn(Dispatchers.IO)
 
-	suspend fun loadLines(res: Resources) {
-		val lines = linesSource.getLines(res)
-		val resp = mutableMapOf<LineKind, List<Line>>()
+	fun loadLines() {
+		val lines = linesSource.getLines()
+		val resp = mutableMapOf<LineKind, List<LineState>>()
 		lines.forEach { (mode, lines) ->
 			when (mode) {
 				Line.TransportMode.BUS -> resp[LineKind.BUS] = lines.sorted()
 				Line.TransportMode.TRAM -> resp[LineKind.TRAM] = lines.sorted()
 				Line.TransportMode.METRO -> resp[LineKind.METRO] = lines.sorted()
 				Line.TransportMode.RAIL -> {
-					resp[LineKind.RER] = lines.filter { it.submode == "local" }.sorted()
+					resp[LineKind.RER] = lines.filter { it.line.submode == "local" }.sorted()
 					resp[LineKind.TRANSILIEN] = lines.filter {
 						// because the API doesn't contain the data of line V
-						it.submode == "suburbanRailway" && it.name != "V"
+						it.line.submode == "suburbanRailway" && it.line.name != "V"
 					}.sorted()
 				}
 
@@ -57,10 +55,6 @@ class LinesRepository(
 			}
 		}
 		_lines.update { resp }
-	}
-
-	suspend fun loadStops(res: Resources) {
-		_stops.update { linesSource.getStops(res) }
 	}
 
 	private var monitoredStops = mutableSetOf<Stop>()
@@ -102,7 +96,7 @@ class LinesRepository(
 			v.mapValues { (_, lines) ->
 				lines.map { line ->
 					line.setDisruption(
-						disruptions[line.id]
+						disruptions[line.line.id]
 							?.filter { it.isHappening() }
 							?.minOrNull()
 							?.severity
@@ -113,10 +107,10 @@ class LinesRepository(
 	}
 }
 
-typealias LineGroups = Map<LineKind, List<Line>>
+typealias LineGroups = Map<LineKind, List<LineState>>
 
-operator fun LineGroups.get(saved: SavedLine): Pair<LineKind, Line>? {
-	return this[saved.kind]?.firstOrNull { it.id == saved.line }?.let { Pair(saved.kind, it) }
+operator fun LineGroups.get(saved: SavedLine): Pair<LineKind, LineState>? {
+	return this[saved.kind]?.firstOrNull { it.line.id == saved.line }?.let { Pair(saved.kind, it) }
 }
 
 typealias LineStops = Map<String, List<Stop>>

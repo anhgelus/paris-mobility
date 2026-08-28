@@ -34,6 +34,7 @@ import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.data.Disruption
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
+import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.models.NetworkViewModel
 import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.DisruptionCard
@@ -66,7 +67,7 @@ fun NetworkScreen(
 				}, modifier)
 			}
 			entry<Route.Network.SpecificLine> { (kind, line) ->
-				LineScreen(kind, line, disruptions[line.id], modifier)
+				LineScreen(kind, line.line, disruptions[line.line.id], modifier)
 			}
 		},
 	)
@@ -75,7 +76,7 @@ fun NetworkScreen(
 @Composable
 fun GeneralScreen(
 	groups: LineGroups,
-	onClick: (LK, Line) -> Unit,
+	onClick: (LK, LineState) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	LazyColumn(

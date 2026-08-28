@@ -1,8 +1,6 @@
 import org.jetbrains.kotlin.konan.properties.loadProperties
 import world.anhgelus.parismobility.plugin.DownloadLinesSvgTask
-import world.anhgelus.parismobility.plugin.DownloadLinesTask
 import world.anhgelus.parismobility.plugin.DownloadPlansTask
-import world.anhgelus.parismobility.plugin.DownloadStopsTask
 
 plugins {
     id("world.anhgelus.parismobility")
@@ -89,12 +87,4 @@ tasks.named<DownloadLinesSvgTask>("downloadLinesSvg").configure {
     target = file("src/main/res/drawable").absolutePath
     modes = listOf("metro", "rer", "tram", "train")
     token = get("PRIM_TOKEN")
-}
-
-tasks.named<DownloadLinesTask>("downloadLines").configure {
-    target = file("src/main/res/raw/lines.json").absolutePath
-}
-
-tasks.named<DownloadStopsTask>("downloadStops").configure {
-    target = file("src/main/res/raw/stops.json").absolutePath
 }
