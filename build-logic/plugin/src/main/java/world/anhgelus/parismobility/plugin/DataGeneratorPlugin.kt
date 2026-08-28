@@ -1,13 +1,10 @@
 package world.anhgelus.parismobility.plugin
 
-import org.gradle.api.DefaultTask
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.gradle.AppPlugin
+import kotlinx.serialization.json.Json
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
-import java.io.File
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -15,31 +12,38 @@ import java.net.http.HttpResponse
 
 class DataGeneratorPlugin : Plugin<Project> {
 	val client: HttpClient = HttpClient.newHttpClient()
+	val json = Json { ignoreUnknownKeys = true }
 
-	override fun apply(target: Project) {
+	override fun apply(project: Project) {
 		INSTANCE = this
-		val dlPlan = target.tasks.register("downloadPlans", DownloadPlansTask::class.java) {
+		val dlPlan = project.tasks.register("downloadPlans", DownloadPlansTask::class.java) {
 			group = "data"
 			description = "Download plans"
 		}
 		val dlLinesSvg =
-			target.tasks.register("downloadLinesSvg", DownloadLinesSvgTask::class.java) {
+			project.tasks.register("downloadLinesSvg", DownloadLinesSvgTask::class.java) {
 				group = "data"
 				description = "Download lines SVG"
 			}
-		val dlLines = target.tasks.register("downloadLines", DownloadLinesTask::class.java) {
-			group = "data"
-			description = "Download lines"
-		}
-		val dlStops = target.tasks.register("downloadStops", DownloadStopsTask::class.java) {
-			group = "data"
-			description = "Download stops"
-		}
-		target.tasks.register("downloadData") {
+		project.tasks.register("downloadData") {
 			group = "data"
 			description = "Download required data"
 
-			dependsOn(dlLinesSvg.name, dlPlan.name, dlLines.name, dlStops.name)
+			dependsOn(dlLinesSvg.name, dlPlan.name)
+		}
+		project.plugins.withType(AppPlugin::class.java) {
+			project.tasks.register("generateData", GenerateDataTask::class.java) {
+				group = "data"
+				description = "Generate data classes"
+			}.let { task ->
+				val components =
+					project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
+				components.onVariants { variant ->
+					variant.sources
+						.java
+						?.addGeneratedSourceDirectory(task, GenerateDataTask::outputDirectory)
+				}
+			}
 		}
 	}
 
@@ -64,7 +68,9 @@ class DataGeneratorPlugin : Plugin<Project> {
 	}
 
 	fun dataRequest(dataset: String): Result<ByteArray> {
-		return request("https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/$dataset/exports/json")
+		return request("https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/$dataset/exports/json") {
+			it.headers("Content-Type", "application/json")
+		}
 	}
 
 	fun primRequest(
@@ -76,29 +82,4 @@ class DataGeneratorPlugin : Plugin<Project> {
 			it.headers("Accept", accept, "apiKey", token)
 		}
 	}
-
-	abstract class DataDownload(
-		@Internal val dataName: String,
-		@Internal val dataset: String,
-	) : DefaultTask() {
-		@get:Input
-		abstract val target: Property<String>
-
-		@TaskAction
-		fun action() {
-			logger.info("Downloading $dataName...")
-			val f = File(target.get())
-			f.createNewFile()
-			INSTANCE.dataRequest(dataset)
-				.getOrThrow()
-				.let { f.writeBytes(it) }
-			logger.info("$dataName downloaded.")
-		}
-	}
 }
-
-abstract class DownloadLinesTask :
-	DataGeneratorPlugin.DataDownload("lines", "referentiel-des-lignes")
-
-abstract class DownloadStopsTask :
-	DataGeneratorPlugin.DataDownload("stops", "emplacement-des-gares-idf")

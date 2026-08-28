@@ -42,7 +42,11 @@ abstract class DownloadLinesSvgTask : DefaultTask() {
 						val name = ze!!.name.split(":")[2].split(".")[0].lowercase()
 						val f = File(Path(target.get(), "line_$name.xml").pathString)
 						if (!f.createNewFile()) continue
-						val p = Path(project.buildTreePath, "tmp", "$name.svg")
+						val p = Path(
+							project.layout.buildDirectory.asFile.get().path,
+							"tmp",
+							"$name.svg"
+						)
 						val tmp = File(p.pathString)
 						tmp.createNewFile()
 						val err = Svg2Vector.parseSvgToXml(p, f.outputStream())
