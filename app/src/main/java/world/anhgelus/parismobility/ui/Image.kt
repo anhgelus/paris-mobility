@@ -23,12 +23,8 @@ fun Image(
 	modifier: Modifier = Modifier,
 	aspectRatio: Float = 1f,
 ) {
-	var scale by remember {
-		mutableFloatStateOf(1.5f)
-	}
-	var offset by remember {
-		mutableStateOf(Offset.Zero)
-	}
+	var scale by remember { mutableFloatStateOf(1.5f) }
+	var offset by remember { mutableStateOf(Offset.Zero) }
 	BoxWithConstraints(modifier = modifier.fillMaxSize()) {
 		val state = rememberTransformableState { _, zoomChange, panChange, _ ->
 			scale = (scale * zoomChange).coerceIn(1f..5f)

@@ -4,19 +4,17 @@ import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
@@ -32,7 +30,6 @@ import world.anhgelus.parismobility.ui.LinesRow
 import world.anhgelus.parismobility.ui.ScreenTitle
 import world.anhgelus.parismobility.ui.SectionTitle
 import world.anhgelus.parismobility.ui.StopsMonitoring
-import world.anhgelus.parismobility.ui.theme.Typography
 import world.anhgelus.parismobility.ui.theme.transitionSub
 import world.anhgelus.parismobility.ui.theme.transitionSubPop
 import world.anhgelus.parismobility.ui.theme.transitionSubPredictivePop
@@ -42,10 +39,9 @@ import world.anhgelus.parismobility.ui.Line as L
 fun HomeScreen(
 	ctx: Context,
 	viewModel: HomeViewModel,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	homeBackStack: NavBackStack<NavKey> = rememberNavBackStack(Route.Home)
 ) {
-	val homeBackStack = rememberNavBackStack(Route.Home)
-
 	val lines by viewModel.lines.collectAsStateWithLifecycle()
 	val savedLines by viewModel.savedLines.collectAsStateWithLifecycle()
 	val savedStops by viewModel.savedStops.collectAsStateWithLifecycle()
@@ -63,7 +59,7 @@ fun HomeScreen(
 					savedStops,
 					viewModel.monitoringStops,
 					modifier
-				) { homeBackStack.add(Route.Home.Modify) }
+				)
 			}
 			entry<Route.Home.Modify> {
 				ModifyScreen(
@@ -92,7 +88,6 @@ fun GeneralScreen(
 	savedStops: Collection<SavedStop>,
 	monitoredStops: StateFlow<MonitoringStops>,
 	modifier: Modifier = Modifier,
-	onModifyClick: () -> Unit,
 ) {
 	Column(
 		modifier = modifier.verticalScroll(rememberScrollState()),
@@ -113,14 +108,6 @@ fun GeneralScreen(
 			}
 		}
 		StopsMonitoring(groups, savedStops, monitoredStops)
-		Column(
-			horizontalAlignment = Alignment.CenterHorizontally,
-			modifier = Modifier.fillMaxWidth()
-		) {
-			FilledTonalButton(onClick = onModifyClick) {
-				Text(text = "Modifier", style = Typography.bodyLarge)
-			}
-		}
 		Spacer(modifier = Modifier.padding(bottom = 16.dp))
 	}
 }

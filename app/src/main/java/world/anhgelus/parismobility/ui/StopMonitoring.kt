@@ -46,10 +46,7 @@ fun StopsMonitoring(
 ) {
 	val monitor by monitoredStops.collectAsStateWithLifecycle()
 	Card(
-		colors = CardDefaults.cardColors(
-			containerColor = MaterialTheme.colorScheme.primaryContainer,
-			contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-		),
+		colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer),
 		modifier = modifier
 			.fillMaxWidth()
 			.padding(top = 8.dp),

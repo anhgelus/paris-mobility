@@ -1,5 +1,6 @@
 package world.anhgelus.parismobility.navigation
 
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import world.anhgelus.parismobility.R
@@ -7,33 +8,43 @@ import world.anhgelus.parismobility.models.LineKind
 
 @Serializable
 sealed interface Route : NavKey {
-	fun name(): String?
+	data class Data(
+		val icon: Int,
+		val contentDescription: String,
+		val onClick: (NavBackStack<NavKey>) -> Unit
+	)
+
+	fun getButton(): Data? = null
+
+	data class TopBarData(val title: String, val onBack: (NavBackStack<NavKey>) -> Unit)
+
+	fun getTopBar(): TopBarData? = null
 
 	@Serializable
-	open class Helper(val name: String? = null) : Route {
-		override fun name(): String? = name
-	}
+	data object Home : Route {
+		override fun getButton(): Data = Data(
+			icon = R.drawable.outline_edit_24,
+			contentDescription = "Modifier votre réseau",
+		) { it.add(Modify) }
 
-	@Serializable
-	data object Home : Helper("Votre réseau") {
 		@Serializable
-		data object Modify : Helper() {
+		data object Modify : Route {
 			@Serializable
-			data object Stops : Helper()
+			data object Stops : Route
 
 			@Serializable
-			data class Stop(val kind: LineKind, val lineId: String) : Helper()
+			data class Stop(val kind: LineKind, val lineId: String) : Route
 		}
 	}
 
 	@Serializable
-	data object Network : Helper("Réseau") {
+	data object Network : Route {
 		@Serializable
-		data class SpecificLine(val kind: LineKind, val lineId: String) : Helper()
+		data class SpecificLine(val kind: LineKind, val lineId: String) : Route
 	}
 
 	@Serializable
-	data object Map : Helper()
+	data object Map : Route
 }
 
 data class BottomNavItem(
@@ -55,3 +66,13 @@ val TOP_LEVEL_DESTINATIONS = mapOf(
 		title = "Carte",
 	)
 )
+
+fun getLastRouteKey(
+	backStack: NavBackStack<NavKey>,
+	homeBackStack: NavBackStack<NavKey>,
+): Route {
+	return when (val general = backStack.last() as Route) {
+		is Route.Home -> homeBackStack.last() as Route
+		else -> general
+	}
+}

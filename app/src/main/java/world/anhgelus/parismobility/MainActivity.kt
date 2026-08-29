@@ -11,9 +11,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,6 +35,7 @@ import world.anhgelus.parismobility.models.GeneralViewModel
 import world.anhgelus.parismobility.navigation.NavigationBar
 import world.anhgelus.parismobility.navigation.NavigationRoot
 import world.anhgelus.parismobility.navigation.Route
+import world.anhgelus.parismobility.navigation.getLastRouteKey
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
 
 class MainActivity : ComponentActivity() {
@@ -50,11 +55,28 @@ class MainActivity : ComponentActivity() {
 					)
 				}
 				val rootBackStack = rememberNavBackStack(Route.Home)
-				val key = rootBackStack.last()
+				val homeBackStack = rememberNavBackStack(Route.Home)
+				val key = getLastRouteKey(rootBackStack, homeBackStack)
 				Scaffold(
 					bottomBar = {
-						NavigationBar(selectedKey = key) { rootBackStack.add(it) }
-					}
+						NavigationBar(rootBackStack.last()) { rootBackStack.add(it) }
+					},
+					floatingActionButton = {
+						val btn = key.getButton() ?: return@Scaffold
+						val onClick = { btn.onClick(homeBackStack) }
+						FilledIconButton(
+							onClick = onClick,
+							colors = IconButtonDefaults.filledIconButtonColors(MaterialTheme.colorScheme.primaryContainer),
+							modifier = Modifier.size(64.dp),
+							shape = ShapeDefaults.Large,
+						) {
+							Icon(
+								painter = painterResource(btn.icon),
+								contentDescription = btn.contentDescription,
+								modifier = Modifier.size(32.dp)
+							)
+						}
+					},
 				) { innerPadding ->
 					val connected by conn.isConnected.collectAsStateWithLifecycle()
 					Column(modifier = Modifier.padding(innerPadding)) {
@@ -79,7 +101,7 @@ class MainActivity : ComponentActivity() {
 								)
 							}
 						}
-						NavigationRoot(baseContext, model, rootBackStack)
+						NavigationRoot(baseContext, model, rootBackStack, homeBackStack)
 					}
 				}
 			}

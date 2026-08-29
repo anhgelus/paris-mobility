@@ -34,6 +34,7 @@ fun NavigationRoot(
 	ctx: Context,
 	model: GeneralViewModel,
 	backStack: NavBackStack<NavKey>,
+	homeBackStack: NavBackStack<NavKey>,
 ) {
 	val homeViewModel = viewModel {
 		HomeViewModel(
@@ -85,7 +86,7 @@ fun NavigationRoot(
 		entryProvider = entryProvider {
 			val modif = Modifier.padding(horizontal = 16.dp)
 			entry<Route.Home> {
-				HomeScreen(ctx, homeViewModel, modif)
+				HomeScreen(ctx, homeViewModel, modif, homeBackStack)
 			}
 			entry<Route.Network> {
 				NetworkScreen(networkViewModel, modif)
