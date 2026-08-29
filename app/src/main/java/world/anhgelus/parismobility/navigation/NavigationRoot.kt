@@ -33,8 +33,9 @@ import kotlin.math.pow
 fun NavigationRoot(
 	ctx: Context,
 	model: GeneralViewModel,
-	backStack: NavBackStack<NavKey>,
+	rootBackStack: NavBackStack<NavKey>,
 	homeBackStack: NavBackStack<NavKey>,
+	networkBackStack: NavBackStack<NavKey>,
 ) {
 	val homeViewModel = viewModel {
 		HomeViewModel(
@@ -45,7 +46,7 @@ fun NavigationRoot(
 	val networkViewModel = viewModel { NetworkViewModel(model.linesRepository) }
 	NavDisplay(
 		modifier = Modifier.fillMaxSize(),
-		backStack = backStack,
+		backStack = rootBackStack,
 		entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
 		transitionSpec = {
 			val scale = 0.95f
@@ -89,7 +90,7 @@ fun NavigationRoot(
 				HomeScreen(ctx, homeViewModel, modif, homeBackStack)
 			}
 			entry<Route.Network> {
-				NetworkScreen(networkViewModel, modif)
+				NetworkScreen(networkViewModel, modif, networkBackStack)
 			}
 			entry<Route.Map> {
 				MapScreen(modif)

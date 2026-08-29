@@ -20,15 +20,21 @@ sealed interface Route : NavKey {
 
 	fun getTopBar(): TopBarData? = null
 
+	interface HomeRoute : Route
+
 	@Serializable
-	data object Home : Route {
+	data object Home : HomeRoute {
 		override fun getButton(): Data = Data(
 			icon = R.drawable.outline_edit_24,
 			contentDescription = "Modifier votre réseau",
 		) { it.add(Modify) }
 
 		@Serializable
-		data object Modify : Route {
+		data object Modify : HomeRoute {
+			override fun getTopBar(): TopBarData = TopBarData("Modifier votre réseau") {
+				it.removeAt(it.lastIndex)
+			}
+
 			@Serializable
 			data object Stops : Route
 
@@ -37,10 +43,18 @@ sealed interface Route : NavKey {
 		}
 	}
 
+	interface NetworkRoute : Route
+
 	@Serializable
-	data object Network : Route {
+	data object Network : NetworkRoute {
 		@Serializable
-		data class SpecificLine(val kind: LineKind, val lineId: String) : Route
+		data class SpecificLine(val kind: LineKind, val lineId: String, val lineName: String) :
+			NetworkRoute {
+			override fun getTopBar(): TopBarData =
+				TopBarData("Incidents sur ${kind.displayName} $lineName") {
+					it.removeAt(it.lastIndex)
+				}
+		}
 	}
 
 	@Serializable
@@ -66,13 +80,3 @@ val TOP_LEVEL_DESTINATIONS = mapOf(
 		title = "Carte",
 	)
 )
-
-fun getLastRouteKey(
-	backStack: NavBackStack<NavKey>,
-	homeBackStack: NavBackStack<NavKey>,
-): Route {
-	return when (val general = backStack.last() as Route) {
-		is Route.Home -> homeBackStack.last() as Route
-		else -> general
-	}
-}

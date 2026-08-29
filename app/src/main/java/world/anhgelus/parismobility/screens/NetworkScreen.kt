@@ -28,8 +28,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import world.anhgelus.parismobility.data.Disruption
 import world.anhgelus.parismobility.data.Line
@@ -51,22 +52,22 @@ import world.anhgelus.parismobility.models.LineKind as LK
 fun NetworkScreen(
 	viewModel: NetworkViewModel,
 	modifier: Modifier = Modifier,
+	backStack: NavBackStack<NavKey>,
 ) {
-	val networkBackStack = rememberNavBackStack(Route.Network)
 	val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
 	val groups by viewModel.lines.collectAsStateWithLifecycle()
 	NavDisplay(
-		backStack = networkBackStack,
+		backStack = backStack,
 		transitionSpec = transitionSub(),
 		popTransitionSpec = transitionSubPop(),
 		predictivePopTransitionSpec = transitionSubPredictivePop(),
 		entryProvider = entryProvider {
 			entry<Route.Network> {
 				GeneralScreen(groups, onClick = { kind, line ->
-					networkBackStack.add(Route.Network.SpecificLine(kind, line.line.id))
+					backStack.add(Route.Network.SpecificLine(kind, line.line.id, line.line.name))
 				}, modifier)
 			}
-			entry<Route.Network.SpecificLine> { (kind, line) ->
+			entry<Route.Network.SpecificLine> { (kind, line, _) ->
 				LineScreen(kind, groups[kind]!![line]!!.line, disruptions[line], modifier)
 			}
 		},

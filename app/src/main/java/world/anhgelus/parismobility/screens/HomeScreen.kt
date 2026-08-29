@@ -16,7 +16,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.flow.StateFlow
 import world.anhgelus.parismobility.data.LineGroups
@@ -40,7 +39,7 @@ fun HomeScreen(
 	ctx: Context,
 	viewModel: HomeViewModel,
 	modifier: Modifier = Modifier,
-	homeBackStack: NavBackStack<NavKey> = rememberNavBackStack(Route.Home)
+	homeBackStack: NavBackStack<NavKey>,
 ) {
 	val lines by viewModel.lines.collectAsStateWithLifecycle()
 	val savedLines by viewModel.savedLines.collectAsStateWithLifecycle()
