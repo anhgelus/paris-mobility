@@ -54,6 +54,14 @@ fun StopsMonitoring(
 	) {
 		val modifier = Modifier.padding(16.dp)
 		SectionTitle("Prochains passages", modifier)
+		if (savedStops.isEmpty()) {
+			Text(
+				"Aucun arrêt configuré. Cliquez sur l'icon en bas à droite pour en ajouter.",
+				modifier
+			)
+			return@Card
+		}
+		SectionTitle("Prochains passages", modifier)
 		savedStops.mapNotNull { STOPS[it.line.line]?.get(it.stop)?.let { s -> Pair(it.line, s) } }
 			.forEach { (line, stop) ->
 				StopMonitoring(

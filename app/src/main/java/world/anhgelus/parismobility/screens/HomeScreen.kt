@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -98,6 +99,10 @@ fun GeneralScreen(
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
 			SectionTitle("État de vos lignes")
+			if (savedLines.isEmpty()) {
+				Text("Aucune ligne configurée. Cliquez sur l'icon en bas à droite pour en ajouter.")
+				return@Column
+			}
 			LinesRow { size ->
 				val lines = savedLines.mapNotNull { groups[it] }
 				lines.forEach { (kind, line) ->

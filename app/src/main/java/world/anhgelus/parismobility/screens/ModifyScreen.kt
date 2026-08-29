@@ -48,9 +48,7 @@ fun ModifyScreen(
 ) {
 	val pager = rememberPagerState(0) { 2 }
 
-	Column(
-		modifier = Modifier.padding(horizontal = 16.dp)
-	) {
+	Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 		SecondaryTabRow(selectedTabIndex = pager.currentPage) {
 			listOf("Lignes", "Arrêts").forEachIndexed { i, name ->
 				Tab(
@@ -145,8 +143,8 @@ fun ModifySavedStops(
 								)
 							}
 						}
-						item { Spacer(Modifier.padding(bottom = 16.dp)) }
 					}
+					item { Spacer(Modifier.padding(bottom = 16.dp)) }
 				}
 			}
 			entry<Route.Home.Modify.Stop> { (kind, line) ->
