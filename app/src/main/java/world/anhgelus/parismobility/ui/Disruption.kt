@@ -36,27 +36,27 @@ fun DisruptionCard(disruption: Disruption, modifier: Modifier = Modifier) {
 	Card(
 		border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer),
 		colors = CardDefaults.cardColors(
-			contentColor = MaterialTheme.colorScheme.onSurface,
+			contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
 			containerColor =
-				if (enabled) MaterialTheme.colorScheme.surfaceContainerHigh
+				if (enabled) MaterialTheme.colorScheme.surfaceVariant
 				else MaterialTheme.colorScheme.surfaceContainerLowest
 		),
-		elevation = CardDefaults.elevatedCardElevation(),
+		elevation = CardDefaults.cardElevation(),
 		modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
+			.fillMaxWidth()
+			.padding(top = 8.dp),
 	) {
 		val modifier = Modifier.padding(16.dp)
 		Box(
 			modifier = Modifier
-                .fillMaxWidth()
-                .background(if (enabled) color.first else MaterialTheme.colorScheme.surfaceContainerLow)
-                .padding(16.dp)
+				.fillMaxWidth()
+				.background(if (enabled) color.first else MaterialTheme.colorScheme.surfaceVariant)
+				.padding(16.dp)
 		) {
 			Column {
 				SectionTitle(
 					content = disruption.title,
-					color = if (enabled) color.second else MaterialTheme.colorScheme.onSurface,
+					color = if (enabled) color.second else MaterialTheme.colorScheme.onSurfaceVariant,
 					modifier = Modifier.padding(bottom = 8.dp)
 				)
 				val p = disruption.periods.first()

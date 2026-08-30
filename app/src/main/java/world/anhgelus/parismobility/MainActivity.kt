@@ -53,11 +53,9 @@ class MainActivity : ComponentActivity() {
 				}
 				val rootBackStack = rememberNavBackStack(Route.Home)
 				val homeBackStack = rememberNavBackStack(Route.Home)
-				val networkBackStack = rememberNavBackStack(Route.Network)
 				val rootKey = rootBackStack.last()
 				val stack = when (rootKey) {
 					is Route.HomeRoute -> homeBackStack
-					is Route.NetworkRoute -> networkBackStack
 					else -> rootBackStack
 				}
 				Scaffold(
@@ -93,7 +91,6 @@ class MainActivity : ComponentActivity() {
 							model,
 							rootBackStack,
 							homeBackStack,
-							networkBackStack
 						)
 					}
 				}

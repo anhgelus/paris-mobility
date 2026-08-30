@@ -35,7 +35,6 @@ fun NavigationRoot(
 	model: GeneralViewModel,
 	rootBackStack: NavBackStack<NavKey>,
 	homeBackStack: NavBackStack<NavKey>,
-	networkBackStack: NavBackStack<NavKey>,
 ) {
 	val homeViewModel = viewModel {
 		HomeViewModel(
@@ -90,7 +89,7 @@ fun NavigationRoot(
 				HomeScreen(ctx, homeViewModel, modif, homeBackStack)
 			}
 			entry<Route.Network> {
-				NetworkScreen(networkViewModel, modif, networkBackStack)
+				NetworkScreen(networkViewModel, modif)
 			}
 			entry<Route.Map> {
 				MapScreen(modif)

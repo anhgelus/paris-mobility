@@ -34,7 +34,7 @@ class LinesRepository(
 	}.flowOn(Dispatchers.IO)
 
 	fun loadLines() {
-		val lines = linesSource.getLines()
+		val lines = linesSource.getLines().toSortedMap()
 		val resp = mutableMapOf<LineKind, Map<String, LineState>>()
 		lines.forEach { (mode, lines) ->
 			when (mode) {

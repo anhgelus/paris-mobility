@@ -1,92 +1,45 @@
 package world.anhgelus.parismobility.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.innerShadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.shadow.Shadow
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.ui.NavDisplay
-import world.anhgelus.parismobility.data.Disruption
 import world.anhgelus.parismobility.data.Line
-import world.anhgelus.parismobility.data.LineGroups
-import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.models.NetworkViewModel
-import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.DisruptionCard
-import world.anhgelus.parismobility.ui.LineImage
 import world.anhgelus.parismobility.ui.LineKind
 import world.anhgelus.parismobility.ui.ScreenTitle
 import world.anhgelus.parismobility.ui.theme.Typography
-import world.anhgelus.parismobility.ui.theme.transitionSub
-import world.anhgelus.parismobility.ui.theme.transitionSubPop
-import world.anhgelus.parismobility.ui.theme.transitionSubPredictivePop
 import world.anhgelus.parismobility.models.LineKind as LK
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NetworkScreen(
 	viewModel: NetworkViewModel,
 	modifier: Modifier = Modifier,
-	backStack: NavBackStack<NavKey>,
 ) {
 	val disruptions by viewModel.disruptions.collectAsStateWithLifecycle()
 	val groups by viewModel.lines.collectAsStateWithLifecycle()
-	NavDisplay(
-		backStack = backStack,
-		transitionSpec = transitionSub(),
-		popTransitionSpec = transitionSubPop(),
-		predictivePopTransitionSpec = transitionSubPredictivePop(),
-		entryProvider = entryProvider {
-			entry<Route.Network> {
-				GeneralScreen(groups, onClick = { kind, line ->
-					backStack.add(Route.Network.SpecificLine(kind, line.line.id, line.line.name))
-				}, modifier)
-			}
-			entry<Route.Network.SpecificLine> { (kind, line, _) ->
-				LineScreen(kind, groups[kind]!![line]!!.line, disruptions[line], modifier)
-			}
-		},
-	)
-}
-
-@Composable
-fun GeneralScreen(
-	groups: LineGroups,
-	onClick: (LK, LineState) -> Unit,
-	modifier: Modifier = Modifier,
-) {
+	var selected by remember { mutableStateOf<Pair<LK, Line>?>(null) }
 	LazyColumn(
 		modifier = modifier,
 		verticalArrangement = Arrangement.spacedBy(32.dp),
 	) {
-		item {
-			ScreenTitle("Réseau")
-		}
+		item { ScreenTitle("Réseau") }
 		items(items = groups.filter { (key, _) -> key != LK.BUS }.toList()) { (kind, lines) ->
 			LineKind(
 				modifier = Modifier
@@ -95,97 +48,30 @@ fun GeneralScreen(
 				name = kind.displayName,
 				lines = lines.values,
 				kind = kind,
-				onClick = onClick
+				onClick = { kind, line -> selected = Pair(kind, line.line) }
 			)
 		}
 	}
-}
-
-@Composable
-fun LineScreen(
-	kind: LK,
-	line: Line,
-	disruptions: List<Disruption>?,
-	modifier: Modifier = Modifier,
-) {
-	Column(
-		modifier = Modifier.background(line.color),
-	) {
-		val network = when (kind) {
-			LK.RER -> "RER"
-			LK.METRO -> "Métro"
-			LK.TRAM -> "Tram"
-			LK.TRANSILIEN -> "Ligne"
-			else -> line.network!!
-		}
-		val title = "$network ${line.name}"
-		Row(
-			horizontalArrangement = Arrangement.spacedBy(16.dp),
-			verticalAlignment = Alignment.CenterVertically,
-			modifier = Modifier
-				.fillMaxWidth()
-				.background(
-					Color(
-						ColorUtils.blendARGB(
-							line.color.toArgb(),
-							Color.Black.toArgb(),
-							0.3f
-						)
-					)
-				)
-				.padding(16.dp)
-		) {
-			Image(
-				painter = painterResource(kind.logoId!!),
-				contentDescription = "Logo du ${kind.displayName}",
-				modifier = Modifier.size(64.dp)
-			)
-			LineImage(kind, line, Modifier.size(64.dp), true)
-		}
-		LazyColumn(
-			verticalArrangement = Arrangement.spacedBy(32.dp),
-			modifier = Modifier.fillMaxHeight(),
-		) {
-			item {
-				Spacer(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(128.dp)
-						.background(Color.White)
-						.innerShadow(
-							RectangleShape,
-							Shadow(
-								radius = 2.dp,
-								spread = 1.dp,
-								color = Color.Black,
-							)
-						)
-				)
-			}
-			disruptions?.sorted()?.let { dis ->
-				items(minOf(3, dis.size), key = { dis[it].id }) { i ->
-					val it = dis[i]
-					DisruptionCard(
-						it.copy(
-							title = it.title.removePrefix("$title : ").removePrefix("$title - ")
-						),
-						modifier
-					)
-				}
+	selected?.let { (kind, line) ->
+		ModalBottomSheet(onDismissRequest = { selected = null }) {
+			LazyColumn(
+				verticalArrangement = Arrangement.spacedBy(16.dp),
+				modifier = modifier.fillMaxHeight(),
+			) {
 				item {
-					if (dis.size >= 3) {
-						Column(
-							horizontalAlignment = Alignment.CenterHorizontally,
-							modifier = Modifier.fillMaxWidth()
-						) {
-							FilledTonalButton(onClick = {}) {
-								Text(text = "Voir plus", style = Typography.bodyLarge)
-							}
-						}
-					}
+					Text(
+						text = "Incidents sur ${kind.displayName} ${line.name}",
+						style = Typography.headlineMedium,
+					)
 				}
+				val dis = disruptions[line.id]?.sorted()
+				if (dis.isNullOrEmpty()) {
+					item { Text("Aucun incident trouvé.") }
+				} else {
+					items(dis, key = { it.id }) { DisruptionCard(it) }
+				}
+				item { Spacer(modifier = Modifier.padding(bottom = 16.dp)) }
 			}
-			item { Spacer(modifier = Modifier.padding(bottom = 16.dp)) }
 		}
 	}
 }

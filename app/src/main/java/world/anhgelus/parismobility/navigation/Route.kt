@@ -43,19 +43,8 @@ sealed interface Route : NavKey {
 		}
 	}
 
-	interface NetworkRoute : Route
-
 	@Serializable
-	data object Network : NetworkRoute {
-		@Serializable
-		data class SpecificLine(val kind: LineKind, val lineId: String, val lineName: String) :
-			NetworkRoute {
-			override fun getTopBar(): TopBarData =
-				TopBarData("Incidents sur ${kind.displayName} $lineName") {
-					it.removeAt(it.lastIndex)
-				}
-		}
-	}
+	data object Network : Route
 
 	@Serializable
 	data object Map : Route

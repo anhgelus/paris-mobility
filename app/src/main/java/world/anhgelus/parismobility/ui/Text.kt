@@ -18,7 +18,7 @@ fun ScreenTitle(
 	Text(
 		text = content,
 		color = color,
-		style = Typography.headlineMedium,
+		style = Typography.headlineLarge,
 		modifier = modifier.padding(top = 24.dp),
 	)
 }
@@ -31,7 +31,7 @@ fun SectionTitle(
 ) {
 	Text(
 		text = content,
-		style = Typography.titleLarge,
+		style = Typography.headlineSmall,
 		modifier = modifier,
 		color = color,
 	)
