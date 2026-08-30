@@ -18,28 +18,29 @@ class DataGeneratorPlugin : Plugin<Project> {
 
 	override fun apply(project: Project) {
 		INSTANCE = this
-		val dlPlan = project.tasks.register("downloadPlans", DownloadPlansTask::class.java) {
-			group = "data"
-			description = "Download plans"
-		}
-		val dlLinesSvg =
-			project.tasks.register("downloadLinesSvg", DownloadLinesSvgTask::class.java) {
-				group = "data"
-				description = "Download lines SVG"
-			}
-		project.tasks.register("downloadData") {
-			group = "data"
-			description = "Download required data"
-
-			dependsOn(dlLinesSvg.name, dlPlan.name)
-		}
 		project.plugins.withType(AppPlugin::class.java) {
+			val components = project.extensions
+				.getByType(ApplicationAndroidComponentsExtension::class.java)
+
+			val dlData = project.tasks.register("downloadData", DownloadLinesSvgTask::class.java) {
+				group = "data"
+				description = "Download required data"
+			}.also { task ->
+				components.onVariants { variant ->
+					variant.sources
+						.res
+						?.addGeneratedSourceDirectory(
+							task,
+							DownloadLinesSvgTask::outputDirectory
+						)
+				}
+			}
 			project.tasks.register("generateData", GenerateDataTask::class.java) {
 				group = "data"
 				description = "Generate data classes"
+
+				dependsOn(dlData)
 			}.let { task ->
-				val components =
-					project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
 				components.onVariants { variant ->
 					variant.sources
 						.java

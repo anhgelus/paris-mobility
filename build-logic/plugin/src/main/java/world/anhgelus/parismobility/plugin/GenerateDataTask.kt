@@ -47,10 +47,7 @@ abstract class GenerateDataTask : DefaultTask() {
 							|			Line.Status.${it.status},
 							|			Color("#${it.rawColor}".toColorInt()),
 							|			Color("#${it.rawTextColor}".toColorInt()),
-							|			R.drawable.${
-								if (it.name != "V") DownloadLinesSvgTask.lineFileName(it.id)
-								else "v"
-							},
+							|			R.drawable.${DownloadLinesSvgTask.lineFileName(if (it.name != "V") it.id else "v")},
 							|		),
 							|""".trimMargin()
 						)

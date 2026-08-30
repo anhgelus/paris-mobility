@@ -1,9 +1,1 @@
 /build
-
-# content that I don't own
-src/main/res/drawable/line_c*
-src/main/res/drawable/plan_*
-
-
-src/main/res/raw/lines.json
-src/main/res/raw/stops.json

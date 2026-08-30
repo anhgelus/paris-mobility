@@ -1,6 +1,5 @@
 import org.jetbrains.kotlin.konan.properties.loadProperties
 import world.anhgelus.parismobility.plugin.DownloadLinesSvgTask
-import world.anhgelus.parismobility.plugin.DownloadPlansTask
 
 plugins {
     id("world.anhgelus.parismobility")
@@ -79,12 +78,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 }
 
-tasks.named<DownloadPlansTask>("downloadPlans").configure {
-    target = file("src/main/res/drawable/plan_metro.png").absolutePath
-}
-
-tasks.named<DownloadLinesSvgTask>("downloadLinesSvg").configure {
-    target = file("src/main/res/drawable").absolutePath
+tasks.named<DownloadLinesSvgTask>("downloadData").configure {
     modes = listOf("metro", "rer", "tram", "train")
     token = get("PRIM_TOKEN")
 }
