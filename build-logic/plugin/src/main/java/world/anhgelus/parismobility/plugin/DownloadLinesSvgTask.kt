@@ -39,8 +39,8 @@ abstract class DownloadLinesSvgTask : DefaultTask() {
 				var ze: ZipEntry? = null
 				while (ins.nextEntry.also { ze = it } != null) {
 					ins.readAllBytes().let {
-						val name = ze!!.name.split(":")[2].split(".")[0].lowercase()
-						val f = File(Path(target.get(), "line_$name.xml").pathString)
+						val name = lineFileName(ze!!.name.split(":")[2].split(".")[0])
+						val f = File(Path(target.get(), "$name.xml").pathString)
 						if (!f.createNewFile()) continue
 						val p = Path(
 							project.layout.buildDirectory.asFile.get().path,
@@ -55,5 +55,9 @@ abstract class DownloadLinesSvgTask : DefaultTask() {
 				}
 			}
 		}
+	}
+
+	companion object {
+		fun lineFileName(name: String): String = "line_${name.lowercase()}"
 	}
 }

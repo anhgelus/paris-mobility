@@ -9,6 +9,8 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.util.zip.GZIPInputStream
+import kotlin.jvm.optionals.getOrNull
 
 class DataGeneratorPlugin : Plugin<Project> {
 	val client: HttpClient = HttpClient.newHttpClient()
@@ -58,12 +60,18 @@ class DataGeneratorPlugin : Plugin<Project> {
 	): Result<ByteArray> {
 		return HttpRequest.newBuilder(URI(url))
 			.GET()
+			.headers("Accept-Encoding", "gzip")
 			.let { builder(it) }
 			.let {
 				client.send(it.build(), HttpResponse.BodyHandlers.ofByteArray())
 			}.let {
 				if (it.statusCode() >= 400) Result.failure(Exception("Invalid status code: ${it.statusCode()}"))
-				else Result.success(it.body())
+				else Result.success(it)
+			}.mapCatching { old ->
+				old.headers().firstValue("Content-Encoding").getOrNull()?.let { enc ->
+					if (enc != "gzip") throw IllegalArgumentException("unknown encoding: $enc")
+					old.body().inputStream().use { GZIPInputStream(it).readAllBytes() }
+				} ?: old.body()
 			}
 	}
 
