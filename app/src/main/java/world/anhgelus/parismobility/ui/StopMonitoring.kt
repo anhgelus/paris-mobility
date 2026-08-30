@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.StateFlow
+import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.data.MonitoringStop
@@ -42,11 +43,15 @@ fun StopsMonitoring(
 	lines: LineGroups,
 	savedStops: Collection<SavedStop>,
 	monitoredStops: StateFlow<MonitoringStops>,
+	onLineClicked: (LineKind, Line) -> Unit,
 	modifier: Modifier = Modifier,
 ) {
 	val monitor by monitoredStops.collectAsStateWithLifecycle()
 	Card(
-		colors = CardDefaults.cardColors(MaterialTheme.colorScheme.secondaryContainer),
+		colors = CardDefaults.cardColors(
+			containerColor = MaterialTheme.colorScheme.secondaryContainer,
+			contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+		),
 		modifier = modifier
 			.fillMaxWidth()
 			.padding(top = 8.dp),
@@ -57,18 +62,19 @@ fun StopsMonitoring(
 		if (savedStops.isEmpty()) {
 			Text(
 				"Aucun arrêt configuré. Cliquez sur l'icon en bas à droite pour en ajouter.",
-				modifier
+				modifier,
 			)
 			return@Card
 		}
-		SectionTitle("Prochains passages", modifier)
 		savedStops.mapNotNull { STOPS[it.line.line]?.get(it.stop)?.let { s -> Pair(it.line, s) } }
 			.forEach { (line, stop) ->
+				val l = lines[line]!!.second
 				StopMonitoring(
 					line.kind,
-					lines[line]!!.second,
+					l,
 					stop,
 					monitor.map[stop.zda.toString()],
+					{ onLineClicked(line.kind, l.line) },
 					modifier
 				)
 			}
@@ -81,6 +87,7 @@ fun StopMonitoring(
 	line: LineState,
 	stop: Stop,
 	monitor: List<MonitoringStop>?,
+	onLineClicked: () -> Unit,
 	modifier: Modifier = Modifier
 ) {
 	Row(
@@ -92,7 +99,7 @@ fun StopMonitoring(
 			horizontalAlignment = Alignment.CenterHorizontally,
 			verticalArrangement = Arrangement.spacedBy(4.dp)
 		) {
-			Line(kind, line, {}, Modifier.size(48.dp))
+			Line(kind, line, onLineClicked, Modifier.size(48.dp))
 			Text(
 				text = stop.name,
 				style = Typography.bodyMedium,

@@ -13,8 +13,10 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -43,6 +45,7 @@ fun NavigationRoot(
 		)
 	}
 	val networkViewModel = viewModel { NetworkViewModel(model.linesRepository) }
+	val disruptions by model.disruptions.collectAsStateWithLifecycle()
 	NavDisplay(
 		modifier = Modifier.fillMaxSize(),
 		backStack = rootBackStack,
@@ -86,10 +89,10 @@ fun NavigationRoot(
 		entryProvider = entryProvider {
 			val modif = Modifier.padding(horizontal = 16.dp)
 			entry<Route.Home> {
-				HomeScreen(ctx, homeViewModel, modif, homeBackStack)
+				HomeScreen(ctx, homeViewModel, disruptions, modif, homeBackStack)
 			}
 			entry<Route.Network> {
-				NetworkScreen(networkViewModel, modif)
+				NetworkScreen(networkViewModel, disruptions, modif)
 			}
 			entry<Route.Map> {
 				MapScreen(modif)

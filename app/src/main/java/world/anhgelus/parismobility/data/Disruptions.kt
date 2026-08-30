@@ -31,7 +31,10 @@ enum class Severity {
 		get() = when (this) {
 			INFORMATION -> Pair(Color.Transparent, MaterialTheme.colorScheme.onSurface)
 			DISRUPT -> Pair(CustomColorScheme.warning, CustomColorScheme.onWarning)
-			BLOCKING -> Pair(CustomColorScheme.error, CustomColorScheme.onError)
+			BLOCKING -> Pair(
+				MaterialTheme.colorScheme.error,
+				MaterialTheme.colorScheme.onError
+			)
 		}
 
 	object Serializer : KSerializer<Severity> {
