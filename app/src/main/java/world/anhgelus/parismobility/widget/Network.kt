@@ -1,16 +1,14 @@
 package world.anhgelus.parismobility.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.net.ConnectivityManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -30,14 +28,9 @@ import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import world.anhgelus.parismobility.R
-import world.anhgelus.parismobility.data.LinesDataSource
+import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
-import world.anhgelus.parismobility.data.SavedLine
-import world.anhgelus.parismobility.data.SavedStop
-import world.anhgelus.parismobility.data.backend.BackendConnection
-import world.anhgelus.parismobility.data.backend.BackendDataSource
-import world.anhgelus.parismobility.models.GeneralViewModel
-import world.anhgelus.parismobility.models.HomeViewModel
+import world.anhgelus.parismobility.data.PreferencesRepository
 
 class Network : GlanceAppWidget() {
 	class WidgetReceiver : GlanceAppWidgetReceiver() {
@@ -50,19 +43,8 @@ class Network : GlanceAppWidget() {
 		context: Context,
 		id: GlanceId
 	) {
-		val conn = BackendConnection(getSystemService(context, ConnectivityManager::class.java)!!)
 		provideContent {
-			val model = remember {
-				GeneralViewModel(
-					context,
-					LinesDataSource,
-					BackendDataSource(conn)
-				)
-			}
-			val homeViewModel = remember {
-				HomeViewModel(model.preferencesRepository, model.linesRepository)
-			}
-			Content(context, homeViewModel)
+			Content(context, LinesRepository.getInstance())
 		}
 	}
 
@@ -80,15 +62,23 @@ class Network : GlanceAppWidget() {
 	}
 
 	@Composable
-	fun Content(ctx: Context, model: HomeViewModel? = null) {
+	fun Content(ctx: Context, linesRepo: LinesRepository? = null) {
 		GlanceTheme {
 			val titleStyle = TextStyle(
 				fontSize = 20.sp,
 				color = GlanceTheme.colors.onSurface,
 				fontFamily = FontFamily("sans-serif"),
 			)
-			val content = getContent(model)
-			val lines by model!!.lines.collectAsState()
+			val pref = PreferencesRepository(ctx)
+			val savedLines by pref.linesFlow.collectAsState(emptySet())
+			val savedStops by pref.stopsFlow.collectAsState(emptySet())
+			val monitor = linesRepo?.monitorStops
+				?.collectAsState(MonitoringStops(emptyMap()))
+				?.value
+				?: LinesRepository.loadLines()
+
+			@SuppressLint("UnrememberedMutableState")
+			val lines by linesRepo?.lines?.collectAsState() ?: return@GlanceTheme
 			Scaffold(
 				titleBar = {
 					TitleBar(
@@ -113,7 +103,7 @@ class Network : GlanceAppWidget() {
 					Column {
 						Text(text = "État de vos lignes", style = titleStyle)
 						FlowRow(
-							content.first.mapNotNull {
+							savedLines.mapNotNull {
 								lines[it.kind]?.get(it.line)?.let { v -> Pair(it.kind, v) }
 							},
 							modifier = GlanceModifier.padding(top = 8.dp)
@@ -129,16 +119,5 @@ class Network : GlanceAppWidget() {
 				}
 			}
 		}
-	}
-
-	@Composable
-	private fun getContent(model: HomeViewModel?): Triple<Set<SavedLine>, Set<SavedStop>, MonitoringStops> {
-		model?.let { model ->
-			val lines by model.savedLines.collectAsState()
-			val stops by model.savedStops.collectAsState()
-			val monitor by model.monitoringStops.collectAsState()
-			return Triple(lines, stops, monitor)
-		}
-		return Triple(emptySet(), emptySet(), MonitoringStops(emptyMap()))
 	}
 }

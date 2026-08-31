@@ -15,10 +15,12 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class LinesRepository(
-	private val linesSource: LinesDataSource,
-	private val backendSource: BackendDataSource,
-) {
+class LinesRepository {
+	private constructor(back: BackendDataSource) {
+		backendSource = back
+	}
+
+	private val backendSource: BackendDataSource
 
 	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
 	val lines = _lines.asStateFlow()
@@ -34,33 +36,7 @@ class LinesRepository(
 	}.flowOn(Dispatchers.IO)
 
 	fun loadLines() {
-		val lines = linesSource.getLines().toSortedMap()
-		val resp = mutableMapOf<LineKind, Map<String, LineState>>()
-		lines.forEach { (mode, lines) ->
-			when (mode) {
-				Line.TransportMode.BUS -> mapOf(LineKind.BUS to lines)
-				Line.TransportMode.TRAM -> mapOf(LineKind.TRAM to lines)
-				Line.TransportMode.METRO -> mapOf(LineKind.METRO to lines)
-				Line.TransportMode.RAIL -> {
-					mapOf(
-						LineKind.RER to lines.filter { it.line.submode == "local" },
-						LineKind.TRANSILIEN to lines.filter {
-							// because the API doesn't contain the data of line V
-							it.line.submode == "suburbanRailway" && it.line.name != "V"
-						},
-					)
-				}
-
-				else -> return@forEach // do nothing with unsupported modes
-			}.let { map ->
-				resp.putAll(map.mapValues { (_, lines) ->
-					lines.sorted().fold(mutableMapOf()) { acc, line ->
-						acc.also { acc[line.line.id] = line }
-					}
-				})
-			}
-		}
-		_lines.update { resp }
+		_lines.update { Companion.loadLines() }
 	}
 
 	private var monitoredStops = mutableSetOf<Stop>()
@@ -109,6 +85,53 @@ class LinesRepository(
 					)
 				}
 			}
+		}
+	}
+
+	companion object {
+		private var instance: LinesRepository? = null
+
+		fun getInstance(): LinesRepository? {
+			return instance
+		}
+
+		fun getOrCreateInstance(back: BackendDataSource): LinesRepository {
+			instance?.let { return it }
+			instance = LinesRepository(back)
+			instance!!.let {
+				it.loadLines()
+				return it
+			}
+		}
+
+		fun loadLines(): MutableMap<LineKind, Map<String, LineState>> {
+			val lines = LinesDataSource.getLines().toSortedMap()
+			val resp = mutableMapOf<LineKind, Map<String, LineState>>()
+			lines.forEach { (mode, lines) ->
+				when (mode) {
+					Line.TransportMode.BUS -> mapOf(LineKind.BUS to lines)
+					Line.TransportMode.TRAM -> mapOf(LineKind.TRAM to lines)
+					Line.TransportMode.METRO -> mapOf(LineKind.METRO to lines)
+					Line.TransportMode.RAIL -> {
+						mapOf(
+							LineKind.RER to lines.filter { it.line.submode == "local" },
+							LineKind.TRANSILIEN to lines.filter {
+								// because the API doesn't contain the data of line V
+								it.line.submode == "suburbanRailway" && it.line.name != "V"
+							},
+						)
+					}
+
+					else -> return@forEach // do nothing with unsupported modes
+				}.let { map ->
+					resp.putAll(map.mapValues { (_, lines) ->
+						lines.sorted().fold(mutableMapOf()) { acc, line ->
+							acc.also { acc[line.line.id] = line }
+						}
+					})
+				}
+			}
+			return resp
 		}
 	}
 }

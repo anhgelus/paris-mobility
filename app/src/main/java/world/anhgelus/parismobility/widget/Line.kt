@@ -76,20 +76,22 @@ fun Line(
 ) {
 	val sev by line.disruptionSeverity
 	val wrap: @Composable (@Composable () -> Unit) -> Unit = if (sev != Severity.INFORMATION) {
-		{ BorderBox(2.dp, sev.color.first, backgroundColor, it) }
+		{ BorderBox(2.dp, sev.color.first, backgroundColor, modifier, it) }
 	} else {
 		{ Box(content = it, modifier = modifier) }
 	}
 	wrap {
 		var modifier: GlanceModifier = GlanceModifier
 		if (sev == Severity.INFORMATION) {
-			modifier = modifier.padding(4.dp)
+			modifier = modifier.padding(4.dp).size(48.dp)
+		} else {
+			modifier = modifier.size(32.dp)
 		}
 		LineImage(
 			ctx = ctx,
 			kind = kind,
 			line = line.line,
-			modifier = modifier.size(48.dp),
+			modifier = modifier,
 		)
 	}
 }
@@ -121,14 +123,20 @@ fun BorderBox(
 	width: Dp,
 	color: Color,
 	backgroundColor: ColorProvider,
+	modifier: GlanceModifier = GlanceModifier,
 	content: @Composable () -> Unit
 ) {
 	Box(
-		modifier = GlanceModifier
+		modifier = modifier
 			.background(color)
-			.cornerRadius(8.dp)
+			.cornerRadius(12.dp)
 			.padding(width)
 	) {
-		Box(modifier = GlanceModifier.background(backgroundColor)) { content() }
+		Box(
+			modifier = GlanceModifier
+				.cornerRadius(10.dp)
+				.background(backgroundColor)
+				.padding(6.dp),
+		) { content() }
 	}
 }

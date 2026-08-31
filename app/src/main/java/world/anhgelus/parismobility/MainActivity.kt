@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
-import world.anhgelus.parismobility.data.LinesDataSource
 import world.anhgelus.parismobility.data.backend.BackendConnection
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.GeneralViewModel
@@ -45,11 +44,7 @@ class MainActivity : ComponentActivity() {
 		setContent {
 			ParisMobiliteTheme {
 				val model = viewModel {
-					GeneralViewModel(
-						baseContext,
-						LinesDataSource,
-						BackendDataSource(conn)
-					)
+					GeneralViewModel(baseContext, BackendDataSource(conn))
 				}
 				val rootBackStack = rememberNavBackStack(Route.Home)
 				val homeBackStack = rememberNavBackStack(Route.Home)
