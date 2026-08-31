@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.LineKind
+import java.time.LocalTime
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -25,10 +26,14 @@ class LinesRepository {
 	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
 	val lines = _lines.asStateFlow()
 
+	private val _lastSync = MutableStateFlow<LocalTime>(LocalTime.now())
+	val lastSync = _lastSync.asStateFlow()
+
 	val disruptions = flow {
 		while (true) {
 			backendSource.disruptions().onSuccess {
 				updateLines(it)
+				_lastSync.value = LocalTime.now()
 				emit(it)
 			}
 			delay(1.minutes)
@@ -57,6 +62,7 @@ class LinesRepository {
 		}
 		while (true) {
 			(previous?.let {
+				if (it.synced) _lastSync.value = LocalTime.now()
 				emit(it.update())
 				10.seconds
 			} ?: 1.seconds).let { delay(it) }

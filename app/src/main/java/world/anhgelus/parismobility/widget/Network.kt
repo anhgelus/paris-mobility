@@ -1,12 +1,12 @@
 package world.anhgelus.parismobility.widget
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -31,6 +31,9 @@ import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.PreferencesRepository
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 class Network : GlanceAppWidget() {
 	class WidgetReceiver : GlanceAppWidgetReceiver() {
@@ -44,7 +47,8 @@ class Network : GlanceAppWidget() {
 		id: GlanceId
 	) {
 		provideContent {
-			Content(context, LinesRepository.getInstance())
+			val repo = remember { LinesRepository.getInstance() }
+			Content(context, repo)
 		}
 	}
 
@@ -75,10 +79,9 @@ class Network : GlanceAppWidget() {
 			val monitor = linesRepo?.monitorStops
 				?.collectAsState(MonitoringStops(emptyMap()))
 				?.value
-				?: LinesRepository.loadLines()
-
-			@SuppressLint("UnrememberedMutableState")
-			val lines by linesRepo?.lines?.collectAsState() ?: return@GlanceTheme
+				?: MonitoringStops(emptyMap())
+			val lines = linesRepo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
+			val lastSync = linesRepo?.lastSync?.collectAsState()?.value ?: LocalTime.now()
 			Scaffold(
 				titleBar = {
 					TitleBar(
@@ -88,6 +91,11 @@ class Network : GlanceAppWidget() {
 						textColor = GlanceTheme.colors.onSecondaryContainer,
 						modifier = GlanceModifier.background(GlanceTheme.colors.secondaryContainer),
 					) {
+						Text(
+							text = lastSync
+								.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
+							style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer)
+						)
 						CircleIconButton(
 							ImageProvider(R.drawable.ic_launcher_foreground),
 							"Recharger",
