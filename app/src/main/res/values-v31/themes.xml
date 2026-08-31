@@ -2,6 +2,6 @@
 <resources>
 
     <style name="Theme.ParisMobilité" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="backgroundRadius">24dp</item>
+        <item name="backgroundRadius">@android:dimen/system_app_widget_background_radius</item>
     </style>
 </resources>

@@ -76,6 +76,9 @@ dependencies {
 
     // datastores
     implementation(libs.androidx.datastore.preferences)
+
+    // glance
+    implementation(libs.bundles.glance)
 }
 
 tasks.named<DownloadLinesSvgTask>("downloadData").configure {

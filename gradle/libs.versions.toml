@@ -13,6 +13,7 @@ kotlinSerialization = "2.4.10"
 kotlinxSerializationCore = "1.11.0"
 datastore = "1.2.1"
 foundation = "1.12.0"
+glance = "1.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -39,6 +40,10 @@ kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationCore" }
 kotlinx-serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor", version.ref = "kotlinxSerializationCore" }
 
+androidx-glance-core = { module = "androidx.glance:glance", version.ref = "glance" }
+androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
+androidx-glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
@@ -56,3 +61,4 @@ compose = [
     "androidx-lifecycle-viewmodel-compose",
 ]
 serialization = ["kotlinx-serialization-core", "kotlinx-serialization-json", "kotlinx-serialization-cbor"]
+glance = ["androidx-glance-core", "androidx-glance-appwidget", "androidx-glance-material3"]
