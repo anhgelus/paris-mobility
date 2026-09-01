@@ -36,7 +36,7 @@ fun <T> FlowRow(
 	modifier: GlanceModifier = GlanceModifier,
 	render: @Composable ((T) -> Unit)
 ) {
-	val w = LocalSize.current.width
+	val w = LocalSize.current.width - 32.dp
 	val n = minOf((w / 64.dp).toInt(), 5)
 	val l = items.toList()
 	val lastBeg = l.size.floorDiv(n) * n
@@ -81,17 +81,12 @@ fun Line(
 		{ Box(content = it, modifier = modifier) }
 	}
 	wrap {
-		var modifier: GlanceModifier = GlanceModifier
-		if (sev == Severity.INFORMATION) {
-			modifier = modifier.padding(4.dp).size(48.dp)
-		} else {
-			modifier = modifier.size(32.dp)
-		}
 		LineImage(
 			ctx = ctx,
 			kind = kind,
 			line = line.line,
-			modifier = modifier,
+			modifier = if (sev == Severity.INFORMATION) GlanceModifier.padding(4.dp).size(48.dp)
+			else GlanceModifier.size(32.dp),
 		)
 	}
 }

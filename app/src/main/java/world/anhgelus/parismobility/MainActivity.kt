@@ -1,6 +1,5 @@
 package world.anhgelus.parismobility
 
-import android.net.ConnectivityManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,8 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
-import world.anhgelus.parismobility.data.backend.BackendConnection
-import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.GeneralViewModel
 import world.anhgelus.parismobility.navigation.NavigationBar
 import world.anhgelus.parismobility.navigation.NavigationFloatingButton
@@ -39,13 +36,9 @@ class MainActivity : ComponentActivity() {
 		enableEdgeToEdge()
 		super.onCreate(savedInstanceState)
 
-		val conn = BackendConnection(getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager)
-
 		setContent {
 			ParisMobiliteTheme {
-				val model = viewModel {
-					GeneralViewModel(baseContext, BackendDataSource(conn))
-				}
+				val model = viewModel { GeneralViewModel(baseContext) }
 				val rootBackStack = rememberNavBackStack(Route.Home)
 				val homeBackStack = rememberNavBackStack(Route.Home)
 				val rootKey = rootBackStack.last()
@@ -58,7 +51,7 @@ class MainActivity : ComponentActivity() {
 					floatingActionButton = { NavigationFloatingButton(stack) },
 					bottomBar = { NavigationBar(rootKey) { rootBackStack += it } },
 				) { innerPadding ->
-					val connected by conn.isConnected.collectAsStateWithLifecycle()
+					val connected by model.isConnected.collectAsStateWithLifecycle()
 					Column(modifier = Modifier.padding(innerPadding)) {
 						if (!connected) {
 							Row(

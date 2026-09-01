@@ -1,6 +1,8 @@
 package world.anhgelus.parismobility.widget
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -20,6 +22,7 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.components.CircleIconButton
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.components.TitleBar
+import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Column
@@ -27,6 +30,9 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
@@ -38,6 +44,12 @@ import java.time.format.FormatStyle
 class Network : GlanceAppWidget() {
 	class WidgetReceiver : GlanceAppWidgetReceiver() {
 		override val glanceAppWidget: GlanceAppWidget = Network()
+		override fun onReceive(context: Context, intent: Intent) {
+			super.onReceive(context, intent)
+			when (intent.action) {
+				AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {}
+			}
+		}
 	}
 
 	override val sizeMode: SizeMode = SizeMode.Exact
@@ -47,8 +59,10 @@ class Network : GlanceAppWidget() {
 		id: GlanceId
 	) {
 		provideContent {
-			val repo = remember { LinesRepository.getInstance() }
-			Content(context, repo)
+			val repo = remember { LinesRepository.getInstance(context) }
+			Content(context, repo, onSync = {
+				CoroutineScope(Dispatchers.IO).launch { update(context, id) }
+			})
 		}
 	}
 
@@ -61,12 +75,12 @@ class Network : GlanceAppWidget() {
 			if (it != GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS) return
 		}
 		provideContent {
-			Content(context)
+			Content(context, onSync = {})
 		}
 	}
 
 	@Composable
-	fun Content(ctx: Context, linesRepo: LinesRepository? = null) {
+	fun Content(ctx: Context, linesRepo: LinesRepository? = null, onSync: () -> Unit) {
 		GlanceTheme {
 			val titleStyle = TextStyle(
 				fontSize = 20.sp,
@@ -97,33 +111,39 @@ class Network : GlanceAppWidget() {
 							style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer)
 						)
 						CircleIconButton(
-							ImageProvider(R.drawable.ic_launcher_foreground),
+							ImageProvider(R.drawable.outline_sync_24),
 							"Recharger",
 							backgroundColor = GlanceTheme.colors.secondaryContainer,
 							contentColor = GlanceTheme.colors.primary,
-							onClick = {},
+							onClick = onSync,
 						)
 					}
 				},
 				backgroundColor = GlanceTheme.colors.surface,
 			) {
-				Column(modifier = GlanceModifier.padding(top = 16.dp)) {
-					Column {
-						Text(text = "État de vos lignes", style = titleStyle)
-						FlowRow(
-							savedLines.mapNotNull {
-								lines[it.kind]?.get(it.line)?.let { v -> Pair(it.kind, v) }
-							},
-							modifier = GlanceModifier.padding(top = 8.dp)
-						) { (kind, line) ->
-							Line(ctx, kind, line, GlanceTheme.colors.surface)
+				LazyColumn(modifier = GlanceModifier.padding(top = 16.dp)) {
+					item {
+						Column {
+							Text(text = "État de vos lignes", style = titleStyle)
+							FlowRow(
+								savedLines.mapNotNull {
+									lines[it.kind]?.get(it.line)?.let { v -> Pair(it.kind, v) }
+								},
+								modifier = GlanceModifier.padding(top = 8.dp)
+							) { (kind, line) ->
+								Line(ctx, kind, line, GlanceTheme.colors.surface)
+							}
 						}
 					}
-					Text(
-						text = "Prochains passages",
-						style = titleStyle,
-						modifier = GlanceModifier.padding(top = 16.dp),
-					)
+					item {
+						Column(modifier = GlanceModifier.padding(top = 16.dp)) {
+							Text(
+								text = "Prochains passages",
+								style = titleStyle,
+								modifier = GlanceModifier.padding(top = 16.dp),
+							)
+						}
+					}
 				}
 			}
 		}

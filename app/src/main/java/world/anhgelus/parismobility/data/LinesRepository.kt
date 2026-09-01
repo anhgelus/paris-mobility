@@ -1,5 +1,8 @@
 package world.anhgelus.parismobility.data
 
+import android.content.Context
+import android.net.ConnectivityManager
+import androidx.core.content.getSystemService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -9,6 +12,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import world.anhgelus.parismobility.data.backend.BackendConnection
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.LineKind
 import java.time.LocalTime
@@ -21,7 +28,7 @@ class LinesRepository {
 		backendSource = back
 	}
 
-	private val backendSource: BackendDataSource
+	val backendSource: BackendDataSource
 
 	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
 	val lines = _lines.asStateFlow()
@@ -97,16 +104,19 @@ class LinesRepository {
 	companion object {
 		private var instance: LinesRepository? = null
 
-		fun getInstance(): LinesRepository? {
-			return instance
-		}
+		private val mutex = Mutex()
 
-		fun getOrCreateInstance(back: BackendDataSource): LinesRepository {
-			instance?.let { return it }
-			instance = LinesRepository(back)
-			instance!!.let {
-				it.loadLines()
-				return it
+		fun getInstance(ctx: Context): LinesRepository {
+			return runBlocking {
+				mutex.withLock {
+					instance?.let { return@withLock it }
+					instance = LinesRepository(
+						BackendDataSource(
+							BackendConnection(ctx.getSystemService<ConnectivityManager>()!!)
+						)
+					)
+					instance!!.also { it.loadLines() }
+				}
 			}
 		}
 

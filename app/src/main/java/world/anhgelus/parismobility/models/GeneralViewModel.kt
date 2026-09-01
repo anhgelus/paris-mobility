@@ -7,14 +7,11 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.PreferencesRepository
-import world.anhgelus.parismobility.data.backend.BackendDataSource
 
-class GeneralViewModel(
-	ctx: Context,
-	backendDataSource: BackendDataSource,
-) : ViewModel() {
-	val linesRepository = LinesRepository.getOrCreateInstance(backendDataSource)
+class GeneralViewModel(ctx: Context) : ViewModel() {
+	val linesRepository = LinesRepository.getInstance(ctx)
 	val preferencesRepository = PreferencesRepository(ctx)
+	val isConnected = linesRepository.backendSource.isConnected
 
 	val disruptions = linesRepository.disruptions.stateIn(
 		scope = viewModelScope,
