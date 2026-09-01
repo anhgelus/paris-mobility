@@ -53,9 +53,10 @@ data class Message(
 			var n = input.read(buf)
 			if (n == -1) return null
 			if (n != buf.size) throw IllegalArgumentException("invalid message")
-			val rawKind = buf[0]
-			if (rawKind >= Kind.entries.size) throw IllegalArgumentException("unknown kind")
-			val kind = Kind.entries[buf[0].toInt()]
+			val rawKind = buf[0].toUInt()
+			if (rawKind >= Kind.entries.size.toUInt())
+				throw IllegalArgumentException("unknown kind $rawKind")
+			val kind = Kind.entries[rawKind.toInt()]
 			val rawFlags = buf[1]
 			val flags = Flag.entries.fold(mutableListOf<Flag>()) { acc, it ->
 				if (1.shl(it.ordinal).and(rawFlags.toInt()) != 0)

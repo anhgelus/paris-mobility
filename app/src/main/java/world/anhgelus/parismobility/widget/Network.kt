@@ -1,15 +1,12 @@
 package world.anhgelus.parismobility.widget
 
-import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -33,27 +30,25 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.PreferencesRepository
 import world.anhgelus.parismobility.data.backend.BackendDataSource
+import world.anhgelus.parismobility.data.backend.Connection
 import world.anhgelus.parismobility.data.backend.OneShotConnection
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 class Network : GlanceAppWidget() {
+	private val connectionState = MutableStateFlow<Connection?>(null)
+
 	class WidgetReceiver : GlanceAppWidgetReceiver() {
 		override val glanceAppWidget: GlanceAppWidget = Network()
-		override fun onReceive(context: Context, intent: Intent) {
-			super.onReceive(context, intent)
-			when (intent.action) {
-				AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {}
-			}
-		}
 	}
 
 	override val sizeMode: SizeMode = SizeMode.Exact
@@ -62,18 +57,30 @@ class Network : GlanceAppWidget() {
 		context: Context,
 		id: GlanceId
 	) {
-		val connection = withContext(Dispatchers.IO) {
-			OneShotConnection(
-				context.getSystemService(ConnectivityManager::class.java)!!
-			)
-		}
 		provideContent {
-			val repo = remember { LinesRepository(BackendDataSource(connection)) }
-			repo.backendSource = BackendDataSource(connection)
-			Content(context, repo, onSync = {
-				CoroutineScope(Dispatchers.IO).launch { update(context, id) }
-			})
-			connection.close()
+			val connection = connectionState.collectAsState(null).value
+				?: OneShotConnection(
+					context.getSystemService(ConnectivityManager::class.java)!!
+				).also { conn ->
+					connectionState.update { conn }
+				}
+			val pref = PreferencesRepository(context)
+			val savedStops by pref.stopsFlow.collectAsState(emptySet())
+			Content(
+				context,
+				WidgetRepository(BackendDataSource(connection), savedStops),
+				onSync = {
+					//TODO: use a service
+					CoroutineScope(Dispatchers.IO).launch {
+						connection.close()
+						connectionState.update {
+							OneShotConnection(
+								context.getSystemService(ConnectivityManager::class.java)!!
+							)
+						}
+						update(context, id)
+					}
+				})
 		}
 	}
 
@@ -91,7 +98,7 @@ class Network : GlanceAppWidget() {
 	}
 
 	@Composable
-	fun Content(ctx: Context, linesRepo: LinesRepository? = null, onSync: () -> Unit) {
+	fun Content(ctx: Context, repo: WidgetRepository? = null, onSync: () -> Unit) {
 		GlanceTheme {
 			val titleStyle = TextStyle(
 				fontSize = 20.sp,
@@ -101,12 +108,12 @@ class Network : GlanceAppWidget() {
 			val pref = PreferencesRepository(ctx)
 			val savedLines by pref.linesFlow.collectAsState(emptySet())
 			val savedStops by pref.stopsFlow.collectAsState(emptySet())
-			val monitor = linesRepo?.monitorStops
+			val monitor = repo?.stops
 				?.collectAsState(MonitoringStops(emptyMap()))
 				?.value
 				?: MonitoringStops(emptyMap())
-			val lines = linesRepo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
-			val lastSync = linesRepo?.lastSync?.collectAsState()?.value ?: LocalTime.now()
+			val lines = repo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
+			val lastSync = repo?.lastSync?.collectAsState()?.value ?: LocalTime.now()
 			Scaffold(
 				titleBar = {
 					TitleBar(

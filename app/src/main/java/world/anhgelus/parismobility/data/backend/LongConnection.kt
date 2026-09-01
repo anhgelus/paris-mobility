@@ -38,21 +38,19 @@ class LongConnection(
 			while (true) {
 				val req = sender.receive()
 				try {
-					val socket = socket()
-					if (socket == null) {
-						response.send(null)
+					socket()?.let { socket ->
+						req.first.encode(req.second).let {
+							socket.getOutputStream()?.write(it)
+						}
+						response.send(Message.decode(socket.getInputStream()))
 						continue
 					}
-					req.first.encode(req.second).let {
-						socket.getOutputStream()?.write(it)
-					}
-					response.send(Message.decode(socket.getInputStream()))
 				} catch (e: SocketException) {
-					Log.w("BackendConnection", "connection lost: ${e.message}")
+					Log.w("LongConnection", "connection lost: ${e.message}")
 					previousSocket = null
 					close()
-					response.send(null)
 				}
+				response.send(null)
 			}
 		}
 	}
@@ -94,12 +92,12 @@ class LongConnection(
 							BuildConfig.SERVER_HOSTNAME,
 							BuildConfig.SERVER_PORT,
 						)
-						Log.i("BackendConnection", "connected to the backend")
+						Log.i("LongConnection", "connected to the backend")
 						_isConnected.value = true
 						break
 					} catch (e: Exception) {
 						Log.w(
-							"BackendConnection",
+							"LongConnection",
 							"cannot connect to the backend: ${e.message}, retrying in $dur seconds"
 						)
 					}

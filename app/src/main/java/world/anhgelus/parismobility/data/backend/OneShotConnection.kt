@@ -2,58 +2,60 @@ package world.anhgelus.parismobility.data.backend
 
 import android.net.ConnectivityManager
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import world.anhgelus.parismobility.BuildConfig
 import java.net.Socket
 import java.net.SocketException
 
-class OneShotConnection(
-	conn: ConnectivityManager,
+data class OneShotConnection(
+	val conn: ConnectivityManager,
+	private var socket: Socket? = null
 ) : Connection {
 	private val _isConnected: MutableStateFlow<Boolean>
 	override val isConnected
 		get() = _isConnected.asStateFlow()
-	private val socket: Socket?
 
 	init {
-		var sock: Socket? = null
 		conn.activeNetwork?.let { network ->
 			try {
-				sock = network.socketFactory.createSocket(
+				socket = network.socketFactory.createSocket(
 					BuildConfig.SERVER_HOSTNAME,
 					BuildConfig.SERVER_PORT,
 				)
-				Log.i("BackendConnection", "connected to the backend")
+				Log.i("OneShotConnection", "connected to the backend")
 			} catch (e: Exception) {
-				Log.w("BackendConnection", "cannot connect to the backend: ${e.message}")
+				Log.w("OneShotConnection", "cannot connect to the backend: ${e.message}")
 			}
 		}
-		_isConnected = MutableStateFlow(sock != null && sock.isConnected)
-		socket = sock
+		_isConnected = MutableStateFlow(socket != null && socket?.isConnected ?: false)
 	}
+
+	private val mutex = Mutex()
 
 
 	override suspend fun send(
 		msg: Message,
 		body: ByteArray
 	): Pair<Message.Kind, ByteArray>? {
-		try {
-			if (socket == null) {
-				return null
+		if (!_isConnected.value) return null
+		mutex.withLock {
+			try {
+				socket?.let { sock ->
+					msg.encode(body).let { sock.getOutputStream()?.write(it) }
+					return Message.decode(sock.getInputStream())
+				}
+			} catch (e: SocketException) {
+				Log.w("BackendConnection", "connection lost: ${e.message}")
+				close()
 			}
-			msg.encode(body).let { socket.getOutputStream()?.write(it) }
-			return Message.decode(withContext(Dispatchers.IO) { socket.getInputStream() })
-		} catch (e: SocketException) {
-			Log.w("BackendConnection", "connection lost: ${e.message}")
-			close()
 			return null
 		}
 	}
 
 	override fun close() {
-		socket?.close()
+		socket?.close()?.also { socket = null }
 	}
 }

@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.seconds
 class LinesRepository(
 	var backendSource: BackendDataSource
 ) {
-	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
+	private val _lines = MutableStateFlow(loadLines())
 	val lines = _lines.asStateFlow()
 
 	private val _lastSync = MutableStateFlow<LocalTime>(LocalTime.now())
@@ -35,10 +35,6 @@ class LinesRepository(
 			delay(1.minutes)
 		}
 	}.flowOn(Dispatchers.IO)
-
-	init {
-		_lines.update { loadLines() }
-	}
 
 	private var monitoredStops = mutableSetOf<Stop>()
 
@@ -73,11 +69,13 @@ class LinesRepository(
 		monitoredStops.removeAll(s.toSet())
 	}
 
-	private fun updateLines(
-		disruptions: Disruptions,
-	) {
-		_lines.update { v ->
-			v.mapValues { (_, lines) ->
+	private fun updateLines(disruptions: Disruptions) {
+		_lines.update { updateLines(it, disruptions) }
+	}
+
+	companion object {
+		fun updateLines(lines: LineGroups, disruptions: Disruptions): LineGroups {
+			return lines.mapValues { (_, lines) ->
 				lines.mapValues { (_, line) ->
 					line.setDisruption(
 						disruptions[line.line.id]
@@ -88,9 +86,7 @@ class LinesRepository(
 				}
 			}
 		}
-	}
 
-	companion object {
 		fun loadLines(): LineGroups {
 			val lines = LinesDataSource.getLines().toSortedMap()
 			val resp = mutableMapOf<LineKind, Map<String, LineState>>()
