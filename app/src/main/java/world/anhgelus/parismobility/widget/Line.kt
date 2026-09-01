@@ -7,11 +7,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.glance.ExperimentalGlanceApi
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -25,6 +30,7 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.unit.ColorProvider
+import world.anhgelus.parismobility.LineDisruptionActivity
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.data.Severity
@@ -66,6 +72,7 @@ fun <T> FlowRow(
 	}
 }
 
+@OptIn(ExperimentalGlanceApi::class)
 @Composable
 fun Line(
 	ctx: Context,
@@ -75,6 +82,14 @@ fun Line(
 	modifier: GlanceModifier = GlanceModifier,
 ) {
 	val sev by line.disruptionSeverity
+	val modifier = modifier.clickable(
+		actionStartActivity<LineDisruptionActivity>(
+			actionParametersOf(
+				ActionParameters.Key<Byte>(LineDisruptionActivity.KIND_KEY) to kind.ordinal.toByte(),
+				ActionParameters.Key<String>(LineDisruptionActivity.LINE_KEY) to line.line.id,
+			)
+		)
+	)
 	val wrap: @Composable (@Composable () -> Unit) -> Unit = if (sev != Severity.INFORMATION) {
 		{ BorderBox(2.dp, sev.color.first, backgroundColor, modifier, it) }
 	} else {

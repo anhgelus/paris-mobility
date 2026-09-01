@@ -25,8 +25,19 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".LineDisruptionActivity"
+            android:exported="true"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.ParisMobilité"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
         <receiver
-            android:name=".widget.Network$WidgetReceiver"
+            android:name=".widget.NetworkWidget$WidgetReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

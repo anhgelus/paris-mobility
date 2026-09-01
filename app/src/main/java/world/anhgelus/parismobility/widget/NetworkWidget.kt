@@ -44,11 +44,11 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-class Network : GlanceAppWidget() {
+class NetworkWidget : GlanceAppWidget() {
 	private val connectionState = MutableStateFlow<Connection?>(null)
 
 	class WidgetReceiver : GlanceAppWidgetReceiver() {
-		override val glanceAppWidget: GlanceAppWidget = Network()
+		override val glanceAppWidget: GlanceAppWidget = NetworkWidget()
 	}
 
 	override val sizeMode: SizeMode = SizeMode.Exact

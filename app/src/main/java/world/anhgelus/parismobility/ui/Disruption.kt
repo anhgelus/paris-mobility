@@ -52,24 +52,34 @@ fun DisruptionsDrawer(
 	onDismissRequest: () -> Unit
 ) {
 	ModalBottomSheet(onDismissRequest = onDismissRequest, sheetState = sheetState) {
-		LazyColumn(
-			verticalArrangement = Arrangement.spacedBy(16.dp),
-			modifier = modifier.fillMaxHeight(),
-		) {
-			item {
-				Text(
-					text = "Incidents sur ${kind.displayName} ${line.name}",
-					style = Typography.headlineMedium,
-				)
-			}
-			val dis = disruptions[line.id]?.sorted()
-			if (dis.isNullOrEmpty()) {
-				item { Text("Aucun incident trouvé.") }
-			} else {
-				items(dis, key = { it.id }) { DisruptionCard(it) }
-			}
-			item { Spacer(modifier = Modifier.padding(bottom = 16.dp)) }
+		DisruptionsList(kind, line, disruptions, modifier)
+	}
+}
+
+@Composable
+fun DisruptionsList(
+	kind: LineKind,
+	line: Line,
+	disruptions: Disruptions,
+	modifier: Modifier = Modifier,
+) {
+	LazyColumn(
+		verticalArrangement = Arrangement.spacedBy(16.dp),
+		modifier = modifier.fillMaxHeight(),
+	) {
+		item {
+			Text(
+				text = "Incidents sur ${kind.displayName} ${line.name}",
+				style = Typography.headlineMedium,
+			)
 		}
+		val dis = disruptions[line.id]?.sorted()
+		if (dis.isNullOrEmpty()) {
+			item { Text("Aucun incident trouvé.") }
+		} else {
+			items(dis, key = { it.id }) { DisruptionCard(it) }
+		}
+		item { Spacer(modifier = Modifier.padding(bottom = 16.dp)) }
 	}
 }
 
