@@ -20,7 +20,7 @@ import world.anhgelus.parismobility.data.Stop
 import java.net.SocketException
 
 class BackendDataSource(
-	private val conn: BackendConnection,
+	private val conn: Connection,
 ) : ConnectivityManager.NetworkCallback() {
 	val isConnected = conn.isConnected
 

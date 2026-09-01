@@ -3,6 +3,7 @@ package world.anhgelus.parismobility.widget
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -33,10 +34,13 @@ import androidx.glance.text.TextStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.PreferencesRepository
+import world.anhgelus.parismobility.data.backend.BackendDataSource
+import world.anhgelus.parismobility.data.backend.OneShotConnection
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -58,11 +62,18 @@ class Network : GlanceAppWidget() {
 		context: Context,
 		id: GlanceId
 	) {
+		val connection = withContext(Dispatchers.IO) {
+			OneShotConnection(
+				context.getSystemService(ConnectivityManager::class.java)!!
+			)
+		}
 		provideContent {
-			val repo = remember { LinesRepository.getInstance(context) }
+			val repo = remember { LinesRepository(BackendDataSource(connection)) }
+			repo.backendSource = BackendDataSource(connection)
 			Content(context, repo, onSync = {
 				CoroutineScope(Dispatchers.IO).launch { update(context, id) }
 			})
+			connection.close()
 		}
 	}
 

@@ -1,8 +1,5 @@
 package world.anhgelus.parismobility.data
 
-import android.content.Context
-import android.net.ConnectivityManager
-import androidx.core.content.getSystemService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -12,10 +9,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import world.anhgelus.parismobility.data.backend.BackendConnection
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.models.LineKind
 import java.time.LocalTime
@@ -23,13 +16,9 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class LinesRepository {
-	private constructor(back: BackendDataSource) {
-		backendSource = back
-	}
-
-	val backendSource: BackendDataSource
-
+class LinesRepository(
+	var backendSource: BackendDataSource
+) {
 	private val _lines = MutableStateFlow<LineGroups>(mutableMapOf())
 	val lines = _lines.asStateFlow()
 
@@ -47,8 +36,8 @@ class LinesRepository {
 		}
 	}.flowOn(Dispatchers.IO)
 
-	fun loadLines() {
-		_lines.update { Companion.loadLines() }
+	init {
+		_lines.update { loadLines() }
 	}
 
 	private var monitoredStops = mutableSetOf<Stop>()
@@ -102,25 +91,7 @@ class LinesRepository {
 	}
 
 	companion object {
-		private var instance: LinesRepository? = null
-
-		private val mutex = Mutex()
-
-		fun getInstance(ctx: Context): LinesRepository {
-			return runBlocking {
-				mutex.withLock {
-					instance?.let { return@withLock it }
-					instance = LinesRepository(
-						BackendDataSource(
-							BackendConnection(ctx.getSystemService<ConnectivityManager>()!!)
-						)
-					)
-					instance!!.also { it.loadLines() }
-				}
-			}
-		}
-
-		fun loadLines(): MutableMap<LineKind, Map<String, LineState>> {
+		fun loadLines(): LineGroups {
 			val lines = LinesDataSource.getLines().toSortedMap()
 			val resp = mutableMapOf<LineKind, Map<String, LineState>>()
 			lines.forEach { (mode, lines) ->
