@@ -114,6 +114,7 @@ func (c *Client) Monitoring(ctx context.Context, zda string) ([]proto.StopMonito
 			return nil, false, errors.New("unknown status: " + journey.Monitored.Status)
 		}
 		res = append(res, proto.StopMonitoring{
+			Line:           strings.Split((journey.LineRef.Value), ":")[3],
 			IsStopped:      journey.Monitored.IsStopped,
 			Destination:    dest,
 			Time:           uint64(t.Unix()),

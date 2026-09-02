@@ -23,6 +23,7 @@ const (
 type Monitoring map[string][]StopMonitoring
 
 type StopMonitoring struct {
+	Line           string    `cbor:"line"`
 	IsStopped      bool      `cbor:"is_stopped"`
 	Destination    []string  `cbor:"destination"`
 	Time           uint64    `cbor:"time"`

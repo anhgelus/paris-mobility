@@ -97,6 +97,7 @@ enum class VehicleFeature {
 @Immutable
 @Serializable
 data class MonitoringStop(
+	val line: String,
 	@SerialName("is_stopped") val isStopped: Boolean,
 	val destination: List<String>,
 	@SerialName("time") private val rawTime: Long,
@@ -109,7 +110,7 @@ data class MonitoringStop(
 	@Transient val displayTime: String = displayTime(isStopped, time)
 ) {
 	fun update(): MonitoringStop {
-		return MonitoringStop(isStopped, destination, rawTime, status, vehicleFeatures)
+		return MonitoringStop(line, isStopped, destination, rawTime, status, vehicleFeatures)
 	}
 }
 
