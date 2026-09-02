@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavBackStack
@@ -23,6 +24,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.flow.StateFlow
+import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
@@ -106,14 +108,14 @@ fun GeneralScreen(
 		modifier = modifier.verticalScroll(rememberScrollState()),
 		verticalArrangement = Arrangement.spacedBy(32.dp),
 	) {
-		ScreenTitle("Votre réseau")
+		ScreenTitle(stringResource(R.string.home_network))
 		Column(
 			modifier = Modifier.padding(horizontal = 16.dp),
 			verticalArrangement = Arrangement.spacedBy(16.dp),
 		) {
-			SectionTitle("État de vos lignes")
+			SectionTitle(stringResource(R.string.home_disruptions))
 			if (savedLines.isEmpty()) {
-				Text("Aucune ligne configurée. Cliquez sur l'icon en bas à droite pour en ajouter.")
+				Text(stringResource(R.string.home_no_lines))
 				return@Column
 			}
 			LinesRow { size ->

@@ -17,12 +17,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.StateFlow
+import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineGroups
 import world.anhgelus.parismobility.data.LineState
@@ -58,12 +60,9 @@ fun StopsMonitoring(
 		elevation = CardDefaults.cardElevation(1.dp),
 	) {
 		val modifier = Modifier.padding(16.dp)
-		SectionTitle("Prochains passages", modifier)
+		SectionTitle(stringResource(R.string.home_next_trains), modifier)
 		if (savedStops.isEmpty()) {
-			Text(
-				"Aucun arrêt configuré. Cliquez sur l'icon en bas à droite pour en ajouter.",
-				modifier,
-			)
+			Text(stringResource(R.string.home_no_stops), modifier)
 			return@Card
 		}
 		savedStops.mapNotNull { STOPS[it.line.line]?.get(it.stop)?.let { s -> Pair(it.line, s) } }
@@ -112,7 +111,7 @@ fun StopMonitoring(
 		Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 			if (monitor.isNullOrEmpty()) {
 				Text(
-					text = "Pas de service",
+					text = stringResource(R.string.home_train_nothing),
 					style = Typography.bodyMedium,
 					fontWeight = FontWeight.Bold
 				)
@@ -150,29 +149,29 @@ fun Monitor(dest: String, monitor: MutableList<MonitoringStop>) {
 					)
 
 					Status.CANCELLED -> Text(
-						text = "Annulé",
+						text = stringResource(R.string.home_train_cancelled),
 						style = Typography.bodyMedium,
 						color = MaterialTheme.colorScheme.error
 					)
 
 					Status.MISSED -> Text(
-						text = "Râté",
+						text = stringResource(R.string.home_train_missed),
 						style = Typography.bodyMedium,
 						color = MaterialTheme.colorScheme.error
 					)
 
 					Status.ARRIVED -> Text(
-						text = "Arrivé",
+						text = stringResource(R.string.home_train_arrived),
 						style = Typography.bodyMedium
 					)
 
 					Status.DEPARTED -> Text(
-						text = "Parti",
+						text = stringResource(R.string.home_train_departed),
 						style = Typography.bodyMedium
 					)
 
 					Status.NOT_EXPECTED -> Text(
-						text = "Non attendu",
+						text = stringResource(R.string.home_train_not_expected),
 						style = Typography.bodyMedium,
 						color = MaterialTheme.colorScheme.error
 					)

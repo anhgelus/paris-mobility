@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
 									tint = MaterialTheme.colorScheme.onErrorContainer,
 								)
 								Text(
-									text = "Déconnecté du serveur.",
+									text = stringResource(R.string.disconnected),
 									color = MaterialTheme.colorScheme.onErrorContainer,
 								)
 							}

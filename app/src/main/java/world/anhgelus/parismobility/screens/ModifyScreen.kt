@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -50,11 +51,11 @@ fun ModifyScreen(
 
 	Column(modifier = Modifier.padding(horizontal = 16.dp)) {
 		SecondaryTabRow(selectedTabIndex = pager.currentPage) {
-			listOf("Lignes", "Arrêts").forEachIndexed { i, name ->
+			listOf(R.string.lines, R.string.stops).forEachIndexed { i, name ->
 				Tab(
 					selected = pager.currentPage == i,
 					onClick = { onClick(pager, i) },
-					text = { Text(text = name) }
+					text = { Text(stringResource(name)) }
 				)
 			}
 		}
@@ -80,7 +81,7 @@ fun ModifySavedLines(
 		groups.filter { it.key != LineKind.BUS }.forEach { (kind, lines) ->
 			item {
 				SectionTitle(
-					content = kind.displayName,
+					content = stringResource(kind.displayName),
 					modifier = Modifier.padding(top = 16.dp)
 				)
 			}
@@ -117,7 +118,7 @@ fun ModifySavedStops(
 					groups.filter { it.key != LineKind.BUS }.forEach { (kind, lines) ->
 						item {
 							SectionTitle(
-								content = kind.displayName,
+								content = stringResource(kind.displayName),
 								modifier = Modifier.padding(top = 16.dp)
 							)
 						}

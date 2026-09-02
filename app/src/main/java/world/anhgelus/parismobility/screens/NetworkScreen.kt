@@ -11,8 +11,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.models.NetworkViewModel
@@ -34,13 +36,13 @@ fun NetworkScreen(
 		modifier = modifier,
 		verticalArrangement = Arrangement.spacedBy(32.dp),
 	) {
-		item { ScreenTitle("Réseau") }
+		item { ScreenTitle(stringResource(R.string.network)) }
 		items(items = groups.filter { (key, _) -> key != LK.BUS }.toList()) { (kind, lines) ->
 			LineKind(
 				modifier = Modifier
 					.padding(horizontal = 16.dp)
 					.padding(bottom = 16.dp),
-				name = kind.displayName,
+				name = stringResource(kind.displayName),
 				lines = lines.values,
 				kind = kind,
 				onClick = { kind, line -> selected = kind to line.line }

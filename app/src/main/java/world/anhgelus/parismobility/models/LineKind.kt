@@ -11,34 +11,34 @@ private val TRAM_CORNER_SHAPE = RoundedCornerShape(5)
 
 @Stable
 enum class LineKind(
-	val displayName: String,
+	val displayName: Int,
 	val roundedCornerShape: CornerBasedShape,
 	val logoId: Int? = null,
 	val requiresBackground: Boolean = false,
 ) {
 	METRO(
-		"Métro",
+		R.string.metro,
 		METRO_CORNER_SHAPE,
 		R.drawable.metro,
 	),
 	RER(
-		"RER",
+		R.string.rer,
 		TRAIN_CORNER_SHAPE,
 		R.drawable.rer,
 	),
 	TRAM(
-		"Tram",
+		R.string.tram,
 		TRAM_CORNER_SHAPE,
 		R.drawable.tram,
 		true,
 	),
 	TRANSILIEN(
-		"Transilien",
+		R.string.transilien,
 		TRAIN_CORNER_SHAPE,
 		R.drawable.transilien,
 	),
 	BUS(
-		"Bus",
+		R.string.bus,
 		RoundedCornerShape(0),
 	)
 }

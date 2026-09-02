@@ -1,3 +1,31 @@
 <resources>
     <string name="app_name">Paris Mobilité</string>
+    <string name="disconnected">Déconnecté du serveur</string>
+    <string name="lines">Lignes</string>
+    <string name="stops">Arrêts</string>
+    <string name="metro">Métro</string>
+    <string name="rer">RER</string>
+    <string name="tram">Tram</string>
+    <string name="transilien">Transilien</string>
+    <string name="bus">Bus</string>
+    <!-- Home screen -->
+    <string name="home_network">Votre réseau</string>
+    <string name="home_disruptions">État de vos lignes</string>
+    <string name="home_no_lines">Aucune ligne configurée. Cliquez sur l\'icon en bas à droite pour en ajouter.</string>
+    <string name="home_next_trains">Prochains passages</string>
+    <string name="home_no_stops">Aucun arrêt configuré. Cliquez sur l\'icon en bas à droite pour en ajouter.</string>
+    <string name="home_train_nothing">Pas de service</string>
+    <string name="home_train_cancelled">Annulé</string>
+    <string name="home_train_missed">Raté</string>
+    <string name="home_train_arrived">Arrivé</string>
+    <string name="home_train_departed">Parti</string>
+    <string name="home_train_not_expected">Non attendu</string>
+    <!-- Disruptions -->
+    <string name="disruptions_line">Incidents sur %1$s %2$s</string>
+    <string name="disruptions_nothing">Aucun incident trouvé.</string>
+    <string name="disruptions_date">Du %1$s au %2$s</string>
+    <!-- Network screen -->
+    <string name="network">Réseau</string>
+    <!-- Map screen -->
+    <string name="map_alt">Plan du métro</string>
 </resources>

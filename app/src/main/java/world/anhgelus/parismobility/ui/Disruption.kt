@@ -21,9 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.dp
+import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.Disruption
 import world.anhgelus.parismobility.data.Disruptions
 import world.anhgelus.parismobility.data.Line
@@ -69,13 +71,17 @@ fun DisruptionsList(
 	) {
 		item {
 			Text(
-				text = "Incidents sur ${kind.displayName} ${line.name}",
+				text = stringResource(
+					R.string.disruptions_line,
+					stringResource(kind.displayName),
+					line.name
+				),
 				style = Typography.headlineMedium,
 			)
 		}
 		val dis = disruptions[line.id]?.sorted()
 		if (dis.isNullOrEmpty()) {
-			item { Text("Aucun incident trouvé.") }
+			item { Text(stringResource(R.string.disruptions_nothing)) }
 		} else {
 			items(dis, key = { it.id }) { DisruptionCard(it) }
 		}
@@ -112,7 +118,11 @@ fun DisruptionCard(disruption: Disruption, modifier: Modifier = Modifier) {
 				)
 				val p = disruption.periods.first()
 				Text(
-					text = "Du ${formatLocalDateTime(p.begin)} au ${formatLocalDateTime(p.end)}",
+					text = stringResource(
+						R.string.disruptions_date,
+						formatLocalDateTime(p.begin),
+						formatLocalDateTime(p.end)
+					),
 					style = Typography.bodySmall,
 					color = if (enabled) color.second else MaterialTheme.colorScheme.onSurfaceVariant,
 				)
