@@ -118,11 +118,14 @@ fun StopMonitoring(
 			} else {
 				val now = ZonedDateTime.now()
 				monitor.filter { it.time.isAfter(now) }
+					// remove trains that arrive at this stop
+					.filter { !it.destination.contains(stop.name) }
 					.fold(mutableMapOf<String, MutableList<MonitoringStop>>()) { acc, t ->
-						acc[t.destination.first()] = acc[t.destination.first()]
-							?.also { it.add(t) }
-							?: mutableListOf(t)
-						acc
+						acc.also {
+							t.destination.first().let { k ->
+								acc[k] = acc[k]?.also { it.add(t) } ?: mutableListOf(t)
+							}
+						}
 					}.forEach { (dest, it) -> Monitor(dest, it) }
 			}
 		}
