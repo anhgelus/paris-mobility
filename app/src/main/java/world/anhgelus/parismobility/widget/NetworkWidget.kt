@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -40,6 +41,7 @@ import world.anhgelus.parismobility.data.PreferencesRepository
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.data.backend.Connection
 import world.anhgelus.parismobility.data.backend.OneShotConnection
+import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -99,7 +101,8 @@ class NetworkWidget : GlanceAppWidget() {
 
 	@Composable
 	fun Content(ctx: Context, repo: WidgetRepository? = null, onSync: () -> Unit) {
-		GlanceTheme {
+		val darkMode = GlanceTheme.colors.surface.getColor(ctx).luminance() < 0.5
+		ParisMobiliteTheme(darkMode, glance = true) {
 			val titleStyle = TextStyle(
 				fontSize = 20.sp,
 				color = GlanceTheme.colors.onSurface,
@@ -118,7 +121,7 @@ class NetworkWidget : GlanceAppWidget() {
 				titleBar = {
 					TitleBar(
 						startIcon = ImageProvider(R.drawable.ic_launcher_foreground),
-						title = "Paris Mobilité",
+						title = ctx.getString(R.string.app_name),
 						iconColor = GlanceTheme.colors.onSecondaryContainer,
 						textColor = GlanceTheme.colors.onSecondaryContainer,
 						modifier = GlanceModifier.background(GlanceTheme.colors.secondaryContainer),
@@ -149,7 +152,7 @@ class NetworkWidget : GlanceAppWidget() {
 								},
 								modifier = GlanceModifier.padding(top = 8.dp)
 							) { (kind, line) ->
-								Line(ctx, kind, line, GlanceTheme.colors.surface)
+								Line(darkMode, kind, line, GlanceTheme.colors.surface)
 							}
 						}
 					}

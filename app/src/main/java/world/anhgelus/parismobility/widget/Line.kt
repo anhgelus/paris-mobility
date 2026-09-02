@@ -1,15 +1,11 @@
 package world.anhgelus.parismobility.widget
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.glance.ExperimentalGlanceApi
 import androidx.glance.GlanceModifier
-import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
@@ -72,10 +68,9 @@ fun <T> FlowRow(
 	}
 }
 
-@OptIn(ExperimentalGlanceApi::class)
 @Composable
 fun Line(
-	ctx: Context,
+	dark: Boolean,
 	kind: LineKind,
 	line: LineState,
 	backgroundColor: ColorProvider,
@@ -97,7 +92,7 @@ fun Line(
 	}
 	wrap {
 		LineImage(
-			ctx = ctx,
+			dark = dark,
 			kind = kind,
 			line = line.line,
 			modifier = if (sev == Severity.INFORMATION) GlanceModifier.padding(4.dp).size(48.dp)
@@ -108,7 +103,7 @@ fun Line(
 
 @Composable
 fun LineImage(
-	ctx: Context,
+	dark: Boolean,
 	kind: LineKind,
 	line: Line,
 	modifier: GlanceModifier = GlanceModifier,
@@ -120,9 +115,7 @@ fun LineImage(
 		modifier = modifier
 			.background(
 				color =
-					if ((GlanceTheme.colors.surface.getColor(ctx)
-							.luminance() < 0.5 || forceBackground) && kind.requiresBackground
-					) Color.White
+					if ((dark || forceBackground) && kind.requiresBackground) Color.White
 					else Color.Transparent,
 			),
 	)

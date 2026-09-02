@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			ParisMobiliteTheme {
+			ParisMobiliteTheme(isSystemInDarkTheme()) {
 				val model = viewModel { GeneralViewModel(baseContext) }
 				val rootBackStack = rememberNavBackStack(Route.Home)
 				val homeBackStack = rememberNavBackStack(Route.Home)

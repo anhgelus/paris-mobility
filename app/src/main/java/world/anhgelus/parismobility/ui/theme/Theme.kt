@@ -1,7 +1,6 @@
 package world.anhgelus.parismobility.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.darkColorScheme
@@ -13,6 +12,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.glance.GlanceTheme
 
 private val DarkColorScheme = darkColorScheme(
 	primary = Purple80,
@@ -50,21 +50,12 @@ lateinit var CustomColorScheme: AdditionalColorScheme
 
 @Composable
 fun ParisMobiliteTheme(
-	darkTheme: Boolean = isSystemInDarkTheme(),
+	darkTheme: Boolean,
 	// Dynamic color is available on Android 12+
 	dynamicColor: Boolean = true,
+	glance: Boolean = false,
 	content: @Composable () -> Unit
 ) {
-	val colorScheme = when {
-		dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-			val context = LocalContext.current
-			if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-		}
-
-		darkTheme -> DarkColorScheme
-		else -> LightColorScheme
-	}
-
 	CustomColorScheme =
 		if (darkTheme) AdditionalColorScheme(
 			OrangeDark, contentColorFor(OrangeDark),
@@ -74,6 +65,21 @@ fun ParisMobiliteTheme(
 			OrangeLight, contentColorFor(OrangeLight),
 			MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.onError
 		)
+
+	if (glance) {
+		GlanceTheme(content = content)
+		return
+	}
+
+	val colorScheme = when {
+		dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+			val context = LocalContext.current
+			if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+		}
+
+		darkTheme -> DarkColorScheme
+		else -> LightColorScheme
+	}
 
 	MaterialTheme(
 		colorScheme = colorScheme,

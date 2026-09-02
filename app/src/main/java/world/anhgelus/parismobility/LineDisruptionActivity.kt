@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
@@ -26,7 +27,7 @@ class LineDisruptionActivity : ComponentActivity() {
 		val line = bundle.getString(LINE_KEY)
 
 		setContent {
-			ParisMobiliteTheme {
+			ParisMobiliteTheme(isSystemInDarkTheme()) {
 				val model = viewModel { GeneralViewModel(baseContext) }
 				Scaffold { innerPadding ->
 					val lines by model.linesRepository.lines.collectAsStateWithLifecycle()

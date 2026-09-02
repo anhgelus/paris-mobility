@@ -21,8 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.Line
 import world.anhgelus.parismobility.data.LineState
 import world.anhgelus.parismobility.data.Severity
@@ -88,7 +90,7 @@ fun LineDetailed(kind: LineKind, line: Line, modifier: Modifier = Modifier) {
 			line = line,
 			modifier = Modifier.size(48.dp),
 		)
-		Text("${kind.displayName} ${line.name}")
+		Text(stringResource(R.string.line_name, stringResource(kind.displayName), line.name))
 	}
 }
 
