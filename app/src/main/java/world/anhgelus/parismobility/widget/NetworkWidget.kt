@@ -111,10 +111,10 @@ class NetworkWidget : GlanceAppWidget() {
 			val pref = PreferencesRepository(ctx)
 			val savedLines by pref.linesFlow.collectAsState(emptySet())
 			val savedStops by pref.stopsFlow.collectAsState(emptySet())
-			val monitor = repo?.stops
-				?.collectAsState(MonitoringStops(emptyMap()))
+			val monitor = (repo?.stops
+				?.collectAsState(emptyMap())
 				?.value
-				?: MonitoringStops(emptyMap())
+				?: emptyMap()).let { MonitoringStops(it) }
 			val lines = repo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
 			val lastSync = repo?.lastSync?.collectAsState()?.value ?: LocalTime.now()
 			Scaffold(
@@ -142,9 +142,9 @@ class NetworkWidget : GlanceAppWidget() {
 				},
 				backgroundColor = GlanceTheme.colors.surface,
 			) {
-				LazyColumn(modifier = GlanceModifier.padding(top = 16.dp)) {
+				LazyColumn {
 					item {
-						Column {
+						Column(modifier = GlanceModifier.padding(top = 16.dp)) {
 							Text(text = "État de vos lignes", style = titleStyle)
 							FlowRow(
 								savedLines.mapNotNull {
@@ -162,6 +162,10 @@ class NetworkWidget : GlanceAppWidget() {
 								text = "Prochains passages",
 								style = titleStyle,
 								modifier = GlanceModifier.padding(top = 16.dp),
+							)
+							StopsMonitoring(
+								ctx, darkMode, lines, savedStops, monitor,
+								GlanceModifier.padding(bottom = 16.dp)
 							)
 						}
 					}

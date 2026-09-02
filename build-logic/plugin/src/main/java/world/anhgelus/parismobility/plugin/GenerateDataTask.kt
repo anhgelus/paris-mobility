@@ -20,8 +20,7 @@ abstract class GenerateDataTask : DefaultTask() {
 			.fold(mutableMapOf<Line.TransportMode, MutableList<Line>>()) { acc, line ->
 				val lines = acc[line.mode] ?: mutableListOf()
 				lines.add(line)
-				acc[line.mode] = lines
-				acc
+				acc.also { acc[line.mode] = lines }
 			}
 			.let { map ->
 				val acc = StringBuilder()
@@ -54,8 +53,7 @@ abstract class GenerateDataTask : DefaultTask() {
 					}
 					acc.append("\t),\n")
 				}
-				acc.append(")\n")
-				acc.toString()
+				acc.also { acc.append(")\n") }.toString()
 			}
 		val stops = plugin.dataRequest("emplacement-des-gares-idf")
 			.getOrThrow()
@@ -63,8 +61,7 @@ abstract class GenerateDataTask : DefaultTask() {
 			.fold(mutableMapOf<String, MutableList<Stop>>()) { acc, stop ->
 				val lines = acc[stop.line] ?: mutableListOf()
 				lines.add(stop)
-				acc[stop.line] = lines
-				acc
+				acc.also { acc[stop.line] = lines }
 			}
 			.let { map ->
 				val acc = StringBuilder()
@@ -79,8 +76,7 @@ abstract class GenerateDataTask : DefaultTask() {
 					}
 					acc.append("\t),\n")
 				}
-				acc.append(")\n")
-				acc
+				acc.also { acc.append(")\n") }.toString()
 			}
 		outputDirectory.get().asFile.let {
 			it.mkdirs()

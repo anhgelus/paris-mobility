@@ -1,5 +1,6 @@
 package world.anhgelus.parismobility.ui
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -17,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -109,6 +112,7 @@ fun StopMonitoring(
 			)
 		}
 		Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+			val monitor = monitor?.let { convertMonitor(stop, line.line, it) }
 			if (monitor.isNullOrEmpty()) {
 				Text(
 					text = stringResource(R.string.home_train_nothing),
@@ -116,28 +120,17 @@ fun StopMonitoring(
 					fontWeight = FontWeight.Bold
 				)
 			} else {
-				val now = ZonedDateTime.now()
-				monitor.filter { it.line == line.line.id }
-					.filter { it.time.isAfter(now) }
-					// remove trains that arrive at this stop
-					.filter { !it.destination.contains(stop.name) }
-					.fold(mutableMapOf<String, MutableList<MonitoringStop>>()) { acc, t ->
-						acc.also {
-							t.destination.first().let { k ->
-								acc[k] = acc[k]?.also { it.add(t) } ?: mutableListOf(t)
-							}
-						}
-					}.forEach { (dest, it) -> Monitor(dest, it) }
+				monitor.forEach { (destination, it) -> Monitor(destination, it) }
 			}
 		}
 	}
 }
 
 @Composable
-fun Monitor(dest: String, monitor: MutableList<MonitoringStop>) {
+fun Monitor(destination: String, monitor: List<MonitoringStop>) {
 	Column(modifier = Modifier.offset(y = (-3).dp)) {
 		Text(
-			text = dest,
+			text = destination,
 			style = Typography.bodyMedium,
 			fontWeight = FontWeight.Bold
 		)
@@ -146,41 +139,47 @@ fun Monitor(dest: String, monitor: MutableList<MonitoringStop>) {
 			horizontalArrangement = Arrangement.spacedBy(16.dp),
 		) {
 			monitor.subList(0, min(monitor.size, 10)).forEach {
-				when (it.status) {
-					Status.ON_TIME, Status.EARLY, Status.DELAYED -> Text(
-						text = it.displayTime,
+				displayStop(LocalContext.current, it).let { (v, err) ->
+					Text(
+						text = v,
 						style = Typography.bodyMedium,
-					)
-
-					Status.CANCELLED -> Text(
-						text = stringResource(R.string.home_train_cancelled),
-						style = Typography.bodyMedium,
-						color = MaterialTheme.colorScheme.error
-					)
-
-					Status.MISSED -> Text(
-						text = stringResource(R.string.home_train_missed),
-						style = Typography.bodyMedium,
-						color = MaterialTheme.colorScheme.error
-					)
-
-					Status.ARRIVED -> Text(
-						text = stringResource(R.string.home_train_arrived),
-						style = Typography.bodyMedium
-					)
-
-					Status.DEPARTED -> Text(
-						text = stringResource(R.string.home_train_departed),
-						style = Typography.bodyMedium
-					)
-
-					Status.NOT_EXPECTED -> Text(
-						text = stringResource(R.string.home_train_not_expected),
-						style = Typography.bodyMedium,
-						color = MaterialTheme.colorScheme.error
+						color = if (err) MaterialTheme.colorScheme.error else Color.Unspecified,
 					)
 				}
 			}
 		}
 	}
+}
+
+fun displayStop(ctx: Context, stop: MonitoringStop): Pair<String, Boolean> = when (stop.status) {
+	Status.ON_TIME, Status.EARLY, Status.DELAYED -> stop.displayTime to false
+	Status.CANCELLED -> ctx.getString(R.string.home_train_cancelled) to true
+	Status.MISSED -> ctx.getString(R.string.home_train_missed) to true
+	Status.ARRIVED -> ctx.getString(R.string.home_train_arrived) to false
+	Status.DEPARTED -> ctx.getString(R.string.home_train_departed) to false
+	Status.NOT_EXPECTED -> ctx.getString(R.string.home_train_not_expected) to true
+}
+
+fun convertMonitor(
+	stop: Stop,
+	line: Line,
+	monitor: List<MonitoringStop>
+): Map<String, List<MonitoringStop>> {
+	val now = ZonedDateTime.now()
+	return monitor.filter { it.line == line.id }
+		.filter { it.time.isAfter(now) }
+		// remove trains that arrive at this stop
+		.filter { b ->
+			b.destination.map { it.lowercase() }.let {
+				!it.any { s -> s.contains(stop.name, true) } &&
+					!it.any { s -> stop.name.contains(s, true) }
+			}
+		}
+		.fold(mutableMapOf<String, MutableList<MonitoringStop>>()) { acc, t ->
+			acc.also {
+				t.destination.first().let { k ->
+					acc[k] = acc[k]?.also { it.add(t) } ?: mutableListOf(t)
+				}
+			}
+		}
 }
