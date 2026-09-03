@@ -43,6 +43,7 @@ class WidgetRepository(conn: BackendDataSource, stops: Collection<SavedStop>) {
 					conn.close()
 					return@launch
 				}
+			_isConnected.update { true }
 			_lastSync.update { LocalTime.now() }
 			conn.close()
 		}

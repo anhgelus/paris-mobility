@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.appwidget.lazy.LazyListScope
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
@@ -27,29 +29,27 @@ import world.anhgelus.parismobility.ui.convertMonitor
 import world.anhgelus.parismobility.ui.displayStop
 import kotlin.math.min
 
-@Composable
-fun StopsMonitoring(
+fun LazyListScope.stopsMonitoring(
 	ctx: Context,
 	darkMode: Boolean,
 	lines: LineGroups,
 	savedStops: Collection<SavedStop>,
 	monitor: MonitoringStops,
-	modifier: GlanceModifier = GlanceModifier
+	modifier: GlanceModifier = GlanceModifier,
 ) {
-	Column(modifier = modifier) {
-		savedStops.mapNotNull { STOPS[it.line.line]?.get(it.stop)?.let { s -> Pair(it.line, s) } }
-			.forEach { (line, stop) ->
-				val l = lines[line]!!.second
-				StopMonitoring(
-					ctx,
-					darkMode,
-					line.kind,
-					l,
-					stop,
-					monitor.map[stop.zda.toString()],
-					GlanceModifier.padding(top = 12.dp)
-				)
-			}
+	items(savedStops.mapNotNull {
+		STOPS[it.line.line]?.get(it.stop)?.let { s -> Pair(it.line, s) }
+	}, itemId = { it.second.id.toLong() }) { (line, stop) ->
+		val l = lines[line]!!.second
+		StopMonitoring(
+			ctx,
+			darkMode,
+			line.kind,
+			l,
+			stop,
+			monitor.map[stop.zda.toString()],
+			modifier.padding(top = 12.dp)
+		)
 	}
 }
 
@@ -83,7 +83,7 @@ fun StopMonitoring(
 				monitor.forEach { (destination, monitor) ->
 					Text(destination, style = textStyle.copy(fontWeight = FontWeight.Bold))
 					Row(GlanceModifier.padding(bottom = 16.dp)) {
-						monitor.subList(0, min(monitor.size, 5)).forEach {
+						monitor.subList(0, min(monitor.size, 4)).forEach {
 							displayStop(ctx, it).let { (v, err) ->
 								Text(
 									text = v,
@@ -92,7 +92,8 @@ fun StopMonitoring(
 										else GlanceTheme.colors.onSurface
 									),
 									modifier = GlanceModifier.padding(top = 4.dp)
-										.padding(end = 8.dp)
+										.padding(end = 8.dp),
+									maxLines = 1,
 								)
 							}
 						}

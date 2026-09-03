@@ -10,9 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -24,7 +26,10 @@ import androidx.glance.appwidget.components.TitleBar
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
+import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
@@ -42,7 +47,6 @@ import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.data.backend.Connection
 import world.anhgelus.parismobility.data.backend.OneShotConnection
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -111,12 +115,14 @@ class NetworkWidget : GlanceAppWidget() {
 			val pref = PreferencesRepository(ctx)
 			val savedLines by pref.linesFlow.collectAsState(emptySet())
 			val savedStops by pref.stopsFlow.collectAsState(emptySet())
-			val monitor = (repo?.stops
-				?.collectAsState(emptyMap())
-				?.value
-				?: emptyMap()).let { MonitoringStops(it) }
+			val monitor = MonitoringStops(
+				repo?.stops
+					?.collectAsState(emptyMap())
+					?.value
+					?: emptyMap()
+			)
 			val lines = repo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
-			val lastSync = repo?.lastSync?.collectAsState()?.value ?: LocalTime.now()
+			val lastSync = repo?.lastSync?.collectAsState()?.value
 			Scaffold(
 				titleBar = {
 					TitleBar(
@@ -126,11 +132,12 @@ class NetworkWidget : GlanceAppWidget() {
 						textColor = GlanceTheme.colors.onSecondaryContainer,
 						modifier = GlanceModifier.background(GlanceTheme.colors.secondaryContainer),
 					) {
-						Text(
-							text = lastSync
-								.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
-							style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer)
-						)
+						lastSync?.let {
+							Text(
+								text = it.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
+								style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer)
+							)
+						}
 						CircleIconButton(
 							ImageProvider(R.drawable.outline_sync_24),
 							"Recharger",
@@ -141,11 +148,39 @@ class NetworkWidget : GlanceAppWidget() {
 					}
 				},
 				backgroundColor = GlanceTheme.colors.surface,
+				horizontalPadding = 0.dp,
 			) {
-				LazyColumn {
-					item {
-						Column(modifier = GlanceModifier.padding(top = 16.dp)) {
-							Text(text = "État de vos lignes", style = titleStyle)
+				val connected = repo?.isConnected?.collectAsState()?.value ?: false
+				Column {
+					if (!connected && lastSync != null) {
+						Row(
+							modifier = GlanceModifier
+								.fillMaxWidth()
+								.background(GlanceTheme.colors.errorContainer)
+								.padding(8.dp),
+							verticalAlignment = Alignment.CenterVertically,
+						) {
+							Image(
+								provider = ImageProvider(R.drawable.outline_signal_cellular_connected_no_internet_0_bar_24),
+								contentDescription = null,
+								colorFilter = ColorFilter.tint(GlanceTheme.colors.onErrorContainer),
+								modifier = GlanceModifier.padding(end = 8.dp)
+							)
+							Text(
+								text = ctx.getString(R.string.disconnected),
+								style = TextStyle(color = GlanceTheme.colors.onErrorContainer),
+							)
+						}
+					}
+					LazyColumn(modifier = GlanceModifier.padding(horizontal = 16.dp)) {
+						item {
+							Text(
+								text = ctx.getString(R.string.home_disruptions),
+								style = titleStyle,
+								modifier = GlanceModifier.padding(top = 16.dp)
+							)
+						}
+						item {
 							FlowRow(
 								savedLines.mapNotNull {
 									lines[it.kind]?.get(it.line)?.let { v -> Pair(it.kind, v) }
@@ -155,19 +190,17 @@ class NetworkWidget : GlanceAppWidget() {
 								Line(darkMode, kind, line, GlanceTheme.colors.surface)
 							}
 						}
-					}
-					item {
-						Column(modifier = GlanceModifier.padding(top = 16.dp)) {
+						item {
 							Text(
-								text = "Prochains passages",
+								text = ctx.getString(R.string.home_next_trains),
 								style = titleStyle,
-								modifier = GlanceModifier.padding(top = 16.dp),
-							)
-							StopsMonitoring(
-								ctx, darkMode, lines, savedStops, monitor,
-								GlanceModifier.padding(bottom = 16.dp)
+								modifier = GlanceModifier.padding(top = 16.dp)
 							)
 						}
+						stopsMonitoring(
+							ctx, darkMode, lines, savedStops, monitor,
+							GlanceModifier.padding(bottom = 16.dp),
+						)
 					}
 				}
 			}
