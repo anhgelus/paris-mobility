@@ -15,7 +15,6 @@ import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
-import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
@@ -35,35 +34,23 @@ import world.anhgelus.parismobility.models.LineKind
 @Composable
 fun <T> FlowRow(
 	items: Collection<T>,
+	padding: Dp,
 	modifier: GlanceModifier = GlanceModifier,
-	render: @Composable ((T) -> Unit)
+	render: @Composable ((T, GlanceModifier) -> Unit)
 ) {
-	val w = LocalSize.current.width - 32.dp
-	val n = minOf((w / 64.dp).toInt(), 5)
+	val w = (LocalSize.current.width - padding * 2).value
+	val n = minOf((w / 64).toInt(), 5)
 	val l = items.toList()
-	val lastBeg = l.size.floorDiv(n) * n
-	val body = l.subList(0, lastBeg)
-	val last = l.subList(lastBeg, l.size)
-	Column(
-		modifier = modifier.fillMaxWidth(),
-	) {
-		repeat(body.size.floorDiv(n)) { line ->
-			Row(
-				modifier = GlanceModifier.fillMaxWidth(),
-				horizontalAlignment = Alignment.CenterHorizontally,
-			) {
-				repeat(n) { i ->
-					if (i != 0) Spacer(GlanceModifier.width(24.dp))
-					render(body[line * n + i])
+	val padLeft = (w - n * 64) / 2f
+	Column(modifier = modifier.padding(horizontal = padding).fillMaxWidth()) {
+		l.chunked(n).forEachIndexed { i, sub ->
+			Row(modifier = GlanceModifier.fillMaxWidth()) {
+				Spacer(GlanceModifier.width(padLeft.dp))
+				sub.forEach { line ->
+					render(line, GlanceModifier.padding(horizontal = 8.dp))
 				}
 			}
-			Spacer(GlanceModifier.height(12.dp))
-		}
-		Row(modifier = GlanceModifier.fillMaxWidth()) {
-			repeat(last.size) { i ->
-				Spacer(GlanceModifier.width(if (i != 0) 24.dp else (w / 64.dp).dp))
-				render(last[i])
-			}
+			if (i < sub.size - 1) Spacer(GlanceModifier.height(8.dp))
 		}
 	}
 }
@@ -129,17 +116,19 @@ fun BorderBox(
 	modifier: GlanceModifier = GlanceModifier,
 	content: @Composable () -> Unit
 ) {
-	Box(
-		modifier = modifier
-			.background(color)
-			.cornerRadius(12.dp)
-			.padding(width)
-	) {
+	Box(modifier = modifier) {
 		Box(
 			modifier = GlanceModifier
-				.cornerRadius(10.dp)
-				.background(backgroundColor)
-				.padding(6.dp),
-		) { content() }
+				.background(color)
+				.cornerRadius(12.dp)
+				.padding(width)
+		) {
+			Box(
+				modifier = GlanceModifier
+					.cornerRadius(10.dp)
+					.background(backgroundColor)
+					.padding(6.dp),
+			) { content() }
+		}
 	}
 }

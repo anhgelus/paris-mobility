@@ -172,12 +172,13 @@ class NetworkWidget : GlanceAppWidget() {
 							)
 						}
 					}
-					LazyColumn(modifier = GlanceModifier.padding(horizontal = 16.dp)) {
+					LazyColumn {
+						val modifier = GlanceModifier.padding(horizontal = 16.dp)
 						item {
 							Text(
 								text = ctx.getString(R.string.home_disruptions),
 								style = titleStyle,
-								modifier = GlanceModifier.padding(top = 16.dp)
+								modifier = modifier.padding(top = 16.dp)
 							)
 						}
 						item {
@@ -185,21 +186,22 @@ class NetworkWidget : GlanceAppWidget() {
 								savedLines.mapNotNull {
 									lines[it.kind]?.get(it.line)?.let { v -> Pair(it.kind, v) }
 								},
-								modifier = GlanceModifier.padding(top = 8.dp)
-							) { (kind, line) ->
-								Line(darkMode, kind, line, GlanceTheme.colors.surface)
+								padding = 16.dp,
+								modifier = GlanceModifier.padding(top = 8.dp),
+							) { (kind, line), modifier ->
+								Line(darkMode, kind, line, GlanceTheme.colors.surface, modifier)
 							}
 						}
 						item {
 							Text(
 								text = ctx.getString(R.string.home_next_trains),
 								style = titleStyle,
-								modifier = GlanceModifier.padding(top = 16.dp)
+								modifier = modifier.padding(top = 16.dp)
 							)
 						}
 						stopsMonitoring(
 							ctx, darkMode, lines, savedStops, monitor,
-							GlanceModifier.padding(bottom = 16.dp),
+							modifier.padding(bottom = 16.dp),
 						)
 					}
 				}
