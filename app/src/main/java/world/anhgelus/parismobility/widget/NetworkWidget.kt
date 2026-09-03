@@ -16,6 +16,8 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalSize
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
@@ -47,6 +49,7 @@ import world.anhgelus.parismobility.data.backend.BackendDataSource
 import world.anhgelus.parismobility.data.backend.Connection
 import world.anhgelus.parismobility.data.backend.OneShotConnection
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -123,57 +126,40 @@ class NetworkWidget : GlanceAppWidget() {
 			)
 			val lines = repo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
 			val lastSync = repo?.lastSync?.collectAsState()?.value
+			val size = WidgetSize.getSize(LocalSize.current)
 			Scaffold(
 				titleBar = {
-					TitleBar(
-						startIcon = ImageProvider(R.drawable.ic_launcher_foreground),
-						title = ctx.getString(R.string.app_name),
-						iconColor = GlanceTheme.colors.onSecondaryContainer,
-						textColor = GlanceTheme.colors.onSecondaryContainer,
-						modifier = GlanceModifier.background(GlanceTheme.colors.secondaryContainer),
-					) {
-						lastSync?.let {
-							Text(
-								text = it.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
-								style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer)
-							)
-						}
-						CircleIconButton(
-							ImageProvider(R.drawable.outline_sync_24),
-							"Recharger",
-							backgroundColor = GlanceTheme.colors.secondaryContainer,
-							contentColor = GlanceTheme.colors.primary,
-							onClick = onSync,
-						)
+					if (size != WidgetSize.SMALL) {
+						TitleBar(
+							startIcon = ImageProvider(R.drawable.ic_launcher_foreground),
+							title = ctx.getString(R.string.app_name),
+							iconColor = GlanceTheme.colors.onSecondaryContainer,
+							textColor = GlanceTheme.colors.onSecondaryContainer,
+							modifier = GlanceModifier.background(GlanceTheme.colors.secondaryContainer),
+						) { Reload(lastSync, onSync) }
 					}
 				},
 				backgroundColor = GlanceTheme.colors.surface,
 				horizontalPadding = 0.dp,
 			) {
-				val connected = repo?.isConnected?.collectAsState()?.value ?: false
+				val connected =
+					(repo?.isConnected?.collectAsState()?.value ?: false) && lastSync != null
 				Column {
-					if (!connected && lastSync != null) {
-						Row(
-							modifier = GlanceModifier
-								.fillMaxWidth()
-								.background(GlanceTheme.colors.errorContainer)
-								.padding(8.dp),
-							verticalAlignment = Alignment.CenterVertically,
-						) {
-							Image(
-								provider = ImageProvider(R.drawable.outline_signal_cellular_connected_no_internet_0_bar_24),
-								contentDescription = null,
-								colorFilter = ColorFilter.tint(GlanceTheme.colors.onErrorContainer),
-								modifier = GlanceModifier.padding(end = 8.dp)
-							)
-							Text(
-								text = ctx.getString(R.string.disconnected),
-								style = TextStyle(color = GlanceTheme.colors.onErrorContainer),
-							)
-						}
-					}
+					if (!connected && size == WidgetSize.LARGE) NoConnection(ctx, onSync)
 					LazyColumn {
 						val modifier = GlanceModifier.padding(horizontal = 16.dp)
+						if (!connected && size != WidgetSize.LARGE) item {
+							NoConnection(ctx, onSync)
+						} else if (size == WidgetSize.SMALL) item {
+							Row(
+								horizontalAlignment = Alignment.End,
+								verticalAlignment = Alignment.CenterVertically,
+								modifier = GlanceModifier.fillMaxWidth()
+									.background(GlanceTheme.colors.secondaryContainer)
+									.padding(horizontal = 8.dp)
+									.padding(vertical = 4.dp),
+							) { Reload(lastSync, onSync) }
+						}
 						item {
 							Text(
 								text = ctx.getString(R.string.home_disruptions),
@@ -200,12 +186,56 @@ class NetworkWidget : GlanceAppWidget() {
 							)
 						}
 						stopsMonitoring(
-							ctx, darkMode, lines, savedStops, monitor,
+							ctx, darkMode, lines, savedStops, monitor, size,
 							modifier.padding(bottom = 16.dp),
 						)
 					}
 				}
 			}
 		}
+	}
+
+	@Composable
+	fun NoConnection(ctx: Context, onClick: () -> Unit) {
+		Row(
+			modifier = GlanceModifier
+				.fillMaxWidth()
+				.background(GlanceTheme.colors.errorContainer)
+				.padding(8.dp)
+				.clickable(onClick),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			Image(
+				provider = ImageProvider(R.drawable.outline_signal_cellular_connected_no_internet_0_bar_24),
+				contentDescription = null,
+				colorFilter = ColorFilter.tint(GlanceTheme.colors.onErrorContainer),
+				modifier = GlanceModifier.padding(end = 8.dp)
+			)
+			Text(
+				text = ctx.getString(R.string.disconnected),
+				style = TextStyle(color = GlanceTheme.colors.onErrorContainer),
+			)
+		}
+	}
+
+	@Composable
+	fun Reload(lastSync: LocalTime?, onSync: () -> Unit) {
+		lastSync?.let {
+			Text(
+				text = it.format(
+					DateTimeFormatter.ofLocalizedTime(
+						FormatStyle.SHORT
+					)
+				),
+				style = TextStyle(color = GlanceTheme.colors.onSecondaryContainer)
+			)
+		}
+		CircleIconButton(
+			ImageProvider(R.drawable.outline_sync_24),
+			"Recharger",
+			backgroundColor = GlanceTheme.colors.secondaryContainer,
+			contentColor = GlanceTheme.colors.primary,
+			onClick = onSync,
+		)
 	}
 }
