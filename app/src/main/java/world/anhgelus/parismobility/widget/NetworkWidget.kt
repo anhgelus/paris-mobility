@@ -54,7 +54,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 class NetworkWidget : GlanceAppWidget() {
-	private val connectionState = MutableStateFlow<Connection?>(null)
+	private val connection = MutableStateFlow<Connection?>(null)
 
 	class WidgetReceiver : GlanceAppWidgetReceiver() {
 		override val glanceAppWidget: GlanceAppWidget = NetworkWidget()
@@ -67,22 +67,17 @@ class NetworkWidget : GlanceAppWidget() {
 		id: GlanceId
 	) {
 		provideContent {
-			val connection = connectionState.collectAsState(null).value
-				?: OneShotConnection(
-					context.getSystemService(ConnectivityManager::class.java)!!
-				).also { conn ->
-					connectionState.update { conn }
-				}
+			val conn by connection.collectAsState(null)
 			val pref = PreferencesRepository(context)
 			val savedStops by pref.stopsFlow.collectAsState(emptySet())
 			Content(
 				context,
-				WidgetRepository(BackendDataSource(connection), savedStops),
+				WidgetRepository(conn?.let { BackendDataSource(it) }, savedStops),
 				onSync = {
 					//TODO: use a service
 					CoroutineScope(Dispatchers.IO).launch {
-						connection.close()
-						connectionState.update {
+						conn?.close()
+						connection.update {
 							OneShotConnection(
 								context.getSystemService(ConnectivityManager::class.java)!!
 							)

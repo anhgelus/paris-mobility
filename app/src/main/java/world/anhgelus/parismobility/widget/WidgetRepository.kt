@@ -13,7 +13,7 @@ import world.anhgelus.parismobility.data.SavedStop
 import world.anhgelus.parismobility.data.backend.BackendDataSource
 import java.time.LocalTime
 
-class WidgetRepository(conn: BackendDataSource, stops: Collection<SavedStop>) {
+class WidgetRepository(conn: BackendDataSource?, stops: Collection<SavedStop>) {
 	private val _lastSync = MutableStateFlow(LocalTime.now())
 	val lastSync = _lastSync.asStateFlow()
 
@@ -27,25 +27,29 @@ class WidgetRepository(conn: BackendDataSource, stops: Collection<SavedStop>) {
 	val stops = _stops.asStateFlow()
 
 	init {
-		CoroutineScope(Dispatchers.IO).launch {
-			conn.disruptions().onSuccess { dis ->
-				_lines.update { LinesRepository.updateLines(it, dis) }
-			}.onFailure {
-				_isConnected.update { false }
-				conn.close()
-				return@launch
-			}
-			conn.monitorStops(stops.map { STOPS[it.line.line]!![it.stop]!! })
-				.onSuccess { stops ->
-					_stops.update { stops }
+		if (conn == null) {
+			_isConnected.update { false }
+		} else {
+			CoroutineScope(Dispatchers.IO).launch {
+				conn.disruptions().onSuccess { dis ->
+					_lines.update { LinesRepository.updateLines(it, dis) }
 				}.onFailure {
 					_isConnected.update { false }
 					conn.close()
 					return@launch
 				}
-			_isConnected.update { true }
-			_lastSync.update { LocalTime.now() }
-			conn.close()
+				conn.monitorStops(stops.map { STOPS[it.line.line]!![it.stop]!! })
+					.onSuccess { stops ->
+						_stops.update { stops }
+					}.onFailure {
+						_isConnected.update { false }
+						conn.close()
+						return@launch
+					}
+				_isConnected.update { true }
+				_lastSync.update { LocalTime.now() }
+				conn.close()
+			}
 		}
 	}
 }
