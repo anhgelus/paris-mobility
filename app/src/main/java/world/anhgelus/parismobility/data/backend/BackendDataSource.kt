@@ -19,9 +19,7 @@ import world.anhgelus.parismobility.data.MonitoringMap
 import world.anhgelus.parismobility.data.Stop
 import java.net.SocketException
 
-class BackendDataSource(
-	private val conn: Connection,
-) : ConnectivityManager.NetworkCallback() {
+class BackendDataSource(private val conn: Connection) : ConnectivityManager.NetworkCallback() {
 	val isConnected = conn.isConnected
 
 	@OptIn(ExperimentalSerializationApi::class)

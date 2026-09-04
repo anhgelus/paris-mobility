@@ -144,8 +144,8 @@ class NetworkWidget : GlanceAppWidget() {
 								verticalAlignment = Alignment.CenterVertically,
 								modifier = GlanceModifier.fillMaxWidth()
 									.background(GlanceTheme.colors.secondaryContainer)
-									.padding(horizontal = 8.dp)
-									.padding(vertical = 4.dp),
+									.padding(horizontal = 4.dp)
+									.padding(vertical = 1.dp),
 							) { Reload(lastSync, onSync) }
 						}
 						item {
