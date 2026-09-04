@@ -1,8 +1,6 @@
 package world.anhgelus.parismobility.widget
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,7 +18,6 @@ import androidx.glance.action.Action
 import androidx.glance.action.action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.components.CircleIconButton
@@ -90,14 +87,10 @@ class NetworkWidget : GlanceAppWidget() {
 		}
 	}
 
-	@RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
 	override suspend fun providePreview(
 		context: Context,
 		widgetCategory: Int
 	) {
-		GlanceAppWidgetManager(context).setWidgetPreviews(WidgetReceiver::class).let {
-			if (it != GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS) return
-		}
 		provideContent {
 			Content(context, onSync = action { })
 		}

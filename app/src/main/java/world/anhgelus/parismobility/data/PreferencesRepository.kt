@@ -20,7 +20,7 @@ class PreferencesRepository(ctx: Context) {
 		Json.decodeFromString(raw)
 	}
 
-	suspend fun addLines(ctx: Context, vararg lines: SavedLine) {
+	suspend fun addLines(ctx: Context, vararg lines: SavedLine) =
 		ctx.dataStore.updateData {
 			it.toMutablePreferences().also { prefs ->
 				val saved = linesFlow.first().toMutableSet()
@@ -28,9 +28,8 @@ class PreferencesRepository(ctx: Context) {
 				prefs[SAVED_LINES] = Json.encodeToString(saved)
 			}
 		}
-	}
 
-	suspend fun removeLines(ctx: Context, vararg lines: SavedLine) {
+	suspend fun removeLines(ctx: Context, vararg lines: SavedLine) =
 		ctx.dataStore.updateData {
 			it.toMutablePreferences().also { prefs ->
 				val saved = linesFlow.first().toMutableSet()
@@ -38,14 +37,13 @@ class PreferencesRepository(ctx: Context) {
 				prefs[SAVED_LINES] = Json.encodeToString(saved)
 			}
 		}
-	}
 
 	val stopsFlow: Flow<Set<SavedStop>> = ctx.dataStore.data.map { preferences ->
 		val raw = preferences[SAVED_STOPS] ?: return@map emptySet()
 		Json.decodeFromString(raw)
 	}
 
-	suspend fun addStops(ctx: Context, vararg stops: SavedStop) {
+	suspend fun addStops(ctx: Context, vararg stops: SavedStop) =
 		ctx.dataStore.updateData {
 			it.toMutablePreferences().also { prefs ->
 				val saved = stopsFlow.first().toMutableSet()
@@ -53,9 +51,8 @@ class PreferencesRepository(ctx: Context) {
 				prefs[SAVED_STOPS] = Json.encodeToString(saved)
 			}
 		}
-	}
 
-	suspend fun removeStops(ctx: Context, vararg stops: SavedStop) {
+	suspend fun removeStops(ctx: Context, vararg stops: SavedStop) =
 		ctx.dataStore.updateData {
 			it.toMutablePreferences().also { prefs ->
 				val saved = stopsFlow.first().toMutableSet()
@@ -63,7 +60,6 @@ class PreferencesRepository(ctx: Context) {
 				prefs[SAVED_STOPS] = Json.encodeToString(saved)
 			}
 		}
-	}
 
 	companion object {
 		val SAVED_LINES = stringPreferencesKey("saved_lines")

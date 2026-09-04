@@ -1,5 +1,7 @@
 package world.anhgelus.parismobility
 
+import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -32,6 +36,7 @@ import world.anhgelus.parismobility.navigation.NavigationRoot
 import world.anhgelus.parismobility.navigation.NavigationTopBar
 import world.anhgelus.parismobility.navigation.Route
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
+import world.anhgelus.parismobility.widget.NetworkWidget.WidgetReceiver
 
 class MainActivity : ComponentActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +44,13 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		setContent {
+			LaunchedEffect("init widget") {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+					@SuppressLint("CheckResult")
+					GlanceAppWidgetManager(baseContext).setWidgetPreviews(WidgetReceiver::class)
+				}
+			}
+
 			ParisMobiliteTheme(isSystemInDarkTheme()) {
 				val model = viewModel { GeneralViewModel(baseContext) }
 				val rootBackStack = rememberNavBackStack(Route.Home)
