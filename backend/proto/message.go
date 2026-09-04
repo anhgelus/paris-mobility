@@ -11,14 +11,19 @@ import (
 	"anhgelus.world/go-cbor"
 )
 
-type Kind uint8
+type KindRequest uint8
 
 const (
-	KindResponse Kind = iota
+	KindDisruptions KindRequest = iota
+	KindMonitoring
+)
+
+type KindResponse uint8
+
+const (
+	KindOk KindResponse = iota
 	KindInvalidRequest
 	KindInternalError
-	KindDisruptions
-	KindMonitoring
 )
 
 type Flag uint8
@@ -27,13 +32,13 @@ const (
 	FlagGZipped Flag = 1 << iota
 )
 
-type Message struct {
+type Message[Kind ~uint8] struct {
 	Kind Kind
 	Flag Flag
 	Body any
 }
 
-func (msg *Message) WriteTo(w io.Writer) (int64, error) {
+func (msg *Message[K]) WriteTo(w io.Writer) (int64, error) {
 	var buf bytes.Buffer
 	buf.Grow(8)
 	buf.WriteRune(rune(msg.Kind))
@@ -74,12 +79,12 @@ func (err ErrInvalidRequest) Unwrap() error {
 	return err.Err
 }
 
-func (err ErrInvalidRequest) ToMessage() *Message {
+func (err ErrInvalidRequest) ToMessage() *Message[KindResponse] {
 	var e string
 	if err.Err != nil {
 		e = err.Err.Error()
 	}
-	return &Message{
+	return &Message[KindResponse]{
 		Kind: KindInvalidRequest,
 		Body: struct {
 			Message string `cbor:"message"`
@@ -88,7 +93,7 @@ func (err ErrInvalidRequest) ToMessage() *Message {
 	}
 }
 
-func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
+func (msg *Message[K]) ReadFrom(r io.Reader) (read int64, err error) {
 	var header [8]byte
 	_, err = io.ReadFull(r, header[:])
 	if err != nil {
@@ -97,7 +102,7 @@ func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 		}
 		return
 	}
-	msg.Kind = Kind(header[0])
+	msg.Kind = K(header[0])
 	msg.Flag = Flag(header[1])
 	ln := binary.BigEndian.Uint32(header[2:])
 	rawBody := make([]byte, ln)
@@ -111,11 +116,11 @@ func (msg *Message) ReadFrom(r io.Reader) (read int64, err error) {
 	var rest []byte
 	var body any
 	switch msg.Kind {
-	case KindDisruptions:
+	case K(KindDisruptions):
 		var v DisruptionsRequest
 		rest, err = unmarshal(rawBody, &v)
 		body = v
-	case KindMonitoring:
+	case K(KindMonitoring):
 		var v MonitoringRequest
 		rest, err = unmarshal(rawBody, &v)
 		body = v

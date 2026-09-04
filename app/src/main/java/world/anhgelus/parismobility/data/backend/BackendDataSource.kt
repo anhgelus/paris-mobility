@@ -34,7 +34,7 @@ class BackendDataSource(
 			val res = conn.send(Message(kind, emptyList()), req)
 				?: return Result.failure(ConnectionException.Kind.NOT_CONNECTED.exception)
 			return when (res.first) {
-				Kind.RESPONSE -> Result.success(Cbor.decodeFromByteArray(res.second))
+				Kind.OK_RESPONSE -> Result.success(Cbor.decodeFromByteArray(res.second))
 				Kind.INVALID_REQUEST -> {
 					Cbor.decodeFromByteArray<ErrorResponse>(res.second).let {
 						it.error?.let { m -> Log.w("BackendData", m) }

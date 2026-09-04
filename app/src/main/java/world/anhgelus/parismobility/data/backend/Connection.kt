@@ -25,7 +25,7 @@ data class Message(
 ) {
 	fun encode(body: ByteArray): ByteArray {
 		val ls = mutableListOf<Byte>()
-		ls.add(kind.ordinal.toByte())
+		ls.add(kind.conv)
 		flags.fold(0.toByte()) { acc, it ->
 			acc.or(1.shl(it.ordinal).toByte())
 		}.let { ls.add(it) }
@@ -44,12 +44,12 @@ data class Message(
 		GZIP,
 	}
 
-	enum class Kind {
-		RESPONSE,
-		INVALID_REQUEST,
-		INTERNAL_ERROR,
-		DISRUPTIONS,
-		MONITORING,
+	enum class Kind(val conv: Byte) {
+		OK_RESPONSE(0),
+		INVALID_REQUEST(1),
+		INTERNAL_ERROR(2),
+		DISRUPTIONS(0),
+		MONITORING(1),
 	}
 
 	companion object {
@@ -58,10 +58,9 @@ data class Message(
 			var n = input.read(buf)
 			if (n == -1) return null
 			if (n != buf.size) throw IllegalArgumentException("invalid message")
-			val rawKind = buf[0].toUInt()
-			if (rawKind >= Kind.entries.size.toUInt())
-				throw IllegalArgumentException("unknown kind $rawKind")
-			val kind = Kind.entries[rawKind.toInt()]
+			val rawKind = buf[0]
+			val kind = Kind.entries.firstOrNull { it.conv == rawKind }
+				?: throw IllegalArgumentException("unknown kind $rawKind")
 			val rawFlags = buf[1]
 			val flags = Flag.entries.fold(mutableListOf<Flag>()) { acc, it ->
 				if (1.shl(it.ordinal).and(rawFlags.toInt()) != 0)

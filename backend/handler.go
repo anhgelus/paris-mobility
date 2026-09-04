@@ -19,7 +19,7 @@ func Handle(ctx context.Context, conn net.Conn) {
 	for {
 		l := l
 		go func() {
-			var msg proto.Message
+			var msg proto.Message[proto.KindRequest]
 			_, err := msg.ReadFrom(conn)
 			if err != nil {
 				ch <- err
@@ -36,7 +36,7 @@ func Handle(ctx context.Context, conn net.Conn) {
 				conn.Close()
 				return
 			}
-			var msg *proto.Message
+			var msg *proto.Message[proto.KindResponse]
 			var err error
 			sub, cancel := context.WithTimeout(ctx, 10*time.Second)
 			switch v := got.(type) {
@@ -67,7 +67,7 @@ func Handle(ctx context.Context, conn net.Conn) {
 				return
 			}
 			l.Error("handling message", "error", err)
-			msg = &proto.Message{
+			msg = &proto.Message[proto.KindResponse]{
 				Kind: proto.KindInternalError,
 				Body: "internal error",
 			}
@@ -85,18 +85,18 @@ func Handle(ctx context.Context, conn net.Conn) {
 	}
 }
 
-func handleDisruptions(ctx context.Context, req proto.DisruptionsRequest) (*proto.Message, error) {
+func handleDisruptions(ctx context.Context, req proto.DisruptionsRequest) (*proto.Message[proto.KindResponse], error) {
 	dis, err := PrimClient(ctx).Disruptions(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return &proto.Message{
-		Kind: proto.KindResponse,
+	return &proto.Message[proto.KindResponse]{
+		Kind: proto.KindOk,
 		Body: dis,
 	}, nil
 }
 
-func handleMonitoring(ctx context.Context, req proto.MonitoringRequest) (*proto.Message, error) {
+func handleMonitoring(ctx context.Context, req proto.MonitoringRequest) (*proto.Message[proto.KindResponse], error) {
 	acc := make(map[string][]proto.StopMonitoring, len(req.Stops))
 	cached := make(map[string][]proto.StopMonitoring)
 	cl := PrimClient(ctx)
@@ -111,8 +111,8 @@ func handleMonitoring(ctx context.Context, req proto.MonitoringRequest) (*proto.
 		}
 	}
 	cl.Cache.UpdateStops(cached)
-	return &proto.Message{
-		Kind: proto.KindResponse,
+	return &proto.Message[proto.KindResponse]{
+		Kind: proto.KindOk,
 		Body: acc,
 	}, nil
 }
