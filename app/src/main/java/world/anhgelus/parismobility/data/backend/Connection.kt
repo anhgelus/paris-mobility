@@ -9,6 +9,11 @@ import kotlin.experimental.or
 
 interface Connection {
 	suspend fun send(msg: Message, body: ByteArray): Pair<Message.Kind, ByteArray>?
+
+	suspend fun <T> use(block: suspend (Connection) -> T): T {
+		return block(this).also { close() }
+	}
+
 	fun close()
 
 	val isConnected: StateFlow<Boolean>

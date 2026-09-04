@@ -29,8 +29,7 @@ class WidgetRepository(private val savedStops: Collection<SavedStop>) {
 	suspend fun update(ctx: Context) {
 		OneShotConnection(
 			ctx.getSystemService(ConnectivityManager::class.java)!!
-		).let { conn -> BackendDataSource(conn) }
-			.let { s -> update(s) }
+		).use { update(BackendDataSource(it)) }
 	}
 
 	suspend fun update(conn: BackendDataSource?) {
@@ -55,6 +54,5 @@ class WidgetRepository(private val savedStops: Collection<SavedStop>) {
 			}
 		_isConnected.update { true }
 		_lastSync.update { LocalTime.now() }
-		conn.close()
 	}
 }

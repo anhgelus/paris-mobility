@@ -16,9 +16,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class LinesRepository(
-	var backendSource: BackendDataSource
-) {
+class LinesRepository(var backendSource: BackendDataSource) {
 	private val _lines = MutableStateFlow(loadLines())
 	val lines = _lines.asStateFlow()
 
