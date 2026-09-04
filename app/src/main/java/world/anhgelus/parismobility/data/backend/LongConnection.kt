@@ -11,12 +11,14 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import world.anhgelus.parismobility.BuildConfig
 import java.net.Socket
 import java.net.SocketException
+import javax.net.ssl.SSLSocketFactory
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -86,14 +88,14 @@ class LongConnection(
 			var dur = 2
 			var socket: Socket? = null
 			while (socket == null && isActive) {
-				network?.let { network ->
+				network?.let {
 					try {
-						socket = network.socketFactory.createSocket(
+						socket = SSLSocketFactory.getDefault().createSocket(
 							BuildConfig.SERVER_HOSTNAME,
 							BuildConfig.SERVER_PORT,
 						)
 						Log.i("LongConnection", "connected to the backend")
-						_isConnected.value = true
+						_isConnected.update { true }
 						break
 					} catch (e: Exception) {
 						Log.w(
@@ -102,7 +104,7 @@ class LongConnection(
 						)
 					}
 				}
-				_isConnected.value = false
+				_isConnected.update { false }
 				delay(dur.seconds)
 				dur = dur.shl(1)
 			}
@@ -112,7 +114,7 @@ class LongConnection(
 
 	override fun close() {
 		previousSocket?.let {
-			_isConnected.value = false
+			_isConnected.update { false }
 			it.close()
 		}
 		previousSocket = null

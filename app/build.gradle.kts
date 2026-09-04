@@ -48,8 +48,6 @@ android {
     buildTypes {
         release {
             optimization { enable = true }
-//            isMinifyEnabled = true
-//            isShrinkResources = true
             signingConfig = signingConfigs["release"]
         }
         debug {

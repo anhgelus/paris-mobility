@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import world.anhgelus.parismobility.BuildConfig
 import java.net.Socket
 import java.net.SocketException
+import javax.net.ssl.SSLSocketFactory
 
 data class OneShotConnection(
 	val conn: ConnectivityManager,
@@ -19,9 +20,9 @@ data class OneShotConnection(
 		get() = _isConnected.asStateFlow()
 
 	init {
-		conn.activeNetwork?.let { network ->
+		conn.activeNetwork?.let {
 			try {
-				socket = network.socketFactory.createSocket(
+				socket = SSLSocketFactory.getDefault().createSocket(
 					BuildConfig.SERVER_HOSTNAME,
 					BuildConfig.SERVER_PORT,
 				)
