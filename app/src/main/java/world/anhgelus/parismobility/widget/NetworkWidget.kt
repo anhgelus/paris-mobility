@@ -1,7 +1,6 @@
 package world.anhgelus.parismobility.widget
 
 import android.content.Context
-import android.net.ConnectivityManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
@@ -17,6 +16,8 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
+import androidx.glance.action.Action
+import androidx.glance.action.action
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -39,48 +40,49 @@ import androidx.glance.text.TextStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import world.anhgelus.parismobility.R
 import world.anhgelus.parismobility.data.LinesRepository
 import world.anhgelus.parismobility.data.MonitoringStops
 import world.anhgelus.parismobility.data.PreferencesRepository
-import world.anhgelus.parismobility.data.backend.BackendDataSource
-import world.anhgelus.parismobility.data.backend.Connection
-import world.anhgelus.parismobility.data.backend.OneShotConnection
 import world.anhgelus.parismobility.ui.theme.ParisMobiliteTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 class NetworkWidget : GlanceAppWidget() {
-	private val connection = MutableStateFlow<Connection?>(null)
-
 	class WidgetReceiver : GlanceAppWidgetReceiver() {
 		override val glanceAppWidget: GlanceAppWidget = NetworkWidget()
 	}
 
 	override val sizeMode: SizeMode = SizeMode.Exact
 
+	private val repo = MutableStateFlow<WidgetRepository?>(null)
+
 	override suspend fun provideGlance(
 		context: Context,
 		id: GlanceId
 	) {
 		provideContent {
-			val conn by connection.collectAsState(null)
-			val pref = PreferencesRepository(context)
-			val savedStops by pref.stopsFlow.collectAsState(emptySet())
+			val rep = repo.collectAsState().value ?: run {
+				val pref = PreferencesRepository(context)
+				val savedStops by pref.stopsFlow.collectAsState(emptySet())
+				WidgetRepository(savedStops)
+			}
 			Content(
 				context,
-				WidgetRepository(conn?.let { BackendDataSource(it) }, savedStops),
-				onSync = {
-					//TODO: use a service
+				rep,
+				onSync = action {
 					CoroutineScope(Dispatchers.IO).launch {
-						conn?.close()
-						connection.update {
-							OneShotConnection(
-								context.getSystemService(ConnectivityManager::class.java)!!
-							)
+						repo.update {
+							val repo = it ?: run {
+								val pref = PreferencesRepository(context)
+								val savedStops = pref.stopsFlow.first()
+								WidgetRepository(savedStops)
+							}
+							repo.apply { update(context) }
 						}
 						update(context, id)
 					}
@@ -97,12 +99,12 @@ class NetworkWidget : GlanceAppWidget() {
 			if (it != GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS) return
 		}
 		provideContent {
-			Content(context, onSync = {})
+			Content(context, onSync = action { })
 		}
 	}
 
 	@Composable
-	fun Content(ctx: Context, repo: WidgetRepository? = null, onSync: () -> Unit) {
+	fun Content(ctx: Context, repo: WidgetRepository? = null, onSync: Action) {
 		val darkMode = GlanceTheme.colors.surface.getColor(ctx).luminance() < 0.5
 		ParisMobiliteTheme(darkMode, glance = true) {
 			val titleStyle = TextStyle(
@@ -114,9 +116,7 @@ class NetworkWidget : GlanceAppWidget() {
 			val savedLines by pref.linesFlow.collectAsState(emptySet())
 			val savedStops by pref.stopsFlow.collectAsState(emptySet())
 			val monitor = MonitoringStops(
-				repo?.stops
-					?.collectAsState(emptyMap())
-					?.value
+				repo?.stops?.collectAsState(emptyMap())?.value
 					?: emptyMap()
 			)
 			val lines = repo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
@@ -138,7 +138,7 @@ class NetworkWidget : GlanceAppWidget() {
 				horizontalPadding = 0.dp,
 			) {
 				val connected =
-					(repo?.isConnected?.collectAsState()?.value ?: false) && lastSync != null
+					(repo?.isConnected?.collectAsState(false)?.value ?: false) && lastSync != null
 				Column {
 					if (!connected && size == WidgetSize.LARGE) NoConnection(ctx, onSync)
 					LazyColumn {
@@ -191,7 +191,7 @@ class NetworkWidget : GlanceAppWidget() {
 	}
 
 	@Composable
-	fun NoConnection(ctx: Context, onClick: () -> Unit) {
+	fun NoConnection(ctx: Context, onClick: Action) {
 		Row(
 			modifier = GlanceModifier
 				.fillMaxWidth()
@@ -214,7 +214,7 @@ class NetworkWidget : GlanceAppWidget() {
 	}
 
 	@Composable
-	fun Reload(lastSync: LocalTime?, onSync: () -> Unit) {
+	fun Reload(lastSync: LocalTime?, onSync: Action) {
 		lastSync?.let {
 			Text(
 				text = it.format(
