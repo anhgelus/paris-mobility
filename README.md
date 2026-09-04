@@ -34,6 +34,14 @@ The protocol is a custom binary protocol based on CBOR.
 It reduces the overhead of HTTP and of JSON, which is useful if the network coverage is bad (like in a tunnel).
 The formal format is described in [`backend/proto/proto.abnf`](backend/proto/proto.abnf).
 
+## Privacy
+
+Because the application is not fully offline, it sends personnal information like your IP address to the backend.
+The default implementation doesn't log anything.
+
+If you are using a third-party packaged application using another backend, it can log your IP address, but the
+first-party is not and will never collect personnal data.
+
 ## License
 
 The application itself is distributed under AGPL-3.0-only.

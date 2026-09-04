@@ -47,7 +47,6 @@ android {
 
     buildTypes {
         release {
-            optimization { enable = true }
             signingConfig = signingConfigs["release"]
         }
         debug {
