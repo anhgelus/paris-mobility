@@ -3,12 +3,12 @@
     <string name="disconnected">Déconnecté du serveur</string>
     <string name="lines">Lignes</string>
     <string name="stops">Arrêts</string>
-    <string name="metro">Métro</string>
-    <string name="rer">RER</string>
-    <string name="tram">Tram</string>
-    <string name="transilien">Transilien</string>
-    <string name="bus">Bus</string>
-    <string name="line_name">%1$s %2$s</string>
+    <string name="metro" translatable="false">Métro</string>
+    <string name="rer" translatable="false">RER</string>
+    <string name="tram" translatable="false">Tram</string>
+    <string name="transilien" translatable="false">Transilien</string>
+    <string name="bus" translatable="false">Bus</string>
+    <string name="line_name" translatable="false">%1$s %2$s</string>
     <!-- Home screen -->
     <string name="home_network">Votre réseau</string>
     <string name="home_disruptions">État de vos lignes</string>
@@ -21,6 +21,7 @@
     <string name="home_train_arrived">Arrivé</string>
     <string name="home_train_departed">Parti</string>
     <string name="home_train_not_expected">Non attendu</string>
+    <string name="home_modify">Modifier votre réseau</string>
     <!-- Disruptions -->
     <string name="disruptions_line">Incidents sur %1$s %2$s</string>
     <string name="disruptions_nothing">Aucun incident trouvé.</string>
@@ -32,4 +33,10 @@
     <!-- Widget -->
     <string name="widget_network">Votre réseau</string>
     <string name="widget_network_desc">Affiche l\'état de vos lignes et les prochains passages.</string>
+    <!-- Buttons -->
+    <string name="button_back">Retour arrière</string>
+    <string name="button_home">Accueil</string>
+    <string name="button_network">Réseau</string>
+    <string name="button_map">Carte</string>
+    <string name="button_modify">Modifier votre réseau</string>
 </resources>

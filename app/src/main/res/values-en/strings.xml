@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Paris Mobility</string>
+    <string name="disconnected">Disconnected from the server</string>
+    <string name="lines">Lines</string>
+    <string name="stops">Stops</string>
+    <string name="home_network">Your network</string>
+    <string name="home_no_lines">No lines selected. Click on the icon on the bottom right to set it up.</string>
+    <string name="home_next_trains">Next trains</string>
+    <string name="home_no_stops">No stops selected. Click on the icon on the bottom right to set it up.</string>
+    <string name="home_train_nothing">No service</string>
+    <string name="home_train_cancelled">Cancelled</string>
+    <string name="home_train_missed">Missed</string>
+    <string name="home_train_arrived">Arrived</string>
+    <string name="home_train_departed">Departed</string>
+    <string name="home_train_not_expected">Not expected</string>
+    <string name="home_modify">Modify your network</string>
+    <string name="disruptions_line">Disruptions on %1$s %2$s</string>
+    <string name="disruptions_nothing">No disruptions found.</string>
+    <string name="disruptions_date">From %1$s to %2$s</string>
+    <string name="network">Network</string>
+    <string name="map_alt">Network map</string>
+    <string name="widget_network">Your network</string>
+    <string name="home_disruptions">Lines status</string>
+    <string name="widget_network_desc">Display the lines status and the next trains.</string>
+    <string name="button_back">Back</string>
+    <string name="button_home">Home</string>
+    <string name="button_network">Network</string>
+    <string name="button_map">Map</string>
+    <string name="button_modify">Modify your network</string>
+</resources>

@@ -15,6 +15,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -34,11 +35,11 @@ fun NavigationBar(
 				icon = {
 					Icon(
 						painter = painterResource(route.painterID),
-						contentDescription = route.title
+						contentDescription = stringResource(route.title)
 					)
 				},
 				label = {
-					Text(text = route.title)
+					Text(text = stringResource(route.title))
 				}
 			)
 		}
@@ -56,7 +57,7 @@ fun NavigationFloatingButton(stack: NavBackStack<NavKey>) {
 	) {
 		Icon(
 			painter = painterResource(btn.icon),
-			contentDescription = btn.contentDescription,
+			contentDescription = stringResource(btn.contentDescription),
 			modifier = Modifier.size(32.dp)
 		)
 	}
@@ -67,12 +68,12 @@ fun NavigationFloatingButton(stack: NavBackStack<NavKey>) {
 fun NavigationTopBar(stack: NavBackStack<NavKey>) {
 	val bar = stack.last().let { it as Route }.getTopBar() ?: return
 	TopAppBar(
-		title = { Text(bar.title) },
+		title = { Text(stringResource(bar.title)) },
 		navigationIcon = {
 			IconButton(onClick = { bar.onBack(stack) }) {
 				Icon(
 					painter = painterResource(R.drawable.outline_arrow_back_24),
-					contentDescription = "Retour arrière",
+					contentDescription = stringResource(R.string.button_back),
 				)
 			}
 		}

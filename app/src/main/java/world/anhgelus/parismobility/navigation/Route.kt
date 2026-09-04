@@ -10,13 +10,13 @@ import world.anhgelus.parismobility.models.LineKind
 sealed interface Route : NavKey {
 	data class Data(
 		val icon: Int,
-		val contentDescription: String,
+		val contentDescription: Int,
 		val onClick: (NavBackStack<NavKey>) -> Unit
 	)
 
 	fun getButton(): Data? = null
 
-	data class TopBarData(val title: String, val onBack: (NavBackStack<NavKey>) -> Unit)
+	data class TopBarData(val title: Int, val onBack: (NavBackStack<NavKey>) -> Unit)
 
 	fun getTopBar(): TopBarData? = null
 
@@ -26,12 +26,12 @@ sealed interface Route : NavKey {
 	data object Home : HomeRoute {
 		override fun getButton(): Data = Data(
 			icon = R.drawable.outline_edit_24,
-			contentDescription = "Modifier votre réseau",
+			contentDescription = R.string.button_modify,
 		) { it.add(Modify) }
 
 		@Serializable
 		data object Modify : HomeRoute {
-			override fun getTopBar(): TopBarData = TopBarData("Modifier votre réseau") {
+			override fun getTopBar(): TopBarData = TopBarData(R.string.home_modify) {
 				it.removeAt(it.lastIndex)
 			}
 
@@ -52,20 +52,20 @@ sealed interface Route : NavKey {
 
 data class BottomNavItem(
 	val painterID: Int,
-	val title: String,
+	val title: Int,
 )
 
 val TOP_LEVEL_DESTINATIONS = mapOf(
 	Route.Home to BottomNavItem(
 		painterID = R.drawable.outline_home_24,
-		title = "Accueil",
+		title = R.string.button_home,
 	),
 	Route.Network to BottomNavItem(
 		painterID = R.drawable.outline_train_24,
-		title = "Réseau",
+		title = R.string.button_network,
 	),
 	Route.Map to BottomNavItem(
 		painterID = R.drawable.outline_map_24,
-		title = "Carte",
+		title = R.string.button_map,
 	)
 )
