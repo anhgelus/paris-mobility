@@ -1,1 +1,8 @@
 Application de mobilité remplaçant *Bonjour RATP* pour les utilisateurs quotidents des transports publics parisiens. Cherche à être rapide, native et facile d'utilisation.
+
+## Fonctionnalités
+
+- Traque l'état du réseau
+- Affiche les prochains trains pour un arrêt spécific
+- Affiche la carte du réseau
+- Widget affichant l'état du réseau et les prochains trains

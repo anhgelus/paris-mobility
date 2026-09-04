@@ -1,1 +1,8 @@
 Mobility application replacing *Bonjour RATP* for daily users of public transports in Paris. Aims to be fast, native and easy to use.
+
+## Features
+
+- Track lines' disruptions
+- Monitor next trains for a specific stop
+- Display network's map
+- Widget displaying lines state and next trains
