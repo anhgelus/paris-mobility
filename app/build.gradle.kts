@@ -9,6 +9,7 @@ plugins {
 }
 
 val keys = loadProperties("keys.properties")
+val keystore = loadProperties(rootProject.file("keystore.properties").path)
 
 fun get(k: String): String {
     return keys[k] as String? ?: System.getenv(k)
@@ -35,11 +36,21 @@ android {
         buildConfigField("int", "SERVER_PORT", get("SERVER_PORT"))
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = keystore["keyAlias"] as String
+            keyPassword = keystore["keyPassword"] as String
+            storeFile = file(keystore["storeFile"] as String)
+            storePassword = keystore["storePassword"] as String
+        }
+    }
+
     buildTypes {
         release {
             optimization { enable = true }
-            isMinifyEnabled = true
-            isShrinkResources = true
+//            isMinifyEnabled = true
+//            isShrinkResources = true
+            signingConfig = signingConfigs["release"]
         }
         debug {
             signingConfig = signingConfigs["debug"]
