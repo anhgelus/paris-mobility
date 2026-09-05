@@ -70,7 +70,7 @@ fun StopMonitoring(
 	val wrap: @Composable (@Composable () -> Unit) -> Unit = when (size) {
 		WidgetSize.SMALL -> { it ->
 			Column(
-				modifier.fillMaxWidth(),
+				modifier = modifier.fillMaxWidth(),
 				horizontalAlignment = Alignment.CenterHorizontally
 			) { it() }
 		}
@@ -102,7 +102,7 @@ fun StopMonitoring(
 						style = textStyle.copy(fontWeight = FontWeight.Bold),
 						maxLines = 1
 					)
-					Row(GlanceModifier.padding(bottom = 16.dp).fillMaxWidth()) {
+					Row(GlanceModifier.padding(bottom = 8.dp).fillMaxWidth()) {
 						monitor.subList(0, min(monitor.size, 4)).forEach {
 							displayStop(ctx, it).let { (v, err) ->
 								Text(

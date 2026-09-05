@@ -39,15 +39,15 @@ fun <T> FlowRow(
 	render: @Composable ((T, GlanceModifier) -> Unit)
 ) {
 	val w = (LocalSize.current.width - padding * 2).value
-	val n = minOf((w / 64).toInt(), 5)
+	val n = minOf((w / 56).toInt(), 5)
 	val l = items.toList()
-	val padLeft = (w - n * 64) / 2f
+	val padLeft = (w - n * 56) / 2f
 	Column(modifier = modifier.padding(horizontal = padding).fillMaxWidth()) {
 		l.chunked(n).forEachIndexed { i, sub ->
 			Row(modifier = GlanceModifier.fillMaxWidth()) {
 				Spacer(GlanceModifier.width(padLeft.dp))
 				sub.forEach { line ->
-					render(line, GlanceModifier.padding(horizontal = 8.dp))
+					render(line, GlanceModifier.padding(horizontal = 4.dp))
 				}
 			}
 			if (i < sub.size - 1) Spacer(GlanceModifier.height(8.dp))

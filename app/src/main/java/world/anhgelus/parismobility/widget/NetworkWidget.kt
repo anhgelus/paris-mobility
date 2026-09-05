@@ -31,7 +31,6 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
-import androidx.glance.text.FontFamily
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import kotlinx.coroutines.CoroutineScope
@@ -101,9 +100,8 @@ class NetworkWidget : GlanceAppWidget() {
 		val darkMode = GlanceTheme.colors.surface.getColor(ctx).luminance() < 0.5
 		ParisMobiliteTheme(darkMode, glance = true) {
 			val titleStyle = TextStyle(
-				fontSize = 20.sp,
+				fontSize = 16.sp,
 				color = GlanceTheme.colors.onSurface,
-				fontFamily = FontFamily("sans-serif"),
 			)
 			val pref = PreferencesRepository(ctx)
 			val savedLines by pref.linesFlow.collectAsState(emptySet())
@@ -114,7 +112,7 @@ class NetworkWidget : GlanceAppWidget() {
 			)
 			val lines = repo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
 			val lastSync = repo?.lastSync?.collectAsState()?.value
-			val size = WidgetSize.getSize(LocalSize.current)
+			val size = WidgetSize.getSize(LocalSize.current.also { println(it) })
 			Scaffold(
 				titleBar = {
 					if (size != WidgetSize.SMALL) {
@@ -135,7 +133,11 @@ class NetworkWidget : GlanceAppWidget() {
 				Column {
 					if (!connected && size == WidgetSize.LARGE) NoConnection(ctx, onSync)
 					LazyColumn {
-						val modifier = GlanceModifier.padding(horizontal = 16.dp)
+						val paddingFactor = when (size) {
+							WidgetSize.LARGE -> 2
+							else -> 1
+						}
+						val modifier = GlanceModifier.padding(horizontal = 8.dp * paddingFactor)
 						if (!connected && size != WidgetSize.LARGE) item {
 							NoConnection(ctx, onSync)
 						} else if (size == WidgetSize.SMALL) item {
@@ -152,7 +154,7 @@ class NetworkWidget : GlanceAppWidget() {
 							Text(
 								text = ctx.getString(R.string.home_disruptions),
 								style = titleStyle,
-								modifier = modifier.padding(top = 16.dp)
+								modifier = modifier.padding(top = 8.dp * paddingFactor)
 							)
 						}
 						item {
@@ -160,8 +162,8 @@ class NetworkWidget : GlanceAppWidget() {
 								savedLines.mapNotNull {
 									lines[it.kind]?.get(it.line)?.let { v -> Pair(it.kind, v) }
 								},
-								padding = 16.dp,
-								modifier = GlanceModifier.padding(top = 8.dp),
+								padding = 8.dp * paddingFactor,
+								modifier = GlanceModifier.padding(top = 4.dp * paddingFactor),
 							) { (kind, line), modifier ->
 								Line(darkMode, kind, line, GlanceTheme.colors.surface, modifier)
 							}
@@ -170,12 +172,12 @@ class NetworkWidget : GlanceAppWidget() {
 							Text(
 								text = ctx.getString(R.string.home_next_trains),
 								style = titleStyle,
-								modifier = modifier.padding(top = 16.dp)
+								modifier = modifier.padding(top = 8.dp * paddingFactor)
 							)
 						}
 						stopsMonitoring(
 							ctx, darkMode, lines, savedStops, monitor, size,
-							modifier.padding(bottom = 16.dp),
+							modifier.padding(bottom = 8.dp),
 						)
 					}
 				}
