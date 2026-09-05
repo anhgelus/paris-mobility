@@ -47,6 +47,9 @@ android {
 
     buildTypes {
         release {
+            optimization { enable = true }
+            isShrinkResources = true
+            isMinifyEnabled = true
             signingConfig = signingConfigs["release"]
         }
         debug {
@@ -67,13 +70,15 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.bundles.serialization)
+    implementation(libs.androidx.work.runtime)
 
     // navbar
     implementation(libs.androidx.navigation3.ui)
