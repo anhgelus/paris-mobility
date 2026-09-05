@@ -19,8 +19,12 @@ data class OneShotConnection(
 	override val isConnected
 		get() = _isConnected.asStateFlow()
 
+	override var isLimited: Boolean = false
+		private set
+
 	init {
 		conn.activeNetwork?.let {
+			isLimited = conn.isActiveNetworkMetered
 			try {
 				socket = SSLSocketFactory.getDefault().createSocket(
 					BuildConfig.SERVER_HOSTNAME,

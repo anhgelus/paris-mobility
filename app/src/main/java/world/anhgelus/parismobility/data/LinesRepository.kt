@@ -30,7 +30,7 @@ class LinesRepository(var backendSource: BackendDataSource) {
 				_lastSync.value = LocalTime.now()
 				emit(it)
 			}
-			delay(1.minutes)
+			delay(if (!backendSource.isLimited) 1.minutes else 5.minutes)
 		}
 	}.flowOn(Dispatchers.IO)
 
@@ -47,7 +47,7 @@ class LinesRepository(var backendSource: BackendDataSource) {
 				backendSource.monitorStops(monitoredStops).onSuccess {
 					previous = MonitoringStops(map = it, synced = true)
 				}
-				delay(45.seconds)
+				delay(if (!backendSource.isLimited) 45.seconds else 3.minutes)
 			}
 		}
 		while (true) {
@@ -59,17 +59,12 @@ class LinesRepository(var backendSource: BackendDataSource) {
 		}
 	}.flowOn(Dispatchers.IO)
 
-	fun monitorStop(vararg s: Stop) {
-		monitoredStops.addAll(s)
-	}
+	fun monitorStop(vararg s: Stop) = monitoredStops.addAll(s)
 
-	fun stopMonitoringStop(vararg s: Stop) {
-		monitoredStops.removeAll(s.toSet())
-	}
+	fun stopMonitoringStop(vararg s: Stop) = monitoredStops.removeAll(s.toSet())
 
-	private fun updateLines(disruptions: Disruptions) {
+	private fun updateLines(disruptions: Disruptions) =
 		_lines.update { updateLines(it, disruptions) }
-	}
 
 	companion object {
 		fun updateLines(lines: LineGroups, disruptions: Disruptions): LineGroups {

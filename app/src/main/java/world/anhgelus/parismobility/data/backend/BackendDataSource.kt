@@ -22,6 +22,9 @@ import java.net.SocketException
 class BackendDataSource(private val conn: Connection) : ConnectivityManager.NetworkCallback() {
 	val isConnected = conn.isConnected
 
+	val isLimited: Boolean
+		get() = conn.isLimited
+
 	@OptIn(ExperimentalSerializationApi::class)
 	private suspend inline fun <reified R, reified T> get(
 		kind: Kind,

@@ -17,6 +17,8 @@ interface Connection {
 	fun close()
 
 	val isConnected: StateFlow<Boolean>
+
+	val isLimited: Boolean
 }
 
 data class Message(

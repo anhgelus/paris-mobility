@@ -24,8 +24,11 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class LongConnection(
-	conn: ConnectivityManager,
+	val conn: ConnectivityManager,
 ) : ConnectivityManager.NetworkCallback(), Connection {
+	override var isLimited: Boolean = false
+		private set
+
 	init {
 		val req = NetworkRequest.Builder()
 			.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -66,12 +69,14 @@ class LongConnection(
 		super.onAvailable(network)
 		waiting?.trySend(Unit)
 		this.network = network
+		isLimited = conn.isActiveNetworkMetered
 		waiting = null
 	}
 
 	override fun onLosing(network: Network, maxMsToLive: Int) {
 		super.onLosing(network, maxMsToLive)
 		this.network = null
+		isLimited = false
 		if (waiting == null) waiting = Channel()
 		close()
 	}
@@ -79,6 +84,7 @@ class LongConnection(
 	override fun onLost(network: Network) {
 		super.onLost(network)
 		this.network = null
+		isLimited = false
 		if (waiting == null) waiting = Channel()
 	}
 
