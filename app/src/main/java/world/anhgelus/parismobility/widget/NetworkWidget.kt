@@ -112,7 +112,7 @@ class NetworkWidget : GlanceAppWidget() {
 			)
 			val lines = repo?.lines?.collectAsState()?.value ?: LinesRepository.loadLines()
 			val lastSync = repo?.lastSync?.collectAsState()?.value
-			val size = WidgetSize.getSize(LocalSize.current.also { println(it) })
+			val size = WidgetSize.getSize(LocalSize.current)
 			Scaffold(
 				titleBar = {
 					if (size != WidgetSize.SMALL) {
